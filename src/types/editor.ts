@@ -1,5 +1,8 @@
 // 编辑器相关类型定义
 
+import { Clip, ProjectData, ProjectSettings, Track } from "./project";
+import { Point } from "./timeline";
+
 /**
  * 编辑器状态
  */

@@ -224,9 +224,9 @@ export const useUIStore = create<UIStore>()(
         // 初始状态
         mode: 'edit',
         activePanel: 'timeline',
-        visiblePanels: new Set(['timeline', 'media', 'properties']),
+        visiblePanels: new Set(['timeline', 'media', 'properties'] as EditorPanel[]),
         
-        theme: 'dark',
+        theme: 'light',
         thumbnailSize: 'medium',
         
         layout: defaultLayout,

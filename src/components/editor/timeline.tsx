@@ -52,17 +52,22 @@ export function Timeline() {
   const handleTimelineClick = useCallback((e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
 
-    const rect = scrollContainerRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const newTime = pixelToTime(clickX, scale, scrollPosition);
-    
-    // 网格对齐
-    if (snapToGrid) {
-      const snappedTime = Math.round(newTime / gridSize) * gridSize;
-      setPlayhead(Math.max(0, Math.min(snappedTime, duration)));
-    } else {
-      setPlayhead(Math.max(0, Math.min(newTime, duration)));
-    }
+    // 使用 setTimeout 避免在渲染阶段更新状态
+    setTimeout(() => {
+      if (!scrollContainerRef.current) return;
+      
+      const rect = scrollContainerRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const newTime = pixelToTime(clickX, scale, scrollPosition);
+      
+      // 网格对齐
+      if (snapToGrid) {
+        const snappedTime = Math.round(newTime / gridSize) * gridSize;
+        setPlayhead(Math.max(0, Math.min(snappedTime, duration)));
+      } else {
+        setPlayhead(Math.max(0, Math.min(newTime, duration)));
+      }
+    }, 0);
   }, [scale, scrollPosition, snapToGrid, gridSize, duration, setPlayhead]);
 
   // 处理水平滚动
@@ -262,7 +267,7 @@ export function Timeline() {
           <span>缩放: {Math.round(scale * 100)}%</span>
           <span>网格: {snapToGrid ? '开启' : '关闭'}</span>
           <span>轨道: {currentProject.tracks.length}</span>
-          {selectedClips.length > 0 && (
+          {selectedClips && selectedClips.length > 0 && (
             <span>已选择: {selectedClips.length} 个片段</span>
           )}
         </div>

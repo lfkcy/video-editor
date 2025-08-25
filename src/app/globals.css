@@ -3,66 +3,67 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-    
-    /* 视频编辑器专用颜色变量 */
-    --timeline-background: 222.2 84% 4.9%;
-    --timeline-track: 210 40% 12%;
-    --timeline-clip: 217.2 32.6% 17.5%;
-    --timeline-selected: 262.1 83.3% 57.8%;
-    --timeline-playhead: 0 84.2% 60.2%;
-    --timeline-grid: 215.4 16.3% 25%;
-  }
+:root {
+  --background: 0 0% 98%; /* 柔和的白色背景 */
+  --foreground: 222.2 47.4% 11.2%; /* 深蓝色前景文字 */
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 47.4% 11.2%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 47.4% 11.2%;
+  --primary: 222.2 83.2% 53.3%; /* 保持一个清晰的蓝色主色 */
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%; /* 略带灰度的浅色 */
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
+  --radius: 0.5rem;
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
-    
-    /* 暗色主题下的视频编辑器颜色 */
-    --timeline-background: 222.2 84% 4.9%;
-    --timeline-track: 217.2 32.6% 17.5%;
-    --timeline-clip: 215.4 16.3% 25%;
-    --timeline-selected: 262.1 83.3% 57.8%;
-    --timeline-playhead: 0 84.2% 60.2%;
-    --timeline-grid: 215.4 16.3% 35%;
-  }
+  /* 视频编辑器颜色优化 */
+  --timeline-background: 210 40% 92.5%; /* 更柔和的浅灰色背景 */
+  --timeline-track: 210 40% 96.1%; /* 浅灰色的轨道 */
+  --timeline-clip: 210 40% 85%; /* 略深的灰色片段，有更好的区分度 */
+  --timeline-selected: 262.1 83.3% 57.8%; /* 保持一个突出的紫色选择色 */
+  --timeline-playhead: 0 84.2% 60.2%; /* 保持醒目的红色播放头 */
+  --timeline-grid: 215.4 16.3% 75%; /* 浅色网格线，更不显眼 */
+}
+
+.dark {
+  --background: 222.2 47.4% 11.2%; /* 柔和的深蓝色背景 */
+  --foreground: 210 40% 98%; /* 保持白色前景文字 */
+  --card: 222.2 47.4% 11.2%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 47.4% 11.2%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%; /* 保持一个清晰的蓝色主色 */
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%; /* 深灰色 */
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 224.3 76.3% 94.1%;
+
+  /* 暗色主题下的视频编辑器颜色优化 */
+  --timeline-background: 222.2 47.4% 9.2%; /* 更深的近黑色背景 */
+  --timeline-track: 217.2 32.6% 15.5%; /* 深灰色轨道，比背景稍浅 */
+  --timeline-clip: 215.4 16.3% 20%; /* 深灰色的片段，有更好的视觉区分度 */
+  --timeline-selected: 262.1 83.3% 57.8%; /* 保持一个突出的紫色选择色 */
+  --timeline-playhead: 0 84.2% 60.2%; /* 保持醒目的红色播放头 */
+  --timeline-grid: 215.4 16.3% 30%; /* 稍浅的灰色网格线，更易于观察 */
+}
+
 }
 
 @layer base {

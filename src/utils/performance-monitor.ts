@@ -75,6 +75,12 @@ export class PerformanceMonitor {
    * 初始化性能监控
    */
   private initializeMonitoring() {
+    // 检查是否在客户端环境
+    if (typeof window === 'undefined') {
+      // 服务端环境，不执行浏览器相关监控
+      return;
+    }
+    
     // 监控页面加载性能
     this.measurePageLoad();
     
@@ -97,11 +103,20 @@ export class PerformanceMonitor {
    * 测量页面加载性能
    */
   private measurePageLoad() {
+    if (typeof window === 'undefined' || typeof performance === 'undefined') {
+      return; // 服务端环境不执行
+    }
+    
     window.addEventListener('load', () => {
-      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-      
-      this.metrics.loadTime = navigation.loadEventEnd - navigation.navigationStart;
-      this.metrics.domContentLoadedTime = navigation.domContentLoadedEventEnd - navigation.navigationStart;
+      try {
+        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+        if (navigation) {
+          this.metrics.loadTime = navigation.loadEventEnd - navigation.navigationStart;
+          this.metrics.domContentLoadedTime = navigation.domContentLoadedEventEnd - navigation.navigationStart;
+        }
+      } catch (error) {
+        console.warn('Failed to measure page load performance:', error);
+      }
     });
   }
 
@@ -109,6 +124,11 @@ export class PerformanceMonitor {
    * 测量Core Web Vitals
    */
   private measureWebVitals() {
+    // 检查是否在客户端环境且PerformanceObserver可用
+    if (typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') {
+      return; // 服务端环境不执行
+    }
+    
     try {
       // First Contentful Paint (FCP)
       const fcpObserver = new PerformanceObserver((list) => {
@@ -125,7 +145,9 @@ export class PerformanceMonitor {
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
-        this.metrics.largestContentfulPaint = lastEntry.startTime;
+        if (lastEntry) {
+          this.metrics.largestContentfulPaint = lastEntry.startTime;
+        }
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
       this.observers.push(lcpObserver);
@@ -149,25 +171,33 @@ export class PerformanceMonitor {
    * 测量内存使用
    */
   private measureMemoryUsage() {
-    if ((performance as any).memory) {
-      const updateMemory = () => {
-        const memory = (performance as any).memory;
-        this.metrics.memoryUsage = {
-          usedJSHeapSize: memory.usedJSHeapSize,
-          totalJSHeapSize: memory.totalJSHeapSize,
-          jsHeapSizeLimit: memory.jsHeapSizeLimit,
-        };
-      };
-
-      updateMemory();
-      setInterval(updateMemory, 5000); // 每5秒更新内存信息
+    // 检查是否在客户端环境且performance.memory可用
+    if (typeof window === 'undefined' || typeof performance === 'undefined' || !(performance as any).memory) {
+      return; // 服务端环境或不支持memory API不执行
     }
+    
+    const updateMemory = () => {
+      const memory = (performance as any).memory;
+      this.metrics.memoryUsage = {
+        usedJSHeapSize: memory.usedJSHeapSize,
+        totalJSHeapSize: memory.totalJSHeapSize,
+        jsHeapSizeLimit: memory.jsHeapSizeLimit,
+      };
+    };
+
+    updateMemory();
+    setInterval(updateMemory, 5000); // 每5秒更新内存信息
   }
 
   /**
    * 监控错误
    */
   private monitorErrors() {
+    // 检查是否在客户端环境
+    if (typeof window === 'undefined') {
+      return; // 服务端环境不执行
+    }
+    
     window.addEventListener('error', (event) => {
       this.errorCount++;
       this.updateErrorRate();
@@ -209,6 +239,11 @@ export class PerformanceMonitor {
    * 开始计时
    */
   public startTiming(name: string): () => void {
+    // 检查是否在客户端环境且performance可用
+    if (typeof performance === 'undefined') {
+      return () => 0; // 服务端环境返回空函数
+    }
+    
     const startTime = performance.now();
     return () => {
       const endTime = performance.now();
@@ -222,6 +257,11 @@ export class PerformanceMonitor {
    * 收集当前指标
    */
   private collectMetrics() {
+    // 检查是否在客户端环境且performance可用
+    if (typeof performance === 'undefined') {
+      return; // 服务端环境不执行
+    }
+    
     // 计算应用运行时间
     const runTime = performance.now() - this.startTime;
     
