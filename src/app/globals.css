@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+    
+    /* 视频编辑器专用颜色变量 */
+    --timeline-background: 222.2 84% 4.9%;
+    --timeline-track: 210 40% 12%;
+    --timeline-clip: 217.2 32.6% 17.5%;
+    --timeline-selected: 262.1 83.3% 57.8%;
+    --timeline-playhead: 0 84.2% 60.2%;
+    --timeline-grid: 215.4 16.3% 25%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    
+    /* 暗色主题下的视频编辑器颜色 */
+    --timeline-background: 222.2 84% 4.9%;
+    --timeline-track: 217.2 32.6% 17.5%;
+    --timeline-clip: 215.4 16.3% 25%;
+    --timeline-selected: 262.1 83.3% 57.8%;
+    --timeline-playhead: 0 84.2% 60.2%;
+    --timeline-grid: 215.4 16.3% 35%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* 视频编辑器专用样式 */
+.video-editor {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.timeline-container {
+  background-color: hsl(var(--timeline-background));
+  border-top: 1px solid hsl(var(--border));
+}
+
+.timeline-track {
+  background-color: hsl(var(--timeline-track));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.timeline-clip {
+  background-color: hsl(var(--timeline-clip));
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.timeline-clip:hover {
+  background-color: hsl(var(--timeline-clip) / 0.8);
+  border-color: hsl(var(--primary));
+}
+
+.timeline-clip.selected {
+  background-color: hsl(var(--timeline-selected));
+  border-color: hsl(var(--timeline-selected));
+}
+
+.timeline-clip:active {
+  cursor: grabbing;
+}
+
+.timeline-playhead {
+  background-color: hsl(var(--timeline-playhead));
+  width: 2px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.timeline-playhead::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -6px;
+  width: 14px;
+  height: 14px;
+  background-color: hsl(var(--timeline-playhead));
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.timeline-grid {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 49px,
+    hsl(var(--timeline-grid)) 49px,
+    hsl(var(--timeline-grid)) 50px
+  );
+}
+
+.video-preview {
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.video-preview video,
+.video-preview canvas {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* 拖拽相关样式 */
+.dragging {
+  user-select: none;
+  cursor: grabbing !important;
+}
+
+.drop-zone {
+  border: 2px dashed hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
+}
+
+.drop-zone.active {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.2);
+}
+
+/* 加载动画 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* 淡入淡出动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease-in-out;
+}
