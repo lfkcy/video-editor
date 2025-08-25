@@ -146,7 +146,7 @@ export interface TextStyle {
   backgroundColor: string;
   textAlign: 'left' | 'center' | 'right';
   lineHeight: number;
-  letterSpacing: number;
+  letterSpacing:  string;
   shadow: TextShadow;
 }
 

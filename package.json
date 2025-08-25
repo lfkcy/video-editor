@@ -27,6 +27,7 @@
     "@webav/av-canvas": "^1.1.17",
     "@webav/av-cliper": "^1.1.17",
     "class-variance-authority": "^0.7.0",
+    "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.424.0",
     "next": "14.2.5",

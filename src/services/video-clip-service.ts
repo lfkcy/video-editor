@@ -1,5 +1,19 @@
-import { Combinator, MP4Clip, AudioClip, ImgClip, OffscreenSprite } from '@webav/av-cliper';
-import { ProjectData, VideoClip, AudioClip as AudioClipType, ImageClip, ExportSettings } from '@/types';
+import {
+  Combinator,
+  MP4Clip,
+  AudioClip,
+  ImgClip,
+  OffscreenSprite,
+  EmbedSubtitlesClip,
+} from "@webav/av-cliper";
+import {
+  ProjectData,
+  VideoClip,
+  AudioClip as AudioClipType,
+  ImageClip,
+  ExportSettings,
+  TextStyle,
+} from "@/types";
 
 /**
  * 视频剪辑服务类
@@ -8,22 +22,32 @@ import { ProjectData, VideoClip, AudioClip as AudioClipType, ImageClip, ExportSe
 export class VideoClipService {
   private combinator: Combinator | null = null;
   private isInitialized = false;
+  private width = 1920;
+  private height = 1080;
+  private fps = 30;
 
   /**
    * 初始化视频合成器
    */
-  async initialize(width: number = 1920, height: number = 1080, fps: number = 30): Promise<void> {
+  async initialize(
+    width: number = 1920,
+    height: number = 1080,
+    fps: number = 30
+  ): Promise<void> {
     try {
       this.combinator = new Combinator({
         width,
         height,
         fps,
-        bgColor: 'transparent',
+        bgColor: "transparent",
       });
       this.isInitialized = true;
-      console.log('VideoClipService initialized successfully');
+      this.width = width;
+      this.height = height;
+      this.fps = fps;
+      console.log("VideoClipService initialized successfully");
     } catch (error) {
-      console.error('Failed to initialize VideoClipService:', error);
+      console.error("Failed to initialize VideoClipService:", error);
       throw error;
     }
   }
@@ -33,40 +57,53 @@ export class VideoClipService {
    */
   private ensureInitialized(): void {
     if (!this.isInitialized || !this.combinator) {
-      throw new Error('VideoClipService not initialized. Call initialize() first.');
+      throw new Error(
+        "VideoClipService not initialized. Call initialize() first."
+      );
     }
   }
 
   /**
    * 添加视频片段到合成器
    */
-  async addVideoClip(file: File, startTime: number, duration?: number): Promise<string> {
+  async addVideoClip(
+    file: File,
+    startTime: number,
+    duration: number
+  ): Promise<OffscreenSprite> {
     this.ensureInitialized();
-    
+
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const mp4Clip = new MP4Clip(arrayBuffer);
+      const fileStream = file.stream();
+      const mp4Clip = new MP4Clip(fileStream);
       await mp4Clip.ready;
 
       const sprite = new OffscreenSprite(mp4Clip);
-      
+
+      await sprite.ready;
+
+      const percent = Math.min(
+        sprite.rect.w / this.width,
+        sprite.rect.h / this.height
+      );
+
       // 设置时间信息
       sprite.time = {
         offset: startTime * 1000000, // 转换为微秒
-        duration: duration ? duration * 1000000 : mp4Clip.duration,
+        duration: duration * 1000000,
       };
 
       // 设置位置和大小
-      sprite.rect.x = 0;
-      sprite.rect.y = 0;
-      sprite.rect.w = this.combinator!.width;
-      sprite.rect.h = this.combinator!.height;
+      sprite.rect.w = sprite.rect.w / percent;
+      sprite.rect.h = sprite.rect.h / percent;
+      sprite.rect.x = (this.width - sprite.rect.w) / 2;
+      sprite.rect.y = (this.height - sprite.rect.h) / 2;
 
       await this.combinator!.addSprite(sprite);
-      
-      return sprite.id;
+
+      return sprite;
     } catch (error) {
-      console.error('Failed to add video clip:', error);
+      console.error("Failed to add video clip:", error);
       throw error;
     }
   }
@@ -74,26 +111,32 @@ export class VideoClipService {
   /**
    * 添加音频片段到合成器
    */
-  async addAudioClip(file: File, startTime: number, duration?: number): Promise<string> {
+  async addAudioClip(
+    file: File,
+    startTime: number,
+    duration: number
+  ): Promise<OffscreenSprite> {
     this.ensureInitialized();
-    
+
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const audioClip = new AudioClip(arrayBuffer);
+      const fileStream = file.stream();
+      const audioClip = new AudioClip(fileStream);
       await audioClip.ready;
 
       const sprite = new OffscreenSprite(audioClip);
-      
+
+      await sprite.ready;
+
       sprite.time = {
         offset: startTime * 1000000,
-        duration: duration ? duration * 1000000 : audioClip.duration,
+        duration: duration * 1000000,
       };
 
       await this.combinator!.addSprite(sprite);
-      
-      return sprite.id;
+
+      return sprite;
     } catch (error) {
-      console.error('Failed to add audio clip:', error);
+      console.error("Failed to add audio clip:", error);
       throw error;
     }
   }
@@ -101,32 +144,44 @@ export class VideoClipService {
   /**
    * 添加图片片段到合成器
    */
-  async addImageClip(file: File, startTime: number, duration: number): Promise<string> {
+  async addImageClip(
+    file: File,
+    startTime: number,
+    duration: number
+  ): Promise<OffscreenSprite> {
     this.ensureInitialized();
-    
+
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const imgClip = new ImgClip(arrayBuffer);
+      const fileStream = file.stream();
+      const imgClip = new ImgClip(fileStream);
       await imgClip.ready;
 
       const sprite = new OffscreenSprite(imgClip);
-      
+
+      await sprite.ready;
+
+      const percent = Math.min(
+        sprite.rect.w / this.width,
+        sprite.rect.h / this.height
+      );
+
+      // 设置时间信息
       sprite.time = {
-        offset: startTime * 1000000,
+        offset: startTime * 1000000, // 转换为微秒
         duration: duration * 1000000,
       };
 
       // 设置位置和大小
-      sprite.rect.x = 0;
-      sprite.rect.y = 0;
-      sprite.rect.w = this.combinator!.width;
-      sprite.rect.h = this.combinator!.height;
+      sprite.rect.w = sprite.rect.w / percent;
+      sprite.rect.h = sprite.rect.h / percent;
+      sprite.rect.x = (this.width - sprite.rect.w) / 2;
+      sprite.rect.y = (this.height - sprite.rect.h) / 2;
 
       await this.combinator!.addSprite(sprite);
-      
-      return sprite.id;
+
+      return sprite;
     } catch (error) {
-      console.error('Failed to add image clip:', error);
+      console.error("Failed to add image clip:", error);
       throw error;
     }
   }
@@ -136,10 +191,10 @@ export class VideoClipService {
    */
   async buildFromProject(project: ProjectData): Promise<void> {
     this.ensureInitialized();
-    
+
     try {
       // 清除现有的 sprites
-      await this.clear();
+      await this.destroy();
 
       // 重新初始化合成器
       await this.initialize(
@@ -157,7 +212,7 @@ export class VideoClipService {
 
           // 根据片段类型添加到合成器
           switch (clip.type) {
-            case 'video':
+            case "video":
               await this.addVideoClipFromUrl(
                 clip.source.url,
                 clip.startTime / 1000,
@@ -165,7 +220,7 @@ export class VideoClipService {
                 clip as VideoClip
               );
               break;
-            case 'audio':
+            case "audio":
               await this.addAudioClipFromUrl(
                 clip.source.url,
                 clip.startTime / 1000,
@@ -173,7 +228,7 @@ export class VideoClipService {
                 clip as AudioClipType
               );
               break;
-            case 'image':
+            case "image":
               await this.addImageClipFromUrl(
                 clip.source.url,
                 clip.startTime / 1000,
@@ -185,7 +240,7 @@ export class VideoClipService {
         }
       }
     } catch (error) {
-      console.error('Failed to build from project:', error);
+      console.error("Failed to build from project:", error);
       throw error;
     }
   }
@@ -194,19 +249,22 @@ export class VideoClipService {
    * 从URL添加视频片段
    */
   private async addVideoClipFromUrl(
-    url: string, 
-    startTime: number, 
-    duration: number, 
+    url: string,
+    startTime: number,
+    duration: number,
     clip: VideoClip
-  ): Promise<string> {
+  ): Promise<void> {
     try {
       const response = await fetch(url);
-      const arrayBuffer = await response.arrayBuffer();
-      const mp4Clip = new MP4Clip(arrayBuffer);
+      const fileStream = response.body;
+      if (!fileStream) {
+        throw new Error("Failed to fetch video file");
+      }
+      const mp4Clip = new MP4Clip(fileStream);
       await mp4Clip.ready;
 
       const sprite = new OffscreenSprite(mp4Clip);
-      
+
       // 应用片段设置
       sprite.time = {
         offset: startTime * 1000000,
@@ -220,9 +278,9 @@ export class VideoClipService {
       sprite.rect.h = clip.transform.height;
 
       // 应用音量
-      if (clip.volume !== undefined) {
-        sprite.audioVolume = clip.volume;
-      }
+      // if (clip.volume !== undefined) {
+      //   sprite.audioVolume = clip.volume;
+      // }
 
       // 应用透明度
       if (clip.opacity !== undefined) {
@@ -230,10 +288,8 @@ export class VideoClipService {
       }
 
       await this.combinator!.addSprite(sprite);
-      
-      return sprite.id;
     } catch (error) {
-      console.error('Failed to add video clip from URL:', error);
+      console.error("Failed to add video clip from URL:", error);
       throw error;
     }
   }
@@ -242,33 +298,34 @@ export class VideoClipService {
    * 从URL添加音频片段
    */
   private async addAudioClipFromUrl(
-    url: string, 
-    startTime: number, 
-    duration: number, 
+    url: string,
+    startTime: number,
+    duration: number,
     clip: AudioClipType
-  ): Promise<string> {
+  ): Promise<void> {
     try {
       const response = await fetch(url);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioClip = new AudioClip(arrayBuffer);
+      const fileStream = response.body;
+      if (!fileStream) {
+        throw new Error("Failed to fetch audio file");
+      }
+      const audioClip = new AudioClip(fileStream);
       await audioClip.ready;
 
       const sprite = new OffscreenSprite(audioClip);
-      
+
       sprite.time = {
         offset: startTime * 1000000,
         duration: duration * 1000000,
       };
 
-      if (clip.volume !== undefined) {
-        sprite.audioVolume = clip.volume;
-      }
+      // if (clip.volume !== undefined) {
+      //   sprite.audioVolume = clip.volume;
+      // }
 
       await this.combinator!.addSprite(sprite);
-      
-      return sprite.id;
     } catch (error) {
-      console.error('Failed to add audio clip from URL:', error);
+      console.error("Failed to add audio clip from URL:", error);
       throw error;
     }
   }
@@ -277,19 +334,22 @@ export class VideoClipService {
    * 从URL添加图片片段
    */
   private async addImageClipFromUrl(
-    url: string, 
-    startTime: number, 
-    duration: number, 
+    url: string,
+    startTime: number,
+    duration: number,
     clip: ImageClip
-  ): Promise<string> {
+  ): Promise<void> {
     try {
       const response = await fetch(url);
-      const arrayBuffer = await response.arrayBuffer();
-      const imgClip = new ImgClip(arrayBuffer);
+      const fileStream = response.body;
+      if (!fileStream) {
+        throw new Error("Failed to fetch image file");
+      }
+      const imgClip = new ImgClip(fileStream);
       await imgClip.ready;
 
       const sprite = new OffscreenSprite(imgClip);
-      
+
       sprite.time = {
         offset: startTime * 1000000,
         duration: duration * 1000000,
@@ -305,40 +365,44 @@ export class VideoClipService {
       }
 
       await this.combinator!.addSprite(sprite);
-      
-      return sprite.id;
     } catch (error) {
-      console.error('Failed to add image clip from URL:', error);
+      console.error("Failed to add image clip from URL:", error);
       throw error;
     }
   }
 
   /**
-   * 移除片段
+   * 添加文字精灵
    */
-  async removeSprite(spriteId: string): Promise<void> {
+  async addTextSprite(text: string, style: TextStyle): Promise<void> {
     this.ensureInitialized();
-    
-    try {
-      await this.combinator!.removeSprite(spriteId);
-    } catch (error) {
-      console.error('Failed to remove sprite:', error);
-      throw error;
-    }
-  }
 
-  /**
-   * 更新片段属性
-   */
-  async updateSprite(spriteId: string, updates: any): Promise<void> {
-    this.ensureInitialized();
-    
     try {
-      // 这里需要根据 WebAV 的实际API来实现
-      // 由于 WebAV 的 API 可能不支持直接更新，可能需要重新创建 sprite
-      console.warn('updateSprite not fully implemented');
+      // 转换样式格式
+      const textStyle = {
+        fontSize: style.fontSize || 32,
+        fontFamily: style.fontFamily || "Arial",
+        fontWeight: style.fontWeight || "normal",
+        color: style.color || "#ffffff",
+        backgroundColor: style.backgroundColor || "transparent",
+        textAlign: style.textAlign || "left",
+        lineHeight: style.lineHeight || 1.2,
+        letterSpacing: style.letterSpacing || "0px",
+      };
+
+      const textClip = new EmbedSubtitlesClip(text, {
+        videoWidth: this.width,
+        videoHeight: this.height,
+        ...textStyle,
+      });
+
+      await textClip.ready;
+
+      const textSprite = new OffscreenSprite(textClip);
+
+      await this.combinator!.addSprite(textSprite);
     } catch (error) {
-      console.error('Failed to update sprite:', error);
+      console.error("Failed to add text sprite:", error);
       throw error;
     }
   }
@@ -346,31 +410,16 @@ export class VideoClipService {
   /**
    * 导出视频
    */
-  async exportVideo(settings?: Partial<ExportSettings>): Promise<ReadableStream> {
+  async exportVideo(
+    settings?: Partial<ExportSettings>
+  ): Promise<ReadableStream> {
     this.ensureInitialized();
-    
+
     try {
       const stream = this.combinator!.output();
       return stream;
     } catch (error) {
-      console.error('Failed to export video:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * 获取指定时间的预览帧
-   */
-  async getPreviewFrame(time: number): Promise<ImageBitmap | null> {
-    this.ensureInitialized();
-    
-    try {
-      // 这里需要根据 WebAV 的实际API来实现预览帧获取
-      // 可能需要使用 render 方法来获取特定时间的帧
-      console.warn('getPreviewFrame not implemented');
-      return null;
-    } catch (error) {
-      console.error('Failed to get preview frame:', error);
+      console.error("Failed to export video:", error);
       throw error;
     }
   }
@@ -380,25 +429,10 @@ export class VideoClipService {
    */
   getDuration(): number {
     this.ensureInitialized();
-    
+
     // 这里需要计算所有片段的最大结束时间
     // 由于 WebAV 可能没有直接的API，需要自己维护
     return 0;
-  }
-
-  /**
-   * 清除所有片段
-   */
-  async clear(): Promise<void> {
-    if (this.combinator) {
-      try {
-        // 移除所有 sprites
-        // 这里需要根据 WebAV 的实际API来实现
-        console.warn('clear method needs implementation');
-      } catch (error) {
-        console.error('Failed to clear combinator:', error);
-      }
-    }
   }
 
   /**
@@ -407,11 +441,11 @@ export class VideoClipService {
   async destroy(): Promise<void> {
     if (this.combinator) {
       try {
-        await this.clear();
+        this.combinator.destroy();
         this.combinator = null;
         this.isInitialized = false;
       } catch (error) {
-        console.error('Failed to destroy VideoClipService:', error);
+        console.error("Failed to destroy VideoClipService:", error);
       }
     }
   }
@@ -420,27 +454,41 @@ export class VideoClipService {
    * 检查是否支持指定的文件格式
    */
   static isSupportedFormat(file: File): boolean {
-    const supportedVideoFormats = ['video/mp4', 'video/webm', 'video/quicktime'];
-    const supportedAudioFormats = ['audio/mp3', 'audio/wav', 'audio/aac', 'audio/ogg'];
-    const supportedImageFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    
+    const supportedVideoFormats = [
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ];
+    const supportedAudioFormats = [
+      "audio/mp3",
+      "audio/wav",
+      "audio/aac",
+      "audio/ogg",
+    ];
+    const supportedImageFormats = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+
     const allSupportedFormats = [
       ...supportedVideoFormats,
       ...supportedAudioFormats,
       ...supportedImageFormats,
     ];
-    
+
     return allSupportedFormats.includes(file.type);
   }
 
   /**
    * 获取文件类型
    */
-  static getFileType(file: File): 'video' | 'audio' | 'image' | 'unknown' {
-    if (file.type.startsWith('video/')) return 'video';
-    if (file.type.startsWith('audio/')) return 'audio';
-    if (file.type.startsWith('image/')) return 'image';
-    return 'unknown';
+  static getFileType(file: File): "video" | "audio" | "image" | "unknown" {
+    if (file.type.startsWith("video/")) return "video";
+    if (file.type.startsWith("audio/")) return "audio";
+    if (file.type.startsWith("image/")) return "image";
+    return "unknown";
   }
 }
 

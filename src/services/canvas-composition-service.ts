@@ -1,5 +1,12 @@
-import { AVCanvas, VideoSprite, AudioSprite, ImgSprite, TextSprite } from '@webav/av-canvas';
-import { TextClip, Transform, TextStyle } from '@/types';
+import { AVCanvas } from "@webav/av-canvas";
+import { TextClip, Transform, TextStyle } from "@/types";
+import {
+  AudioClip,
+  EmbedSubtitlesClip,
+  ImgClip,
+  MP4Clip,
+  VisibleSprite,
+} from "@webav/av-cliper";
 
 /**
  * 画布合成服务类
@@ -7,26 +14,38 @@ import { TextClip, Transform, TextStyle } from '@/types';
  */
 export class CanvasCompositionService {
   private avCanvas: AVCanvas | null = null;
+  private videoWidth: number = 1920;
+  private videoHeight: number = 1080;
   private containerElement: HTMLElement | null = null;
   private isInitialized = false;
-  private sprites: Map<string, any> = new Map();
+  private currentTime: number = 0;
+  private duration: number = 0; // 视频总时长
+  private sprites: Map<string, VisibleSprite> = new Map();
 
   /**
    * 初始化画布合成器
    */
-  async initialize(container: HTMLElement, width: number = 1920, height: number = 1080): Promise<void> {
+  async initialize(
+    container: HTMLElement,
+    width: number = 1920,
+    height: number = 1080,
+    duration: number = 0
+  ): Promise<void> {
     try {
       this.containerElement = container;
+      this.videoWidth = width;
+      this.videoHeight = height;
+      this.duration = duration;
       this.avCanvas = new AVCanvas(container, {
         width,
         height,
-        bgColor: '#000000',
+        bgColor: "#000000",
       });
 
       this.isInitialized = true;
-      console.log('CanvasCompositionService initialized successfully');
+      console.log("CanvasCompositionService initialized successfully");
     } catch (error) {
-      console.error('Failed to initialize CanvasCompositionService:', error);
+      console.error("Failed to initialize CanvasCompositionService:", error);
       throw error;
     }
   }
@@ -36,7 +55,9 @@ export class CanvasCompositionService {
    */
   private ensureInitialized(): void {
     if (!this.isInitialized || !this.avCanvas) {
-      throw new Error('CanvasCompositionService not initialized. Call initialize() first.');
+      throw new Error(
+        "CanvasCompositionService not initialized. Call initialize() first."
+      );
     }
   }
 
@@ -45,17 +66,24 @@ export class CanvasCompositionService {
    */
   async addVideoSprite(file: File, id?: string): Promise<string> {
     this.ensureInitialized();
-    
+
     try {
       const spriteId = id || this.generateId();
-      const videoSprite = new VideoSprite(file);
-      
+
+      const videoStream = file.stream();
+
+      const videoClip = new MP4Clip(videoStream);
+
+      await videoClip.ready;
+
+      const videoSprite = new VisibleSprite(videoClip);
+
       await this.avCanvas!.addSprite(videoSprite);
       this.sprites.set(spriteId, videoSprite);
-      
+
       return spriteId;
     } catch (error) {
-      console.error('Failed to add video sprite:', error);
+      console.error("Failed to add video sprite:", error);
       throw error;
     }
   }
@@ -65,17 +93,25 @@ export class CanvasCompositionService {
    */
   async addAudioSprite(file: File, id?: string): Promise<string> {
     this.ensureInitialized();
-    
+
     try {
       const spriteId = id || this.generateId();
-      const audioSprite = new AudioSprite(file);
-      
+
+      const audioStream = file.stream();
+
+      const audioClip = new AudioClip(audioStream);
+
+      await audioClip.ready;
+
+      const audioSprite = new VisibleSprite(audioClip);
+
       await this.avCanvas!.addSprite(audioSprite);
+
       this.sprites.set(spriteId, audioSprite);
-      
+
       return spriteId;
     } catch (error) {
-      console.error('Failed to add audio sprite:', error);
+      console.error("Failed to add audio sprite:", error);
       throw error;
     }
   }
@@ -85,17 +121,24 @@ export class CanvasCompositionService {
    */
   async addImageSprite(file: File, id?: string): Promise<string> {
     this.ensureInitialized();
-    
+
     try {
       const spriteId = id || this.generateId();
-      const imgSprite = new ImgSprite(file);
-      
+
+      const imgStream = file.stream();
+
+      const imgClip = new ImgClip(imgStream);
+
+      await imgClip.ready;
+
+      const imgSprite = new VisibleSprite(imgClip);
+
       await this.avCanvas!.addSprite(imgSprite);
       this.sprites.set(spriteId, imgSprite);
-      
+
       return spriteId;
     } catch (error) {
-      console.error('Failed to add image sprite:', error);
+      console.error("Failed to add image sprite:", error);
       throw error;
     }
   }
@@ -103,32 +146,44 @@ export class CanvasCompositionService {
   /**
    * 添加文字精灵
    */
-  async addTextSprite(text: string, style: TextStyle, id?: string): Promise<string> {
+  async addTextSprite(
+    text: string,
+    style: TextStyle,
+    id?: string
+  ): Promise<string> {
     this.ensureInitialized();
-    
+
     try {
       const spriteId = id || this.generateId();
-      
+
       // 转换样式格式
       const textStyle = {
         fontSize: style.fontSize || 32,
-        fontFamily: style.fontFamily || 'Arial',
-        fontWeight: style.fontWeight || 'normal',
-        color: style.color || '#ffffff',
-        backgroundColor: style.backgroundColor || 'transparent',
-        textAlign: style.textAlign || 'left',
+        fontFamily: style.fontFamily || "Arial",
+        fontWeight: style.fontWeight || "normal",
+        color: style.color || "#ffffff",
+        backgroundColor: style.backgroundColor || "transparent",
+        textAlign: style.textAlign || "left",
         lineHeight: style.lineHeight || 1.2,
-        letterSpacing: style.letterSpacing || 0,
+        letterSpacing: style.letterSpacing || "0px",
       };
 
-      const textSprite = new TextSprite(text, textStyle);
-      
+      const textClip = new EmbedSubtitlesClip(text, {
+        videoWidth: this.videoWidth,
+        videoHeight: this.videoHeight,
+        ...textStyle,
+      });
+
+      await textClip.ready;
+
+      const textSprite = new VisibleSprite(textClip);
+
       await this.avCanvas!.addSprite(textSprite);
       this.sprites.set(spriteId, textSprite);
-      
+
       return spriteId;
     } catch (error) {
-      console.error('Failed to add text sprite:', error);
+      console.error("Failed to add text sprite:", error);
       throw error;
     }
   }
@@ -138,15 +193,15 @@ export class CanvasCompositionService {
    */
   async addVideoSpriteFromUrl(url: string, id?: string): Promise<string> {
     this.ensureInitialized();
-    
+
     try {
       const response = await fetch(url);
       const blob = await response.blob();
-      const file = new File([blob], 'video', { type: blob.type });
-      
+      const file = new File([blob], "video", { type: blob.type });
+
       return await this.addVideoSprite(file, id);
     } catch (error) {
-      console.error('Failed to add video sprite from URL:', error);
+      console.error("Failed to add video sprite from URL:", error);
       throw error;
     }
   }
@@ -156,15 +211,15 @@ export class CanvasCompositionService {
    */
   async addImageSpriteFromUrl(url: string, id?: string): Promise<string> {
     this.ensureInitialized();
-    
+
     try {
       const response = await fetch(url);
       const blob = await response.blob();
-      const file = new File([blob], 'image', { type: blob.type });
-      
+      const file = new File([blob], "image", { type: blob.type });
+
       return await this.addImageSprite(file, id);
     } catch (error) {
-      console.error('Failed to add image sprite from URL:', error);
+      console.error("Failed to add image sprite from URL:", error);
       throw error;
     }
   }
@@ -174,15 +229,15 @@ export class CanvasCompositionService {
    */
   async removeSprite(spriteId: string): Promise<void> {
     this.ensureInitialized();
-    
+
     try {
       const sprite = this.sprites.get(spriteId);
       if (sprite) {
-        await this.avCanvas!.removeSprite(sprite);
+        this.avCanvas!.removeSprite(sprite);
         this.sprites.delete(spriteId);
       }
     } catch (error) {
-      console.error('Failed to remove sprite:', error);
+      console.error("Failed to remove sprite:", error);
       throw error;
     }
   }
@@ -196,26 +251,32 @@ export class CanvasCompositionService {
 
     try {
       // 更新位置
-      if (transform.x !== undefined) sprite.x = transform.x;
-      if (transform.y !== undefined) sprite.y = transform.y;
-      
+      if (transform.x !== undefined) sprite.rect.x = transform.x;
+      if (transform.y !== undefined) sprite.rect.y = transform.y;
+
       // 更新大小
-      if (transform.width !== undefined) sprite.width = transform.width;
-      if (transform.height !== undefined) sprite.height = transform.height;
-      
+      if (transform.width !== undefined) sprite.rect.w = transform.width;
+      if (transform.height !== undefined) sprite.rect.h = transform.height;
+
       // 更新旋转
-      if (transform.rotation !== undefined) sprite.rotation = transform.rotation;
-      
+      if (transform.rotation !== undefined)
+        sprite.rect.angle = transform.rotation;
+
       // 更新缩放
-      if (transform.scaleX !== undefined) sprite.scaleX = transform.scaleX;
-      if (transform.scaleY !== undefined) sprite.scaleY = transform.scaleY;
-      
+      if (transform.scaleX !== undefined) {
+        sprite.rect.x = sprite.rect.x * transform.scaleX;
+        sprite.rect.w = sprite.rect.w * transform.scaleX;
+      }
+      if (transform.scaleY !== undefined) {
+        sprite.rect.y = sprite.rect.y * transform.scaleY;
+        sprite.rect.h = sprite.rect.h * transform.scaleY;
+      }
+
       // 更新锚点
-      if (transform.anchorX !== undefined) sprite.anchorX = transform.anchorX;
-      if (transform.anchorY !== undefined) sprite.anchorY = transform.anchorY;
-      
+      // if (transform.anchorX !== undefined) sprite.rect.anchorX = transform.anchorX;
+      // if (transform.anchorY !== undefined) sprite.rect.anchorY = transform.anchorY;
     } catch (error) {
-      console.error('Failed to update sprite transform:', error);
+      console.error("Failed to update sprite transform:", error);
     }
   }
 
@@ -229,7 +290,7 @@ export class CanvasCompositionService {
     try {
       sprite.opacity = Math.max(0, Math.min(1, opacity));
     } catch (error) {
-      console.error('Failed to update sprite opacity:', error);
+      console.error("Failed to update sprite opacity:", error);
     }
   }
 
@@ -243,31 +304,26 @@ export class CanvasCompositionService {
     try {
       sprite.visible = visible;
     } catch (error) {
-      console.error('Failed to update sprite visibility:', error);
+      console.error("Failed to update sprite visibility:", error);
     }
   }
 
   /**
    * 更新文字精灵内容
    */
-  updateTextSprite(spriteId: string, text?: string, style?: Partial<TextStyle>): void {
+  updateTextSprite(spriteId: string, style: TextStyle, text?: string): void {
     const sprite = this.sprites.get(spriteId);
-    if (!sprite || !(sprite instanceof TextSprite)) return;
+    if (!sprite || !(sprite instanceof VisibleSprite)) return;
 
+    if (this.avCanvas) {
+      this.avCanvas.removeSprite(sprite); // 移除旧的片段
+    }
     try {
-      if (text !== undefined) {
-        sprite.text = text;
-      }
-      
-      if (style) {
-        if (style.fontSize !== undefined) sprite.fontSize = style.fontSize;
-        if (style.fontFamily !== undefined) sprite.fontFamily = style.fontFamily;
-        if (style.color !== undefined) sprite.color = style.color;
-        if (style.backgroundColor !== undefined) sprite.backgroundColor = style.backgroundColor;
-        // 其他样式属性...
+      if (text) {
+        this.addTextSprite(text, style);
       }
     } catch (error) {
-      console.error('Failed to update text sprite:', error);
+      console.error("Failed to update text sprite:", error);
     }
   }
 
@@ -281,7 +337,7 @@ export class CanvasCompositionService {
     try {
       sprite.zIndex = zIndex;
     } catch (error) {
-      console.error('Failed to set sprite z-index:', error);
+      console.error("Failed to set sprite z-index:", error);
     }
   }
 
@@ -290,11 +346,11 @@ export class CanvasCompositionService {
    */
   getMediaStream(): MediaStream | null {
     this.ensureInitialized();
-    
+
     try {
       return this.avCanvas!.captureStream();
     } catch (error) {
-      console.error('Failed to get media stream:', error);
+      console.error("Failed to get media stream:", error);
       return null;
     }
   }
@@ -302,13 +358,21 @@ export class CanvasCompositionService {
   /**
    * 播放
    */
-  async play(): Promise<void> {
+  async play(
+    startTime: number = 0,
+    endTime: number = 0,
+    playbackRate?: number
+  ): Promise<void> {
     this.ensureInitialized();
-    
+
     try {
-      await this.avCanvas!.play();
+      this.avCanvas!.play({
+        start: startTime,
+        end: endTime,
+        playbackRate: playbackRate || 1,
+      });
     } catch (error) {
-      console.error('Failed to play:', error);
+      console.error("Failed to play:", error);
       throw error;
     }
   }
@@ -318,11 +382,11 @@ export class CanvasCompositionService {
    */
   async pause(): Promise<void> {
     this.ensureInitialized();
-    
+
     try {
-      await this.avCanvas!.pause();
+      this.avCanvas!.pause();
     } catch (error) {
-      console.error('Failed to pause:', error);
+      console.error("Failed to pause:", error);
       throw error;
     }
   }
@@ -332,11 +396,11 @@ export class CanvasCompositionService {
    */
   async stop(): Promise<void> {
     this.ensureInitialized();
-    
+
     try {
-      await this.avCanvas!.stop();
+      this.avCanvas!.pause();
     } catch (error) {
-      console.error('Failed to stop:', error);
+      console.error("Failed to stop:", error);
       throw error;
     }
   }
@@ -346,11 +410,11 @@ export class CanvasCompositionService {
    */
   async seekTo(time: number): Promise<void> {
     this.ensureInitialized();
-    
+
     try {
-      await this.avCanvas!.seek(time);
+      await this.avCanvas!.previewFrame(time);
     } catch (error) {
-      console.error('Failed to seek:', error);
+      console.error("Failed to seek:", error);
       throw error;
     }
   }
@@ -358,27 +422,27 @@ export class CanvasCompositionService {
   /**
    * 设置音量
    */
-  setVolume(volume: number): void {
-    this.ensureInitialized();
-    
-    try {
-      const clampedVolume = Math.max(0, Math.min(1, volume));
-      this.avCanvas!.volume = clampedVolume;
-    } catch (error) {
-      console.error('Failed to set volume:', error);
-    }
-  }
+  // setVolume(volume: number): void {
+  //   this.ensureInitialized();
+
+  //   try {
+  //     const clampedVolume = Math.max(0, Math.min(1, volume));
+  //     this.avCanvas!.volume = clampedVolume;
+  //   } catch (error) {
+  //     console.error("Failed to set volume:", error);
+  //   }
+  // }
 
   /**
    * 获取当前播放时间
    */
   getCurrentTime(): number {
     this.ensureInitialized();
-    
+
     try {
-      return this.avCanvas!.currentTime;
+      return this.currentTime;
     } catch (error) {
-      console.error('Failed to get current time:', error);
+      console.error("Failed to get current time:", error);
       return 0;
     }
   }
@@ -388,11 +452,11 @@ export class CanvasCompositionService {
    */
   getDuration(): number {
     this.ensureInitialized();
-    
+
     try {
-      return this.avCanvas!.duration;
+      return this.duration;
     } catch (error) {
-      console.error('Failed to get duration:', error);
+      console.error("Failed to get duration:", error);
       return 0;
     }
   }
@@ -402,11 +466,15 @@ export class CanvasCompositionService {
    */
   setSize(width: number, height: number): void {
     this.ensureInitialized();
-    
+
     try {
-      this.avCanvas!.setSize(width, height);
+      // 暂时这样获取画布元素
+      const canvasDom = document.querySelector("canvas") as HTMLCanvasElement;
+      canvasDom.width = width;
+      canvasDom.height = height;
+      // this.avCanvas!.setSize(width, height);
     } catch (error) {
-      console.error('Failed to set canvas size:', error);
+      console.error("Failed to set canvas size:", error);
     }
   }
 
@@ -415,11 +483,13 @@ export class CanvasCompositionService {
    */
   async captureFrame(): Promise<Blob | null> {
     this.ensureInitialized();
-    
+
     try {
-      return await this.avCanvas!.captureFrame();
+      const imageBase64 = this.avCanvas!.captureImage();
+      const blob = await fetch(imageBase64).then((res) => res.blob());
+      return blob;
     } catch (error) {
-      console.error('Failed to capture frame:', error);
+      console.error("Failed to capture frame:", error);
       return null;
     }
   }
@@ -429,15 +499,15 @@ export class CanvasCompositionService {
    */
   async clear(): Promise<void> {
     this.ensureInitialized();
-    
+
     try {
       // 移除所有精灵
-      for (const [spriteId, sprite] of this.sprites) {
-        await this.avCanvas!.removeSprite(sprite);
+      for (const [spriteId, sprite] of Array.from(this.sprites.entries())) {
+        this.avCanvas!.removeSprite(sprite);
       }
       this.sprites.clear();
     } catch (error) {
-      console.error('Failed to clear canvas:', error);
+      console.error("Failed to clear canvas:", error);
     }
   }
 
@@ -469,13 +539,13 @@ export class CanvasCompositionService {
     if (this.avCanvas) {
       try {
         await this.clear();
-        await this.avCanvas.destroy();
+        this.avCanvas.destroy();
         this.avCanvas = null;
         this.containerElement = null;
         this.isInitialized = false;
         this.sprites.clear();
       } catch (error) {
-        console.error('Failed to destroy CanvasCompositionService:', error);
+        console.error("Failed to destroy CanvasCompositionService:", error);
       }
     }
   }
@@ -491,27 +561,27 @@ export class CanvasCompositionService {
    * 检查是否支持指定的文件格式
    */
   static isSupportedFormat(file: File): boolean {
-    const supportedVideoFormats = ['video/mp4', 'video/webm'];
-    const supportedAudioFormats = ['audio/mp3', 'audio/wav', 'audio/ogg'];
-    const supportedImageFormats = ['image/jpeg', 'image/png', 'image/gif'];
-    
+    const supportedVideoFormats = ["video/mp4", "video/webm"];
+    const supportedAudioFormats = ["audio/mp3", "audio/wav", "audio/ogg"];
+    const supportedImageFormats = ["image/jpeg", "image/png", "image/gif"];
+
     const allSupportedFormats = [
       ...supportedVideoFormats,
       ...supportedAudioFormats,
       ...supportedImageFormats,
     ];
-    
+
     return allSupportedFormats.includes(file.type);
   }
 
   /**
    * 获取文件类型
    */
-  static getFileType(file: File): 'video' | 'audio' | 'image' | 'unknown' {
-    if (file.type.startsWith('video/')) return 'video';
-    if (file.type.startsWith('audio/')) return 'audio';
-    if (file.type.startsWith('image/')) return 'image';
-    return 'unknown';
+  static getFileType(file: File): "video" | "audio" | "image" | "unknown" {
+    if (file.type.startsWith("video/")) return "video";
+    if (file.type.startsWith("audio/")) return "audio";
+    if (file.type.startsWith("image/")) return "image";
+    return "unknown";
   }
 }
 
