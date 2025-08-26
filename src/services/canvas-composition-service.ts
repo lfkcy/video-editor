@@ -1,51 +1,53 @@
-import { AVCanvas } from "@webav/av-canvas";
-import { TextClip, Transform, TextStyle } from "@/types";
 import {
-  AudioClip,
-  EmbedSubtitlesClip,
-  ImgClip,
+  Combinator,
   MP4Clip,
-  VisibleSprite,
+  AudioClip,
+  ImgClip,
+  OffscreenSprite,
+  EmbedSubtitlesClip,
 } from "@webav/av-cliper";
+import {
+  ProjectData,
+  VideoClip,
+  AudioClip as AudioClipType,
+  ImageClip,
+  ExportSettings,
+  TextStyle,
+} from "@/types";
 
 /**
- * 画布合成服务类
- * 封装 WebAV av-canvas 的功能，用于实时预览和画面合成
+ * 视频合成服务类
+ * 封装 WebAV av-cliper 的功能
  */
 export class CanvasCompositionService {
-  private avCanvas: AVCanvas | null = null;
-  private videoWidth: number = 1920;
-  private videoHeight: number = 1080;
-  private containerElement: HTMLElement | null = null;
+  private combinator: Combinator | null = null;
   private isInitialized = false;
-  private currentTime: number = 0;
-  private duration: number = 0; // 视频总时长
-  private sprites: Map<string, VisibleSprite> = new Map();
+  private width = 1920;
+  private height = 1080;
+  private fps = 30;
 
   /**
-   * 初始化画布合成器
+   * 初始化视频合成器
    */
   async initialize(
-    container: HTMLElement,
     width: number = 1920,
     height: number = 1080,
-    duration: number = 0
+    fps: number = 30
   ): Promise<void> {
     try {
-      this.containerElement = container;
-      this.videoWidth = width;
-      this.videoHeight = height;
-      this.duration = duration;
-      this.avCanvas = new AVCanvas(container, {
+      this.combinator = new Combinator({
         width,
         height,
-        bgColor: "#000000",
+        fps,
+        bgColor: "transparent",
       });
-
       this.isInitialized = true;
-      console.log("CanvasCompositionService initialized successfully");
+      this.width = width;
+      this.height = height;
+      this.fps = fps;
+      console.log("VideoClipService initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize CanvasCompositionService:", error);
+      console.error("Failed to initialize VideoClipService:", error);
       throw error;
     }
   }
@@ -54,91 +56,317 @@ export class CanvasCompositionService {
    * 检查是否已初始化
    */
   private ensureInitialized(): void {
-    if (!this.isInitialized || !this.avCanvas) {
+    if (!this.isInitialized || !this.combinator) {
       throw new Error(
-        "CanvasCompositionService not initialized. Call initialize() first."
+        "VideoClipService not initialized. Call initialize() first."
       );
     }
   }
 
   /**
-   * 添加视频精灵
+   * 添加视频片段到合成器
    */
-  async addVideoSprite(file: File, id?: string): Promise<string> {
+  async addVideoClip(
+    file: File,
+    startTime: number,
+    duration: number
+  ): Promise<OffscreenSprite> {
     this.ensureInitialized();
 
     try {
-      const spriteId = id || this.generateId();
+      const fileStream = file.stream();
+      const mp4Clip = new MP4Clip(fileStream);
+      await mp4Clip.ready;
 
-      const videoStream = file.stream();
+      const sprite = new OffscreenSprite(mp4Clip);
 
-      const videoClip = new MP4Clip(videoStream);
+      await sprite.ready;
 
-      await videoClip.ready;
+      const percent = Math.min(
+        sprite.rect.w / this.width,
+        sprite.rect.h / this.height
+      );
 
-      const videoSprite = new VisibleSprite(videoClip);
+      // 设置时间信息
+      sprite.time = {
+        offset: startTime * 1000000, // 转换为微秒
+        duration: duration * 1000000,
+      };
 
-      await this.avCanvas!.addSprite(videoSprite);
-      this.sprites.set(spriteId, videoSprite);
+      // 设置位置和大小
+      sprite.rect.w = sprite.rect.w / percent;
+      sprite.rect.h = sprite.rect.h / percent;
+      sprite.rect.x = (this.width - sprite.rect.w) / 2;
+      sprite.rect.y = (this.height - sprite.rect.h) / 2;
 
-      return spriteId;
+      await this.combinator!.addSprite(sprite);
+
+      return sprite;
     } catch (error) {
-      console.error("Failed to add video sprite:", error);
+      console.error("Failed to add video clip:", error);
       throw error;
     }
   }
 
   /**
-   * 添加音频精灵
+   * 添加音频片段到合成器
    */
-  async addAudioSprite(file: File, id?: string): Promise<string> {
+  async addAudioClip(
+    file: File,
+    startTime: number,
+    duration: number
+  ): Promise<OffscreenSprite> {
     this.ensureInitialized();
 
     try {
-      const spriteId = id || this.generateId();
-
-      const audioStream = file.stream();
-
-      const audioClip = new AudioClip(audioStream);
-
+      const fileStream = file.stream();
+      const audioClip = new AudioClip(fileStream);
       await audioClip.ready;
 
-      const audioSprite = new VisibleSprite(audioClip);
+      const sprite = new OffscreenSprite(audioClip);
 
-      await this.avCanvas!.addSprite(audioSprite);
+      await sprite.ready;
 
-      this.sprites.set(spriteId, audioSprite);
+      sprite.time = {
+        offset: startTime * 1000000,
+        duration: duration * 1000000,
+      };
 
-      return spriteId;
+      await this.combinator!.addSprite(sprite);
+
+      return sprite;
     } catch (error) {
-      console.error("Failed to add audio sprite:", error);
+      console.error("Failed to add audio clip:", error);
       throw error;
     }
   }
 
   /**
-   * 添加图片精灵
+   * 添加图片片段到合成器
    */
-  async addImageSprite(file: File, id?: string): Promise<string> {
+  async addImageClip(
+    file: File,
+    startTime: number,
+    duration: number
+  ): Promise<OffscreenSprite> {
     this.ensureInitialized();
 
     try {
-      const spriteId = id || this.generateId();
-
-      const imgStream = file.stream();
-
-      const imgClip = new ImgClip(imgStream);
-
+      const fileStream = file.stream();
+      const imgClip = new ImgClip(fileStream);
       await imgClip.ready;
 
-      const imgSprite = new VisibleSprite(imgClip);
+      const sprite = new OffscreenSprite(imgClip);
 
-      await this.avCanvas!.addSprite(imgSprite);
-      this.sprites.set(spriteId, imgSprite);
+      await sprite.ready;
 
-      return spriteId;
+      const percent = Math.min(
+        sprite.rect.w / this.width,
+        sprite.rect.h / this.height
+      );
+
+      // 设置时间信息
+      sprite.time = {
+        offset: startTime * 1000000, // 转换为微秒
+        duration: duration * 1000000,
+      };
+
+      // 设置位置和大小
+      sprite.rect.w = sprite.rect.w / percent;
+      sprite.rect.h = sprite.rect.h / percent;
+      sprite.rect.x = (this.width - sprite.rect.w) / 2;
+      sprite.rect.y = (this.height - sprite.rect.h) / 2;
+
+      await this.combinator!.addSprite(sprite);
+
+      return sprite;
     } catch (error) {
-      console.error("Failed to add image sprite:", error);
+      console.error("Failed to add image clip:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 从项目数据构建合成器
+   */
+  async buildFromProject(project: ProjectData): Promise<void> {
+    this.ensureInitialized();
+
+    try {
+      // 清除现有的 sprites
+      await this.destroy();
+
+      // 重新初始化合成器
+      await this.initialize(
+        project.settings.width,
+        project.settings.height,
+        project.settings.fps
+      );
+
+      // 按时间轴顺序添加所有片段
+      for (const track of project.tracks) {
+        if (!track.isVisible) continue;
+
+        for (const clip of track.clips) {
+          if (!clip.source.url) continue;
+
+          // 根据片段类型添加到合成器
+          switch (clip.type) {
+            case "video":
+              await this.addVideoClipFromUrl(
+                clip.source.url,
+                clip.startTime / 1000,
+                clip.duration / 1000,
+                clip as VideoClip
+              );
+              break;
+            case "audio":
+              await this.addAudioClipFromUrl(
+                clip.source.url,
+                clip.startTime / 1000,
+                clip.duration / 1000,
+                clip as AudioClipType
+              );
+              break;
+            case "image":
+              await this.addImageClipFromUrl(
+                clip.source.url,
+                clip.startTime / 1000,
+                clip.duration / 1000,
+                clip as ImageClip
+              );
+              break;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to build from project:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 从URL添加视频片段
+   */
+  private async addVideoClipFromUrl(
+    url: string,
+    startTime: number,
+    duration: number,
+    clip: VideoClip
+  ): Promise<void> {
+    try {
+      const response = await fetch(url);
+      const fileStream = response.body;
+      if (!fileStream) {
+        throw new Error("Failed to fetch video file");
+      }
+      const mp4Clip = new MP4Clip(fileStream);
+      await mp4Clip.ready;
+
+      const sprite = new OffscreenSprite(mp4Clip);
+
+      // 应用片段设置
+      sprite.time = {
+        offset: startTime * 1000000,
+        duration: duration * 1000000,
+      };
+
+      // 应用变换
+      sprite.rect.x = clip.transform.x;
+      sprite.rect.y = clip.transform.y;
+      sprite.rect.w = clip.transform.width;
+      sprite.rect.h = clip.transform.height;
+
+      // 应用音量
+      // if (clip.volume !== undefined) {
+      //   sprite.audioVolume = clip.volume;
+      // }
+
+      // 应用透明度
+      if (clip.opacity !== undefined) {
+        sprite.opacity = clip.opacity;
+      }
+
+      await this.combinator!.addSprite(sprite);
+    } catch (error) {
+      console.error("Failed to add video clip from URL:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 从URL添加音频片段
+   */
+  private async addAudioClipFromUrl(
+    url: string,
+    startTime: number,
+    duration: number,
+    clip: AudioClipType
+  ): Promise<void> {
+    try {
+      const response = await fetch(url);
+      const fileStream = response.body;
+      if (!fileStream) {
+        throw new Error("Failed to fetch audio file");
+      }
+      const audioClip = new AudioClip(fileStream);
+      await audioClip.ready;
+
+      const sprite = new OffscreenSprite(audioClip);
+
+      sprite.time = {
+        offset: startTime * 1000000,
+        duration: duration * 1000000,
+      };
+
+      // if (clip.volume !== undefined) {
+      //   sprite.audioVolume = clip.volume;
+      // }
+
+      await this.combinator!.addSprite(sprite);
+    } catch (error) {
+      console.error("Failed to add audio clip from URL:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 从URL添加图片片段
+   */
+  private async addImageClipFromUrl(
+    url: string,
+    startTime: number,
+    duration: number,
+    clip: ImageClip
+  ): Promise<void> {
+    try {
+      const response = await fetch(url);
+      const fileStream = response.body;
+      if (!fileStream) {
+        throw new Error("Failed to fetch image file");
+      }
+      const imgClip = new ImgClip(fileStream);
+      await imgClip.ready;
+
+      const sprite = new OffscreenSprite(imgClip);
+
+      sprite.time = {
+        offset: startTime * 1000000,
+        duration: duration * 1000000,
+      };
+
+      sprite.rect.x = clip.transform.x;
+      sprite.rect.y = clip.transform.y;
+      sprite.rect.w = clip.transform.width;
+      sprite.rect.h = clip.transform.height;
+
+      if (clip.opacity !== undefined) {
+        sprite.opacity = clip.opacity;
+      }
+
+      await this.combinator!.addSprite(sprite);
+    } catch (error) {
+      console.error("Failed to add image clip from URL:", error);
       throw error;
     }
   }
@@ -146,16 +374,10 @@ export class CanvasCompositionService {
   /**
    * 添加文字精灵
    */
-  async addTextSprite(
-    text: string,
-    style: TextStyle,
-    id?: string
-  ): Promise<string> {
+  async addTextSprite(text: string, style: TextStyle): Promise<void> {
     this.ensureInitialized();
 
     try {
-      const spriteId = id || this.generateId();
-
       // 转换样式格式
       const textStyle = {
         fontSize: style.fontSize || 32,
@@ -169,19 +391,16 @@ export class CanvasCompositionService {
       };
 
       const textClip = new EmbedSubtitlesClip(text, {
-        videoWidth: this.videoWidth,
-        videoHeight: this.videoHeight,
+        videoWidth: this.width,
+        videoHeight: this.height,
         ...textStyle,
       });
 
       await textClip.ready;
 
-      const textSprite = new VisibleSprite(textClip);
+      const textSprite = new OffscreenSprite(textClip);
 
-      await this.avCanvas!.addSprite(textSprite);
-      this.sprites.set(spriteId, textSprite);
-
-      return spriteId;
+      await this.combinator!.addSprite(textSprite);
     } catch (error) {
       console.error("Failed to add text sprite:", error);
       throw error;
@@ -189,381 +408,69 @@ export class CanvasCompositionService {
   }
 
   /**
-   * 从URL添加视频精灵
+   * 导出视频
    */
-  async addVideoSpriteFromUrl(url: string, id?: string): Promise<string> {
+  async exportVideo(
+    settings?: Partial<ExportSettings>
+  ): Promise<ReadableStream> {
     this.ensureInitialized();
 
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const file = new File([blob], "video", { type: blob.type });
-
-      return await this.addVideoSprite(file, id);
+      const stream = this.combinator!.output();
+      return stream;
     } catch (error) {
-      console.error("Failed to add video sprite from URL:", error);
+      console.error("Failed to export video:", error);
       throw error;
     }
   }
 
   /**
-   * 从URL添加图片精灵
-   */
-  async addImageSpriteFromUrl(url: string, id?: string): Promise<string> {
-    this.ensureInitialized();
-
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const file = new File([blob], "image", { type: blob.type });
-
-      return await this.addImageSprite(file, id);
-    } catch (error) {
-      console.error("Failed to add image sprite from URL:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * 移除精灵
-   */
-  async removeSprite(spriteId: string): Promise<void> {
-    this.ensureInitialized();
-
-    try {
-      const sprite = this.sprites.get(spriteId);
-      if (sprite) {
-        this.avCanvas!.removeSprite(sprite);
-        this.sprites.delete(spriteId);
-      }
-    } catch (error) {
-      console.error("Failed to remove sprite:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * 更新精灵变换属性
-   */
-  updateSpriteTransform(spriteId: string, transform: Partial<Transform>): void {
-    const sprite = this.sprites.get(spriteId);
-    if (!sprite) return;
-
-    try {
-      // 更新位置
-      if (transform.x !== undefined) sprite.rect.x = transform.x;
-      if (transform.y !== undefined) sprite.rect.y = transform.y;
-
-      // 更新大小
-      if (transform.width !== undefined) sprite.rect.w = transform.width;
-      if (transform.height !== undefined) sprite.rect.h = transform.height;
-
-      // 更新旋转
-      if (transform.rotation !== undefined)
-        sprite.rect.angle = transform.rotation;
-
-      // 更新缩放
-      if (transform.scaleX !== undefined) {
-        sprite.rect.x = sprite.rect.x * transform.scaleX;
-        sprite.rect.w = sprite.rect.w * transform.scaleX;
-      }
-      if (transform.scaleY !== undefined) {
-        sprite.rect.y = sprite.rect.y * transform.scaleY;
-        sprite.rect.h = sprite.rect.h * transform.scaleY;
-      }
-
-      // 更新锚点
-      // if (transform.anchorX !== undefined) sprite.rect.anchorX = transform.anchorX;
-      // if (transform.anchorY !== undefined) sprite.rect.anchorY = transform.anchorY;
-    } catch (error) {
-      console.error("Failed to update sprite transform:", error);
-    }
-  }
-
-  /**
-   * 更新精灵透明度
-   */
-  updateSpriteOpacity(spriteId: string, opacity: number): void {
-    const sprite = this.sprites.get(spriteId);
-    if (!sprite) return;
-
-    try {
-      sprite.opacity = Math.max(0, Math.min(1, opacity));
-    } catch (error) {
-      console.error("Failed to update sprite opacity:", error);
-    }
-  }
-
-  /**
-   * 更新精灵可见性
-   */
-  updateSpriteVisibility(spriteId: string, visible: boolean): void {
-    const sprite = this.sprites.get(spriteId);
-    if (!sprite) return;
-
-    try {
-      sprite.visible = visible;
-    } catch (error) {
-      console.error("Failed to update sprite visibility:", error);
-    }
-  }
-
-  /**
-   * 更新文字精灵内容
-   */
-  updateTextSprite(spriteId: string, style: TextStyle, text?: string): void {
-    const sprite = this.sprites.get(spriteId);
-    if (!sprite || !(sprite instanceof VisibleSprite)) return;
-
-    if (this.avCanvas) {
-      this.avCanvas.removeSprite(sprite); // 移除旧的片段
-    }
-    try {
-      if (text) {
-        this.addTextSprite(text, style);
-      }
-    } catch (error) {
-      console.error("Failed to update text sprite:", error);
-    }
-  }
-
-  /**
-   * 设置精灵层级
-   */
-  setSpriteZIndex(spriteId: string, zIndex: number): void {
-    const sprite = this.sprites.get(spriteId);
-    if (!sprite) return;
-
-    try {
-      sprite.zIndex = zIndex;
-    } catch (error) {
-      console.error("Failed to set sprite z-index:", error);
-    }
-  }
-
-  /**
-   * 获取画布的MediaStream
-   */
-  getMediaStream(): MediaStream | null {
-    this.ensureInitialized();
-
-    try {
-      return this.avCanvas!.captureStream();
-    } catch (error) {
-      console.error("Failed to get media stream:", error);
-      return null;
-    }
-  }
-
-  /**
-   * 播放
-   */
-  async play(
-    startTime: number = 0,
-    endTime: number = 0,
-    playbackRate?: number
-  ): Promise<void> {
-    this.ensureInitialized();
-
-    try {
-      this.avCanvas!.play({
-        start: startTime,
-        end: endTime,
-        playbackRate: playbackRate || 1,
-      });
-    } catch (error) {
-      console.error("Failed to play:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * 暂停
-   */
-  async pause(): Promise<void> {
-    this.ensureInitialized();
-
-    try {
-      this.avCanvas!.pause();
-    } catch (error) {
-      console.error("Failed to pause:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * 停止
-   */
-  async stop(): Promise<void> {
-    this.ensureInitialized();
-
-    try {
-      this.avCanvas!.pause();
-    } catch (error) {
-      console.error("Failed to stop:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * 跳转到指定时间
-   */
-  async seekTo(time: number): Promise<void> {
-    this.ensureInitialized();
-
-    try {
-      await this.avCanvas!.previewFrame(time);
-    } catch (error) {
-      console.error("Failed to seek:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * 设置音量
-   */
-  // setVolume(volume: number): void {
-  //   this.ensureInitialized();
-
-  //   try {
-  //     const clampedVolume = Math.max(0, Math.min(1, volume));
-  //     this.avCanvas!.volume = clampedVolume;
-  //   } catch (error) {
-  //     console.error("Failed to set volume:", error);
-  //   }
-  // }
-
-  /**
-   * 获取当前播放时间
-   */
-  getCurrentTime(): number {
-    this.ensureInitialized();
-
-    try {
-      return this.currentTime;
-    } catch (error) {
-      console.error("Failed to get current time:", error);
-      return 0;
-    }
-  }
-
-  /**
-   * 获取总时长
+   * 获取项目总时长
    */
   getDuration(): number {
     this.ensureInitialized();
 
-    try {
-      return this.duration;
-    } catch (error) {
-      console.error("Failed to get duration:", error);
-      return 0;
-    }
-  }
-
-  /**
-   * 设置画布大小
-   */
-  setSize(width: number, height: number): void {
-    this.ensureInitialized();
-
-    try {
-      // 暂时这样获取画布元素
-      const canvasDom = document.querySelector("canvas") as HTMLCanvasElement;
-      canvasDom.width = width;
-      canvasDom.height = height;
-      // this.avCanvas!.setSize(width, height);
-    } catch (error) {
-      console.error("Failed to set canvas size:", error);
-    }
-  }
-
-  /**
-   * 截取当前画面
-   */
-  async captureFrame(): Promise<Blob | null> {
-    this.ensureInitialized();
-
-    try {
-      const imageBase64 = this.avCanvas!.captureImage();
-      const blob = await fetch(imageBase64).then((res) => res.blob());
-      return blob;
-    } catch (error) {
-      console.error("Failed to capture frame:", error);
-      return null;
-    }
-  }
-
-  /**
-   * 清除所有精灵
-   */
-  async clear(): Promise<void> {
-    this.ensureInitialized();
-
-    try {
-      // 移除所有精灵
-      for (const [spriteId, sprite] of Array.from(this.sprites.entries())) {
-        this.avCanvas!.removeSprite(sprite);
-      }
-      this.sprites.clear();
-    } catch (error) {
-      console.error("Failed to clear canvas:", error);
-    }
-  }
-
-  /**
-   * 获取精灵列表
-   */
-  getSprites(): Map<string, any> {
-    return new Map(this.sprites);
-  }
-
-  /**
-   * 获取精灵
-   */
-  getSprite(spriteId: string): any | null {
-    return this.sprites.get(spriteId) || null;
-  }
-
-  /**
-   * 检查精灵是否存在
-   */
-  hasSprite(spriteId: string): boolean {
-    return this.sprites.has(spriteId);
+    // 这里需要计算所有片段的最大结束时间
+    // 由于 WebAV 可能没有直接的API，需要自己维护
+    return 0;
   }
 
   /**
    * 销毁服务
    */
   async destroy(): Promise<void> {
-    if (this.avCanvas) {
+    if (this.combinator) {
       try {
-        await this.clear();
-        this.avCanvas.destroy();
-        this.avCanvas = null;
-        this.containerElement = null;
+        this.combinator.destroy();
+        this.combinator = null;
         this.isInitialized = false;
-        this.sprites.clear();
       } catch (error) {
-        console.error("Failed to destroy CanvasCompositionService:", error);
+        console.error("Failed to destroy VideoClipService:", error);
       }
     }
-  }
-
-  /**
-   * 生成唯一ID
-   */
-  private generateId(): string {
-    return `sprite_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
    * 检查是否支持指定的文件格式
    */
   static isSupportedFormat(file: File): boolean {
-    const supportedVideoFormats = ["video/mp4", "video/webm"];
-    const supportedAudioFormats = ["audio/mp3", "audio/wav", "audio/ogg"];
-    const supportedImageFormats = ["image/jpeg", "image/png", "image/gif"];
+    const supportedVideoFormats = [
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ];
+    const supportedAudioFormats = [
+      "audio/mp3",
+      "audio/wav",
+      "audio/aac",
+      "audio/ogg",
+    ];
+    const supportedImageFormats = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
 
     const allSupportedFormats = [
       ...supportedVideoFormats,

@@ -3,7 +3,7 @@
  * 负责管理播放器时间、时间轴播放头和画布服务之间的同步
  */
 
-import { canvasCompositionService } from './canvas-composition-service';
+import { videoClipService } from "./video-clip-service";
 
 export class TimeSyncService {
   private isActive = false;
@@ -24,7 +24,7 @@ export class TimeSyncService {
    */
   start(): void {
     if (this.isActive) return;
-    
+
     this.isActive = true;
     this.lastUpdateTime = performance.now();
     this.scheduleUpdate();
@@ -76,15 +76,15 @@ export class TimeSyncService {
 
     // 从画布服务获取当前播放时间
     try {
-      const canvasCurrentTime = canvasCompositionService.getCurrentTime();
+      const canvasCurrentTime = videoClipService.getCurrentTime();
       const timeInMs = canvasCurrentTime * 1000; // 转换为毫秒
 
       // 通知所有回调
-      this.callbacks.forEach(callback => {
+      this.callbacks.forEach((callback) => {
         try {
           callback(timeInMs);
         } catch (error) {
-          console.error('Time sync callback error:', error);
+          console.error("Time sync callback error:", error);
         }
       });
     } catch (error) {
@@ -96,11 +96,11 @@ export class TimeSyncService {
    * 手动同步到指定时间
    */
   syncTo(timeMs: number): void {
-    this.callbacks.forEach(callback => {
+    this.callbacks.forEach((callback) => {
       try {
         callback(timeMs);
       } catch (error) {
-        console.error('Manual sync callback error:', error);
+        console.error("Manual sync callback error:", error);
       }
     });
   }
@@ -136,7 +136,7 @@ export class PlaybackCoordinator {
 
   constructor(
     private timeSyncService: TimeSyncService,
-    private canvasService: typeof canvasCompositionService
+    private canvasService: typeof videoClipService
   ) {}
 
   /**
@@ -148,13 +148,13 @@ export class PlaybackCoordinator {
     try {
       // 启动画布播放
       await this.canvasService.play();
-      
+
       // 启动时间同步
       this.timeSyncService.start();
-      
+
       this.isPlaying = true;
     } catch (error) {
-      console.error('Failed to start playback:', error);
+      console.error("Failed to start playback:", error);
       throw error;
     }
   }
@@ -168,13 +168,13 @@ export class PlaybackCoordinator {
     try {
       // 暂停画布播放
       await this.canvasService.pause();
-      
+
       // 暂停时间同步
       this.timeSyncService.pause();
-      
+
       this.isPlaying = false;
     } catch (error) {
-      console.error('Failed to pause playback:', error);
+      console.error("Failed to pause playback:", error);
       throw error;
     }
   }
@@ -186,18 +186,18 @@ export class PlaybackCoordinator {
     try {
       // 停止画布播放
       await this.canvasService.stop();
-      
+
       // 停止时间同步
       this.timeSyncService.stop();
-      
+
       // 重置状态
       this.isPlaying = false;
       this.currentTime = 0;
-      
+
       // 同步到开始位置
       this.timeSyncService.syncTo(0);
     } catch (error) {
-      console.error('Failed to stop playback:', error);
+      console.error("Failed to stop playback:", error);
       throw error;
     }
   }
@@ -209,17 +209,17 @@ export class PlaybackCoordinator {
     try {
       // 限制时间范围
       const clampedTime = Math.max(0, Math.min(this.duration, timeMs));
-      
+
       // 画布服务跳转
       await this.canvasService.seekTo(clampedTime / 1000);
-      
+
       // 更新当前时间
       this.currentTime = clampedTime;
-      
+
       // 手动同步时间
       this.timeSyncService.syncTo(clampedTime);
     } catch (error) {
-      console.error('Failed to seek:', error);
+      console.error("Failed to seek:", error);
       throw error;
     }
   }
@@ -238,7 +238,7 @@ export class PlaybackCoordinator {
    */
   setVolume(volume: number): void {
     const clampedVolume = Math.max(0, Math.min(1, volume));
-    this.canvasService.setVolume(clampedVolume);
+    // this.canvasService.setVolume(clampedVolume);
   }
 
   /**
@@ -271,5 +271,5 @@ export class PlaybackCoordinator {
 // 创建单例实例
 export const playbackCoordinator = new PlaybackCoordinator(
   timeSyncService,
-  canvasCompositionService
+  videoClipService
 );

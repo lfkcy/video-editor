@@ -1,4 +1,4 @@
-import { videoClipService } from "./video-clip-service";
+import { canvasCompositionService } from "./canvas-composition-service";
 import {
   ProjectData,
   ExportSettings,
@@ -51,7 +51,7 @@ export class VideoExportService {
       onProgress?.(0, "准备导出...");
 
       // 1. 初始化视频合成器
-      await videoClipService.initialize(
+      await canvasCompositionService.initialize(
         settings.width,
         settings.height,
         settings.fps
@@ -60,7 +60,7 @@ export class VideoExportService {
       onProgress?.(10, "构建项目...");
 
       // 2. 从项目数据构建合成器
-      await videoClipService.buildFromProject(project);
+      await canvasCompositionService.buildFromProject(project);
 
       onProgress?.(30, "添加叠加层...");
 
@@ -72,7 +72,7 @@ export class VideoExportService {
       onProgress?.(50, "开始视频合成...");
 
       // 5. 导出视频流
-      const stream = await videoClipService.exportVideo(settings);
+      const stream = await canvasCompositionService.exportVideo(settings);
 
       onProgress?.(70, "处理视频数据...");
 
@@ -104,7 +104,7 @@ export class VideoExportService {
 
       // 清理资源
       try {
-        await videoClipService.destroy();
+        await canvasCompositionService.destroy();
       } catch (error) {
         console.error("Failed to cleanup after export:", error);
       }
@@ -121,7 +121,7 @@ export class VideoExportService {
     this.currentExportId = null;
 
     try {
-      await videoClipService.destroy();
+      await canvasCompositionService.destroy();
     } catch (error) {
       console.error("Failed to cleanup after cancel:", error);
     }
@@ -146,7 +146,7 @@ export class VideoExportService {
    */
   private async addTextOverlayToExport(overlay: TextOverlay): Promise<void> {
     try {
-      await videoClipService.addTextSprite(overlay.text, {
+      await canvasCompositionService.addTextSprite(overlay.text, {
         fontSize: overlay.fontSize,
         fontFamily: overlay.fontFamily,
         fontWeight: overlay.fontWeight,
@@ -166,7 +166,7 @@ export class VideoExportService {
 
       // 设置变换属性
       // 注意：这里需要将百分比转换为像素
-      // videoClipService.updateSpriteTransform(overlay.id, {
+      // canvasCompositionService.updateSpriteTransform(overlay.id, {
       //   x: overlay.position.x,
       //   y: overlay.position.y,
       //   rotation: overlay.rotation,

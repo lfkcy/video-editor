@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn, generateId } from '@/lib/utils';
-import { canvasCompositionService } from '@/services';
+import { videoClipService } from '@/services';
 
 interface OverlayManagerProps {
   containerWidth: number;
@@ -68,7 +68,7 @@ export function OverlayManager({
     setEditingOverlayId(newOverlay.id);
 
     // 添加到画布服务
-    canvasCompositionService.addTextSprite(newOverlay.text, {
+    videoClipService.addTextSprite(newOverlay.text, {
       fontSize: newOverlay.fontSize,
       fontFamily: newOverlay.fontFamily,
       fontWeight: newOverlay.fontWeight,
@@ -76,7 +76,7 @@ export function OverlayManager({
       backgroundColor: newOverlay.background || 'transparent',
       textAlign: newOverlay.textAlign,
       lineHeight: 1.2,
-      letterSpacing: 0,
+      letterSpacing: '0px',
       shadow: {
         enabled: newOverlay.shadow,
         offsetX: 2,
@@ -124,7 +124,7 @@ export function OverlayManager({
     setSelectedOverlayId(newOverlay.id);
 
     // 添加到画布服务
-    canvasCompositionService.addImageSpriteFromUrl(imageUrl, newOverlay.id);
+    videoClipService.addImageSpriteFromUrl(imageUrl, newOverlay.id);
 
     // 清空文件输入
     event.target.value = '';
@@ -141,24 +141,27 @@ export function OverlayManager({
     // 更新画布服务中的精灵
     const overlay = textOverlays.find(o => o.id === id);
     if (overlay) {
-      if (updates.text !== undefined) {
-        canvasCompositionService.updateTextSprite(id, updates.text);
-      }
+      // if (updates.text !== undefined) {
+      //   videoClipService.updateTextSprite(id, {
+      //     ...overlay,
+      //     ...updates,
+      //   });
+      // }
       
       if (updates.position) {
         const transform = {
           x: (updates.position.x / 100) * containerWidth,
           y: (updates.position.y / 100) * containerHeight,
         };
-        canvasCompositionService.updateSpriteTransform(id, transform);
+        videoClipService.updateSpriteTransform(id, transform);
       }
 
       if (updates.opacity !== undefined) {
-        canvasCompositionService.updateSpriteOpacity(id, updates.opacity / 100);
+        videoClipService.updateSpriteOpacity(id, updates.opacity / 100);
       }
 
       if (updates.rotation !== undefined) {
-        canvasCompositionService.updateSpriteTransform(id, { rotation: updates.rotation });
+        videoClipService.updateSpriteTransform(id, { rotation: updates.rotation });
       }
     }
   }, [textOverlays, containerWidth, containerHeight]);
@@ -182,12 +185,12 @@ export function OverlayManager({
           height: updates.size ? (updates.size.height / 100) * containerHeight : undefined,
           rotation: updates.rotation,
         };
-        canvasCompositionService.updateSpriteTransform(id, transform);
+        videoClipService.updateSpriteTransform(id, transform);
       }
     }
 
     if (updates.opacity !== undefined) {
-      canvasCompositionService.updateSpriteOpacity(id, updates.opacity / 100);
+      videoClipService.updateSpriteOpacity(id, updates.opacity / 100);
     }
   }, [imageOverlays, containerWidth, containerHeight]);
 
@@ -204,7 +207,7 @@ export function OverlayManager({
     }
 
     // 从画布服务中移除
-    canvasCompositionService.removeSprite(id);
+    videoClipService.removeSprite(id);
   }, [selectedOverlayId, editingOverlayId]);
 
   // 调整层级
@@ -223,7 +226,7 @@ export function OverlayManager({
         if (newZIndex < 0 || newZIndex >= prev.length) return prev;
 
         newArray[index] = { ...prev[index], zIndex: newZIndex };
-        canvasCompositionService.setSpriteZIndex(id, newZIndex);
+        videoClipService.setSpriteZIndex(id, newZIndex);
         
         return newArray;
       });
@@ -238,7 +241,7 @@ export function OverlayManager({
         if (newZIndex < 0 || newZIndex >= prev.length) return prev;
 
         newArray[index] = { ...prev[index], zIndex: newZIndex };
-        canvasCompositionService.setSpriteZIndex(id, newZIndex);
+        videoClipService.setSpriteZIndex(id, newZIndex);
         
         return newArray;
       });

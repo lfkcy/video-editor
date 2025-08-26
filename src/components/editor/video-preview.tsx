@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Play, Pause, Square, Volume2, VolumeX, Maximize } from 'lucide-react';
 import { useTimelineStore, useUIStore } from '@/stores';
-import { canvasCompositionService } from '@/services';
+import { videoClipService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { cn, formatTime } from '@/lib/utils';
 
@@ -48,7 +48,7 @@ export function VideoPreview() {
       if (!containerRef.current) return;
 
       try {
-        await canvasCompositionService.initialize(containerRef.current);
+        await videoClipService.initialize(containerRef.current);
         setIsInitialized(true);
         setError(null);
       } catch (err) {
@@ -60,7 +60,7 @@ export function VideoPreview() {
     initializeCanvas();
 
     return () => {
-      canvasCompositionService.destroy();
+      videoClipService.destroy();
     };
   }, []);
 
@@ -70,10 +70,10 @@ export function VideoPreview() {
 
     try {
       if (isPlaying) {
-        await canvasCompositionService.pause();
+        await videoClipService.pause();
         pause();
       } else {
-        await canvasCompositionService.play();
+        await videoClipService.play();
         play();
       }
     } catch (err) {
@@ -85,7 +85,7 @@ export function VideoPreview() {
     if (!isInitialized) return;
 
     try {
-      await canvasCompositionService.stop();
+      await videoClipService.stop();
       stop();
     } catch (err) {
       console.error('Stop failed:', err);
@@ -96,7 +96,7 @@ export function VideoPreview() {
     if (!isInitialized) return;
 
     try {
-      await canvasCompositionService.seekTo(time / 1000); // 转换为秒
+      await videoClipService.seekTo(time / 1000); // 转换为秒
       seekTo(time);
     } catch (err) {
       console.error('Seek failed:', err);
@@ -106,14 +106,14 @@ export function VideoPreview() {
   const handleVolumeChange = useCallback((newVolume: number) => {
     if (!isInitialized) return;
 
-    canvasCompositionService.setVolume(newVolume);
+    // videoClipService.setVolume(newVolume);
     setVolume(newVolume);
   }, [isInitialized, setVolume]);
 
   const handleMuteToggle = useCallback(() => {
     toggleMute();
     if (isInitialized) {
-      canvasCompositionService.setVolume(muted ? volume : 0);
+      // videoClipService.setVolume(muted ? volume : 0);
     }
   }, [isInitialized, muted, volume, toggleMute]);
 

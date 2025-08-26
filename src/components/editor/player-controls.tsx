@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatTime, cn } from '@/lib/utils';
-import { canvasCompositionService } from '@/services';
+import { videoClipService } from '@/services';
 
 /**
  * 播放器控制组件
@@ -69,10 +69,10 @@ export function PlayerControls() {
   const handlePlayPause = useCallback(async () => {
     try {
       if (isPlaying) {
-        await canvasCompositionService.pause();
+        await videoClipService.pause();
         pause();
       } else {
-        await canvasCompositionService.play();
+        await videoClipService.play();
         play();
       }
     } catch (error) {
@@ -83,7 +83,7 @@ export function PlayerControls() {
   // 停止播放
   const handleStop = useCallback(async () => {
     try {
-      await canvasCompositionService.stop();
+      await videoClipService.stop();
       stop();
       setPlayhead(0);
     } catch (error) {
@@ -95,24 +95,24 @@ export function PlayerControls() {
   const handleSkipBack = useCallback(() => {
     const newTime = Math.max(0, playhead - 5000); // 后退5秒
     setPlayhead(newTime);
-    canvasCompositionService.seekTo(newTime / 1000);
+    videoClipService.seekTo(newTime / 1000);
   }, [playhead, setPlayhead]);
 
   const handleSkipForward = useCallback(() => {
     const newTime = Math.min(duration, playhead + 5000); // 前进5秒
     setPlayhead(newTime);
-    canvasCompositionService.seekTo(newTime / 1000);
+    videoClipService.seekTo(newTime / 1000);
   }, [playhead, duration, setPlayhead]);
 
   // 跳转到开始/结束
   const handleJumpToStart = useCallback(() => {
     setPlayhead(0);
-    canvasCompositionService.seekTo(0);
+    videoClipService.seekTo(0);
   }, [setPlayhead]);
 
   const handleJumpToEnd = useCallback(() => {
     setPlayhead(duration);
-    canvasCompositionService.seekTo(duration / 1000);
+    videoClipService.seekTo(duration / 1000);
   }, [duration, setPlayhead]);
 
   // 进度条拖拽处理
@@ -136,7 +136,7 @@ export function PlayerControls() {
     const handleMouseUp = () => {
       setIsDraggingProgress(false);
       setPlayhead(tempPlayhead);
-      canvasCompositionService.seekTo(tempPlayhead / 1000);
+      videoClipService.seekTo(tempPlayhead / 1000);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -148,7 +148,7 @@ export function PlayerControls() {
   // 音量控制
   const handleVolumeChange = useCallback((newVolume: number) => {
     setVolume(newVolume);
-    canvasCompositionService.setVolume(newVolume);
+    // videoClipService.setVolume(newVolume);
     if (newVolume > 0 && muted) {
       toggleMute(); // 如果调整音量且当前静音，取消静音
     }
@@ -156,7 +156,7 @@ export function PlayerControls() {
 
   const handleMuteToggle = useCallback(() => {
     toggleMute();
-    canvasCompositionService.setVolume(muted ? volume : 0);
+    // videoClipService.setVolume(muted ? volume : 0);
   }, [muted, volume, toggleMute]);
 
   // 播放速度控制

@@ -81,7 +81,7 @@ export default function TestPage() {
         description: '测试视频合成服务初始化',
         test: async () => {
           try {
-            await videoClipService.initialize(1920, 1080, 30);
+            await canvasCompositionService.initialize(1920, 1080, 30);
             return true;
           } catch (error) {
             console.error('Video service init failed:', error);
@@ -102,7 +102,7 @@ export default function TestPage() {
             mockContainer.style.height = '100px';
             document.body.appendChild(mockContainer);
             
-            await canvasCompositionService.initialize(mockContainer, 100, 100);
+            await videoClipService.initialize(mockContainer, 100, 100);
             
             // 清理
             document.body.removeChild(mockContainer);
