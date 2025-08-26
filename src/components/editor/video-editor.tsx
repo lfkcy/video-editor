@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useProjectStore, useTimelineStore, useUIStore } from '@/stores';
 import { VideoPreview } from './video-preview';
-import { Timeline } from './timeline';
+import { TimelineEditor } from './timeline-editor';
 import { PlayerControls } from './player-controls';
 import { MediaLibrary } from '../panels/media-library';
 import { PropertyPanel } from '../panels/property-panel';
@@ -117,7 +117,7 @@ export function VideoEditor() {
               
               {/* 时间轴 */}
               <div className="h-80">
-                <Timeline />
+                <TimelineEditor height={320} showToolbar={true} />
               </div>
             </div>
           )}

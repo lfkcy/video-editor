@@ -26,6 +26,7 @@
     "@radix-ui/react-tooltip": "^1.1.2",
     "@webav/av-canvas": "^1.1.17",
     "@webav/av-cliper": "^1.1.17",
+    "@xzdarcy/react-timeline-editor": "^0.1.9",
     "class-variance-authority": "^0.7.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
