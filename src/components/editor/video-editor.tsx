@@ -21,8 +21,8 @@ import { cn } from "@/lib/utils";
 
 // 新的服务和管理器
 import {
+  videoClipService,
   VideoClipService,
-  createVideoClipService,
 } from "@/services/video-clip-service";
 import {
   TimelineAVCanvasIntegrator,
@@ -88,7 +88,7 @@ export function VideoEditor() {
           // 1. 创建 VideoClipService，使用传递进来的容器
           if (!videoClipServiceRef.current) {
             console.log("初始化 VideoClipService...");
-            videoClipServiceRef.current = createVideoClipService();
+            videoClipServiceRef.current = videoClipService;
             await videoClipServiceRef.current.initialize(
               videoPreviewContainerRef.current as HTMLElement,
               currentProject.settings,

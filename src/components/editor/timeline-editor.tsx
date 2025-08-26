@@ -28,8 +28,8 @@ import {
 } from "@/lib/timeline-performance-optimizer";
 import { EnhancedTimelineToolbar } from "./enhanced-timeline-toolbar";
 import {
+  videoClipService,
   VideoClipService,
-  createVideoClipService,
 } from "@/services/video-clip-service";
 import {
   TimelineAVCanvasIntegrator,
@@ -259,7 +259,7 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
     useEffect(() => {
       // 创建 VideoClipService
       if (!videoClipServiceRef.current) {
-        videoClipServiceRef.current = createVideoClipService();
+        videoClipServiceRef.current = videoClipService;
       }
 
       // 创建时间轴集成器

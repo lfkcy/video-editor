@@ -3,7 +3,7 @@
  * 测试核心功能是否正常工作
  */
 
-import { VideoClipService, createVideoClipService, isSupportedFormat, getFileType } from '@/services/video-clip-service';
+import { VideoClipService, videoClipService, isSupportedFormat, getFileType } from '@/services/video-clip-service';
 import { AVCanvasManager, createAVCanvasManager } from '@/lib/av-canvas-manager';
 import { ActionSpriteManager, createActionSpriteManager } from '@/lib/action-sprite-manager';
 import { TimelineAVCanvasIntegrator, createTimelineAVCanvasIntegrator } from '@/lib/timeline-avcanvas-integrator';
@@ -191,7 +191,7 @@ export class VideoEditorTestSuite {
    */
   private async testVideoClipService(): Promise<void> {
     await this.runTest('VideoClipService', async () => {
-      const service = createVideoClipService();
+      const service = videoClipService
       
       // 测试初始化
       await service.initialize(this.mockContainer, {
@@ -232,8 +232,7 @@ export class VideoEditorTestSuite {
    * 测试时间轴集成
    */
   private async testTimelineIntegration(): Promise<void> {
-    await this.runTest('时间轴集成', async () => {
-      const videoClipService = createVideoClipService();
+    await this.runTest('时间轴集成', async () => { 
       await videoClipService.initialize(this.mockContainer);
 
       const integrator = createTimelineAVCanvasIntegrator(videoClipService);
@@ -264,7 +263,6 @@ export class VideoEditorTestSuite {
    */
   private async testPlaybackSync(): Promise<void> {
     await this.runTest('播放同步', async () => {
-      const videoClipService = createVideoClipService();
       await videoClipService.initialize(this.mockContainer);
 
       const timelineIntegrator = createTimelineAVCanvasIntegrator(videoClipService);
@@ -299,7 +297,6 @@ export class VideoEditorTestSuite {
    */
   private async testClipOperations(): Promise<void> {
     await this.runTest('片段操作', async () => {
-      const videoClipService = createVideoClipService();
       await videoClipService.initialize(this.mockContainer);
 
       const timelineIntegrator = createTimelineAVCanvasIntegrator(videoClipService);
@@ -400,7 +397,7 @@ export class VideoEditorTestSuite {
           document.body.appendChild(container);
           containers.push(container);
 
-          const service = createVideoClipService();
+          const service = videoClipService
           await service.initialize(container);
           services.push(service);
         }

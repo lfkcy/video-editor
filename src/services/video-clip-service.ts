@@ -98,6 +98,7 @@ export class VideoClipService {
       });
 
       this.isInitialized = true;
+      
       console.log('视频剪辑服务初始化成功', this.projectSettings);
     } catch (error) {
       console.error('初始化视频剪辑服务失败:', error);
@@ -109,6 +110,10 @@ export class VideoClipService {
    * 检查是否已初始化
    */
   private ensureInitialized(): void {
+    console.log(this.isInitialized,'this.isInitialized');
+    console.log(this.avCanvasManager,'this.avCanvasManager');
+    
+    
     if (!this.isInitialized || !this.avCanvasManager.getInitialized()) {
       throw new Error('视频剪辑服务未初始化，请先调用 initialize()');
     }
@@ -523,13 +528,6 @@ export class VideoClipService {
       throw error;
     }
   }
-}
-
-/**
- * 创建视频剪辑服务实例
- */
-export function createVideoClipService(): VideoClipService {
-  return new VideoClipService();
 }
 
 /**

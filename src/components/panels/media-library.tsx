@@ -1,22 +1,50 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useCallback, useContext, createContext } from 'react';
-import { Upload, Search, Grid, List, Filter, Play, Plus, MoreVertical } from 'lucide-react';
-import { MediaFile } from '@/types';
-import { mediaProcessingService, MediaProcessingService } from '@/services';
-import { VideoClipService, createVideoClipService, isSupportedFormat, getFileType } from '@/services/video-clip-service';
-import { Button } from '@/components/ui/button';
-import { MediaItem } from './media-item';
-import { cn, formatFileSize } from '@/lib/utils';
-import { useProjectStore } from '@/stores';
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useContext,
+  createContext,
+} from "react";
+import {
+  Upload,
+  Search,
+  Grid,
+  List,
+  Filter,
+  Play,
+  Plus,
+  MoreVertical,
+} from "lucide-react";
+import { MediaFile } from "@/types";
+import { mediaProcessingService, MediaProcessingService } from "@/services";
+import {
+  isSupportedFormat,
+  getFileType,
+  videoClipService,
+} from "@/services/video-clip-service";
+import { Button } from "@/components/ui/button";
+import { MediaItem } from "./media-item";
+import { cn, formatFileSize } from "@/lib/utils";
+import { useProjectStore } from "@/stores";
 
 /**
  * 时间轴编辑器上下文
  * 用于与父级 TimelineEditor 组件通信
  */
 interface TimelineEditorContextType {
-  addMediaFile?: (file: File, trackId?: string, fileType?: 'video' | 'audio' | 'image') => Promise<any>;
-  addTextSprite?: (text: string, style?: any, trackId?: string, duration?: number) => Promise<any>;
+  addMediaFile?: (
+    file: File,
+    trackId?: string,
+    fileType?: "video" | "audio" | "image"
+  ) => Promise<any>;
+  addTextSprite?: (
+    text: string,
+    style?: any,
+    trackId?: string,
+    duration?: number
+  ) => Promise<any>;
 }
 
 const TimelineEditorContext = createContext<TimelineEditorContextType>({});
@@ -29,92 +57,106 @@ export function MediaLibrary() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timelineContext = useContext(TimelineEditorContext);
   const { currentProject } = useProjectStore();
-  
+
   // 本地状态
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchText, setSearchText] = useState('');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchText, setSearchText] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
   const [dragToTimeline, setDragToTimeline] = useState(false);
-  
+
   // 过滤状态
-  const [filterType, setFilterType] = useState<'all' | 'video' | 'audio' | 'image'>('all');
+  const [filterType, setFilterType] = useState<
+    "all" | "video" | "audio" | "image"
+  >("all");
 
   // 文件上传处理（增强版）
-  const handleFileSelect = useCallback(async (files: FileList, addToTimeline = false) => {
-    setIsUploading(true);
-    setUploadProgress(0);
-    
-    try {
-      const fileArray = Array.from(files);
-      
-      // 验证文件（使用新的验证方法）
-      const validFiles = fileArray.filter(file => {
-        const isSupported = isSupportedFormat(file);
-        if (!isSupported) {
-          console.warn(`文件 ${file.name} 被拒绝: 不支持的格式`);
-        }
-        return isSupported;
-      });
+  const handleFileSelect = useCallback(
+    async (files: FileList, addToTimeline = false) => {
+      setIsUploading(true);
+      setUploadProgress(0);
 
-      if (validFiles.length === 0) {
-        alert('没有有效的文件可以上传');
-        return;
-      }
+      try {
+        const fileArray = Array.from(files);
 
-      let processedFiles: MediaFile[] = [];
-      
-      if (addToTimeline && timelineContext.addMediaFile) {
-        // 直接添加到时间轴
-        for (let i = 0; i < validFiles.length; i++) {
-          const file = validFiles[i];
-          const fileType = getFileType(file);
-          
-          try {
-            // 只添加支持的文件类型到时间轴
-            if (fileType !== 'unknown') {
-              const result = await timelineContext.addMediaFile(file, undefined, fileType as 'video' | 'audio' | 'image');
-              console.log('文件添加到时间轴成功:', result);
-            } else {
-              console.warn(`不支持的文件类型: ${file.type}`);
-            }
-            
-            // 同时添加到媒体库
-            const mediaFile = await mediaProcessingService.processMediaFile(file);
-            processedFiles.push(mediaFile);
-          } catch (error) {
-            console.error(`添加文件 ${file.name} 到时间轴失败:`, error);
-            // 即使添加到时间轴失败，也要添加到媒体库
-            const mediaFile = await mediaProcessingService.processMediaFile(file);
-            processedFiles.push(mediaFile);
+        // 验证文件（使用新的验证方法）
+        const validFiles = fileArray.filter((file) => {
+          const isSupported = isSupportedFormat(file);
+          if (!isSupported) {
+            console.warn(`文件 ${file.name} 被拒绝: 不支持的格式`);
           }
-          
-          // 更新进度
-          setUploadProgress(Math.round(((i + 1) / validFiles.length) * 100));
+          return isSupported;
+        });
+
+        if (validFiles.length === 0) {
+          alert("没有有效的文件可以上传");
+          return;
         }
-      } else {
-        // 仅添加到媒体库
-        processedFiles = await mediaProcessingService.processMediaFiles(validFiles);
-        setUploadProgress(100);
+
+        let processedFiles: MediaFile[] = [];
+
+        if (addToTimeline && timelineContext.addMediaFile) {
+          // 直接添加到时间轴
+          for (let i = 0; i < validFiles.length; i++) {
+            const file = validFiles[i];
+            const fileType = getFileType(file);
+
+            try {
+              // 只添加支持的文件类型到时间轴
+              if (fileType !== "unknown") {
+                const result = await timelineContext.addMediaFile(
+                  file,
+                  undefined,
+                  fileType as "video" | "audio" | "image"
+                );
+                console.log("文件添加到时间轴成功:", result);
+              } else {
+                console.warn(`不支持的文件类型: ${file.type}`);
+              }
+
+              // 同时添加到媒体库
+              const mediaFile = await mediaProcessingService.processMediaFile(
+                file
+              );
+              processedFiles.push(mediaFile);
+            } catch (error) {
+              console.error(`添加文件 ${file.name} 到时间轴失败:`, error);
+              // 即使添加到时间轴失败，也要添加到媒体库
+              const mediaFile = await mediaProcessingService.processMediaFile(
+                file
+              );
+              processedFiles.push(mediaFile);
+            }
+
+            // 更新进度
+            setUploadProgress(Math.round(((i + 1) / validFiles.length) * 100));
+          }
+        } else {
+          // 仅添加到媒体库
+          processedFiles = await mediaProcessingService.processMediaFiles(
+            validFiles
+          );
+          setUploadProgress(100);
+        }
+
+        // 添加到媒体库
+        setMediaFiles((prev) => [...prev, ...processedFiles]);
+
+        setTimeout(() => {
+          setUploadProgress(0);
+        }, 1000);
+      } catch (error) {
+        console.error("文件上传失败:", error);
+        alert("文件上传失败");
+      } finally {
+        setIsUploading(false);
       }
-      
-      // 添加到媒体库
-      setMediaFiles(prev => [...prev, ...processedFiles]);
-      
-      setTimeout(() => {
-        setUploadProgress(0);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('文件上传失败:', error);
-      alert('文件上传失败');
-    } finally {
-      setIsUploading(false);
-    }
-  }, [timelineContext]);
+    },
+    [timelineContext]
+  );
 
   // 点击上传按钮
   const handleUploadClick = useCallback(() => {
@@ -122,31 +164,35 @@ export function MediaLibrary() {
   }, []);
 
   // 文件输入变化
-  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileSelect(files, dragToTimeline);
-    }
-    // 清空输入框以允许重新选择相同文件
-    e.target.value = '';
-    setDragToTimeline(false);
-  }, [handleFileSelect, dragToTimeline]);
+  const handleFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        handleFileSelect(files, dragToTimeline);
+      }
+      // 清空输入框以允许重新选择相同文件
+      e.target.value = "";
+      setDragToTimeline(false);
+    },
+    [handleFileSelect, dragToTimeline]
+  );
 
   // 拖拽处理（增强版）
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
-    
+
     // 检测是否拖拽到时间轴区域
-    const timelineElement = document.querySelector('.timeline-editor-container');
+    const timelineElement = document.querySelector(
+      ".timeline-editor-container"
+    );
     if (timelineElement) {
       const rect = timelineElement.getBoundingClientRect();
-      const isOverTimeline = (
+      const isOverTimeline =
         e.clientX >= rect.left &&
         e.clientX <= rect.right &&
         e.clientY >= rect.top &&
-        e.clientY <= rect.bottom
-      );
+        e.clientY <= rect.bottom;
       setDragToTimeline(isOverTimeline);
     }
   }, []);
@@ -157,36 +203,45 @@ export function MediaLibrary() {
     setDragToTimeline(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleFileSelect(files, dragToTimeline);
-    }
-    setDragToTimeline(false);
-  }, [handleFileSelect, dragToTimeline]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        handleFileSelect(files, dragToTimeline);
+      }
+      setDragToTimeline(false);
+    },
+    [handleFileSelect, dragToTimeline]
+  );
 
   // 搜索过滤（增强版）
-  const filteredFiles = mediaFiles.filter(file => {
-    const matchesSearch = file.name.toLowerCase().includes(searchText.toLowerCase());
-    const matchesType = filterType === 'all' || file.type.startsWith(filterType);
+  const filteredFiles = mediaFiles.filter((file) => {
+    const matchesSearch = file.name
+      .toLowerCase()
+      .includes(searchText.toLowerCase());
+    const matchesType =
+      filterType === "all" || file.type.startsWith(filterType);
     return matchesSearch && matchesType;
   });
 
   // 文件选择
-  const handleFileSelection = useCallback((fileId: string, multiSelect = false) => {
-    if (multiSelect) {
-      setSelectedFiles(prev => 
-        prev.includes(fileId) 
-          ? prev.filter(id => id !== fileId)
-          : [...prev, fileId]
-      );
-    } else {
-      setSelectedFiles([fileId]);
-    }
-  }, []);
+  const handleFileSelection = useCallback(
+    (fileId: string, multiSelect = false) => {
+      if (multiSelect) {
+        setSelectedFiles((prev) =>
+          prev.includes(fileId)
+            ? prev.filter((id) => id !== fileId)
+            : [...prev, fileId]
+        );
+      } else {
+        setSelectedFiles([fileId]);
+      }
+    },
+    []
+  );
 
   // 清除选择
   const handleClearSelection = useCallback(() => {
@@ -201,18 +256,24 @@ export function MediaLibrary() {
 
     try {
       for (const fileId of selectedFiles) {
-        const mediaFile = mediaFiles.find(f => f.id === fileId);
+        const mediaFile = mediaFiles.find((f) => f.id === fileId);
         if (mediaFile && mediaFile.url) {
           try {
             // 从 URL 重新获取 File 对象
             const response = await fetch(mediaFile.url);
             const blob = await response.blob();
             const file = new File([blob], mediaFile.name, { type: blob.type });
-            
+
             const fileType = getFileType(file);
             // 只添加支持的文件类型到时间轴
-            if (fileType !== 'unknown') {
-              await timelineContext.addMediaFile(file, undefined, fileType as 'video' | 'audio' | 'image');
+            if (fileType !== "unknown") {
+              console.log(videoClipService, "添加文件到时间轴");
+
+              await timelineContext.addMediaFile(
+                file,
+                undefined,
+                fileType as "video" | "audio" | "image"
+              );
             } else {
               console.warn(`不支持的文件类型: ${mediaFile.type}`);
             }
@@ -221,33 +282,35 @@ export function MediaLibrary() {
           }
         }
       }
-      
+
       // 清除选择
       setSelectedFiles([]);
-      
-      console.log('所选文件已添加到时间轴');
+
+      console.log("所选文件已添加到时间轴");
     } catch (error) {
-      console.error('添加文件到时间轴失败:', error);
-      alert('添加文件到时间轴失败');
+      console.error("添加文件到时间轴失败:", error);
+      alert("添加文件到时间轴失败");
     }
   }, [timelineContext, selectedFiles, mediaFiles]);
 
   // 删除选中文件
   const handleDeleteSelected = useCallback(() => {
     if (selectedFiles.length === 0) return;
-    
+
     if (confirm(`确定要删除 ${selectedFiles.length} 个文件吗？`)) {
-      setMediaFiles(prev => prev.filter(file => !selectedFiles.includes(file.id)));
+      setMediaFiles((prev) =>
+        prev.filter((file) => !selectedFiles.includes(file.id))
+      );
       setSelectedFiles([]);
     }
   }, [selectedFiles]);
 
   // 下载选中文件
   const handleDownloadSelected = useCallback(() => {
-    selectedFiles.forEach(fileId => {
-      const mediaFile = mediaFiles.find(f => f.id === fileId);
+    selectedFiles.forEach((fileId) => {
+      const mediaFile = mediaFiles.find((f) => f.id === fileId);
       if (mediaFile && mediaFile.url) {
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = mediaFile.url;
         link.download = mediaFile.name;
         document.body.appendChild(link);
@@ -263,22 +326,22 @@ export function MediaLibrary() {
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">媒体库</h2>
-          
+
           <div className="flex items-center space-x-2">
             {/* 视图模式切换 */}
             <div className="flex border rounded-md">
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
                 className="rounded-r-none"
               >
                 <Grid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 className="rounded-l-none"
               >
                 <List className="h-4 w-4" />
@@ -287,12 +350,17 @@ export function MediaLibrary() {
 
             {/* 过滤器按钮 */}
             <div className="relative">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => {
                   // 切换过滤器
-                  const types: ('all' | 'video' | 'audio' | 'image')[] = ['all', 'video', 'audio', 'image'];
+                  const types: ("all" | "video" | "audio" | "image")[] = [
+                    "all",
+                    "video",
+                    "audio",
+                    "image",
+                  ];
                   const currentIndex = types.indexOf(filterType);
                   const nextIndex = (currentIndex + 1) % types.length;
                   setFilterType(types[nextIndex]);
@@ -300,7 +368,7 @@ export function MediaLibrary() {
               >
                 <Filter className="h-4 w-4" />
               </Button>
-              {filterType !== 'all' && (
+              {filterType !== "all" && (
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
               )}
             </div>
@@ -325,8 +393,8 @@ export function MediaLibrary() {
         <div
           className={cn(
             "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors",
-            isDragOver 
-              ? "border-primary bg-primary/10" 
+            isDragOver
+              ? "border-primary bg-primary/10"
               : "border-muted-foreground/25 hover:border-primary/50"
           )}
           onClick={handleUploadClick}
@@ -345,13 +413,18 @@ export function MediaLibrary() {
           </p>
           <p className="text-xs text-muted-foreground">
             支持 MP4, WebM, MP3, WAV, JPG, PNG 等格式
-            {filterType !== 'all' && (
+            {filterType !== "all" && (
               <span className="block mt-1 text-primary">
-                当前过滤: {filterType === 'video' ? '视频' : filterType === 'audio' ? '音频' : '图片'}
+                当前过滤:{" "}
+                {filterType === "video"
+                  ? "视频"
+                  : filterType === "audio"
+                  ? "音频"
+                  : "图片"}
               </span>
             )}
           </p>
-          
+
           {/* 上传进度 */}
           {isUploading && (
             <div className="mt-3">
@@ -384,15 +457,17 @@ export function MediaLibrary() {
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <div className="text-4xl mb-2">📁</div>
             <p className="text-sm">
-              {mediaFiles.length === 0 ? '媒体库为空' : '没有找到匹配的文件'}
+              {mediaFiles.length === 0 ? "媒体库为空" : "没有找到匹配的文件"}
             </p>
             <p className="text-xs mt-1">
-              {mediaFiles.length === 0 ? '上传一些文件开始编辑' : '尝试其他搜索词'}
+              {mediaFiles.length === 0
+                ? "上传一些文件开始编辑"
+                : "尝试其他搜索词"}
             </p>
           </div>
         ) : (
           <div className="p-4">
-            {viewMode === 'grid' ? (
+            {viewMode === "grid" ? (
               <div className="grid grid-cols-2 gap-3">
                 {filteredFiles.map((file) => (
                   <MediaItem
@@ -400,7 +475,9 @@ export function MediaLibrary() {
                     file={file}
                     viewMode="grid"
                     isSelected={selectedFiles.includes(file.id)}
-                    onSelect={(multiSelect) => handleFileSelection(file.id, multiSelect)}
+                    onSelect={(multiSelect) =>
+                      handleFileSelection(file.id, multiSelect)
+                    }
                   />
                 ))}
               </div>
@@ -412,7 +489,9 @@ export function MediaLibrary() {
                     file={file}
                     viewMode="list"
                     isSelected={selectedFiles.includes(file.id)}
-                    onSelect={(multiSelect) => handleFileSelection(file.id, multiSelect)}
+                    onSelect={(multiSelect) =>
+                      handleFileSelection(file.id, multiSelect)
+                    }
                   />
                 ))}
               </div>
@@ -426,15 +505,11 @@ export function MediaLibrary() {
         <div className="p-4 border-t border-border bg-muted/20">
           <div className="flex items-center justify-between text-sm mb-2">
             <span>已选择 {selectedFiles.length} 个文件</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearSelection}
-            >
+            <Button variant="ghost" size="sm" onClick={handleClearSelection}>
               清除选择
             </Button>
           </div>
-          
+
           {/* 操作按钮 */}
           <div className="flex items-center space-x-2">
             {timelineContext.addMediaFile && (
@@ -447,7 +522,7 @@ export function MediaLibrary() {
                 <span>添加到时间轴</span>
               </Button>
             )}
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -456,7 +531,7 @@ export function MediaLibrary() {
             >
               <span>下载</span>
             </Button>
-            
+
             <Button
               variant="destructive"
               size="sm"
