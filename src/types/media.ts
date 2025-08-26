@@ -1,5 +1,7 @@
 // 媒体相关类型定义
 
+import { MediaMetadata as CustomMediaMetadata } from './project';
+
 /**
  * 媒体文件信息
  */
@@ -10,7 +12,7 @@ export interface MediaFile {
   size: number;
   url: string;
   thumbnailUrl?: string;
-  metadata: MediaMetadata;
+  metadata: CustomMediaMetadata;
   createdAt: Date;
   lastModified: Date;
 }
@@ -183,7 +185,7 @@ export interface AudioStreamInfo {
 /**
  * 扩展的媒体元数据
  */
-export interface ExtendedMediaMetadata extends MediaMetadata {
+export interface ExtendedMediaMetadata extends CustomMediaMetadata {
   videoStreams: VideoStreamInfo[];
   audioStreams: AudioStreamInfo[];
   chapters?: Chapter[];

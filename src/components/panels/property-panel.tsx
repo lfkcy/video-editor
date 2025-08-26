@@ -103,7 +103,7 @@ export function PropertyPanel() {
     const clip = selectedClipObjects[0]; // 显示第一个选中片段的属性
 
     return (
-      <div className="p-4 space-y-4">
+      clip?<div className="p-4 space-y-4">
         <div className="flex items-center space-x-2 mb-4">
           <Info className="h-5 w-5" />
           <h3 className="text-lg font-semibold">片段属性</h3>
@@ -257,7 +257,7 @@ export function PropertyPanel() {
             添加效果
           </Button>
         </div>
-      </div>
+      </div>:null
     );
   };
 

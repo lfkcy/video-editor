@@ -1,6 +1,6 @@
 import {
   MediaFile,
-  MediaMetadata,
+  MediaMetadata as CustomMediaMetadata,
   MediaType,
   MediaProcessingTask,
   MediaProcessingResult,
@@ -134,8 +134,8 @@ export class MediaProcessingService {
   /**
    * 提取媒体元数据
    */
-  private async extractMetadata(file: File): Promise<MediaMetadata> {
-    const metadata: MediaMetadata = {
+  private async extractMetadata(file: File): Promise<CustomMediaMetadata> {
+    const metadata: CustomMediaMetadata = {
       format: file.type,
     };
 
@@ -157,13 +157,13 @@ export class MediaProcessingService {
   /**
    * 提取视频元数据
    */
-  private async extractVideoMetadata(file: File): Promise<MediaMetadata> {
+  private async extractVideoMetadata(file: File): Promise<CustomMediaMetadata> {
     return new Promise((resolve, reject) => {
       const video = document.createElement("video");
       video.preload = "metadata";
 
       video.onloadedmetadata = () => {
-        const metadata: MediaMetadata = {
+        const metadata: CustomMediaMetadata = {
           duration: video.duration * 1000, // 转换为毫秒
           width: video.videoWidth,
           height: video.videoHeight,
@@ -191,17 +191,19 @@ export class MediaProcessingService {
   /**
    * 提取音频元数据
    */
-  private async extractAudioMetadata(file: File): Promise<MediaMetadata> {
+  private async extractAudioMetadata(file: File): Promise<CustomMediaMetadata> {
     return new Promise((resolve, reject) => {
       const audio = document.createElement("audio");
       audio.preload = "metadata";
 
       audio.onloadedmetadata = () => {
-        const metadata: MediaMetadata = {
+        const metadata: CustomMediaMetadata = {
           duration: audio.duration * 1000, // 转换为毫秒
           format: file.type,
           sampleRate: 44100, // 默认值
           channels: 2, // 默认值
+          // 添加缺失的必需属性
+          bitrate: 128000, // 默认值
         };
 
         URL.revokeObjectURL(audio.src);
@@ -220,12 +222,12 @@ export class MediaProcessingService {
   /**
    * 提取图片元数据
    */
-  private async extractImageMetadata(file: File): Promise<MediaMetadata> {
+  private async extractImageMetadata(file: File): Promise<CustomMediaMetadata> {
     return new Promise((resolve, reject) => {
       const img = new Image();
 
       img.onload = () => {
-        const metadata: MediaMetadata = {
+        const metadata: CustomMediaMetadata = {
           width: img.naturalWidth,
           height: img.naturalHeight,
           format: file.type,

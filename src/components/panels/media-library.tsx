@@ -3,7 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload, Search, Grid, List, Filter } from 'lucide-react';
 import { MediaFile } from '@/types';
-import { mediaProcessingService } from '@/services';
+import { mediaProcessingService, MediaProcessingService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { MediaItem } from './media-item';
 import { cn, formatFileSize } from '@/lib/utils';
@@ -31,7 +31,7 @@ export function MediaLibrary() {
     try {
       const fileArray = Array.from(files);
       const validFiles = fileArray.filter(file => {
-        const validation = mediaProcessingService.validateFile(file);
+        const validation = MediaProcessingService.validateFile(file);
         if (!validation.isValid) {
           console.warn(`File ${file.name} rejected: ${validation.error}`);
         }
