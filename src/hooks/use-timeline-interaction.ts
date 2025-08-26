@@ -142,7 +142,7 @@ export function useTimelineInteraction() {
           clipIds: Array.from(dragStartRef.current.originalClipData.keys()),
         },
         undoData: {
-          originalPositions: Object.fromEntries(
+          oldValues: Object.fromEntries(
             dragStartRef.current.originalClipData
           ),
         },
@@ -273,12 +273,16 @@ export function useTimelineInteraction() {
         type: "split-clip",
         description: `分割片段 ${clip.source.name}`,
         data: {
-          originalClipId: clipId,
-          newClipIds,
-          splitTime,
+          clipIds: newClipIds,
+          properties: {
+            originalClipId: clipId,
+            splitTime,
+          },
         },
         undoData: {
-          clipData: clip,
+          oldValues: {
+            clipData: clip,
+          },
         },
       });
 
@@ -314,7 +318,9 @@ export function useTimelineInteraction() {
         clipIds: selectedClips,
       },
       undoData: {
-        clipsData: clipsToDelete,
+        oldValues: {
+          clipsData: clipsToDelete,
+        },
       },
     });
 

@@ -6,6 +6,7 @@ import { OverlayManager } from '../editor/overlays/overlay-manager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useProjectStore, useTimelineStore } from '@/stores';
+import { ImageOverlay, TextOverlay } from '@/types';
 
 /**
  * 叠加层面板组件
@@ -13,7 +14,7 @@ import { useProjectStore, useTimelineStore } from '@/stores';
 export function OverlayPanel() {
   const { currentProject } = useProjectStore();
   const { playhead } = useTimelineStore();
-  const [overlayData, setOverlayData] = useState({ textOverlays: [], imageOverlays: [] });
+  const [overlayData, setOverlayData] = useState<{textOverlays:TextOverlay[],imageOverlays:ImageOverlay[]}>({ textOverlays: [], imageOverlays: [] });
 
   if (!currentProject) {
     return (

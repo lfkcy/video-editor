@@ -111,8 +111,9 @@ export class PerformanceMonitor {
       try {
         const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
         if (navigation) {
-          this.metrics.loadTime = navigation.loadEventEnd - navigation.navigationStart;
-          this.metrics.domContentLoadedTime = navigation.domContentLoadedEventEnd - navigation.navigationStart;
+          // 使用 fetchStart 作为基准时间，因为 navigationStart 在新版本中已弃用
+          this.metrics.loadTime = navigation.loadEventEnd - navigation.fetchStart;
+          this.metrics.domContentLoadedTime = navigation.domContentLoadedEventEnd - navigation.fetchStart;
         }
       } catch (error) {
         console.warn('Failed to measure page load performance:', error);
@@ -156,7 +157,10 @@ export class PerformanceMonitor {
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         entries.forEach((entry) => {
-          this.metrics.firstInputDelay = entry.processingStart - entry.startTime;
+          const eventEntry = entry as PerformanceEventTiming;
+          if (eventEntry.processingStart && eventEntry.startTime) {
+            this.metrics.firstInputDelay = eventEntry.processingStart - eventEntry.startTime;
+          }
         });
       });
       fidObserver.observe({ entryTypes: ['first-input'] });

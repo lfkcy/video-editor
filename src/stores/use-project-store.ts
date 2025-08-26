@@ -403,13 +403,9 @@ export const useProjectStore = create<ProjectStore>()(
 
           const updatedTracks = currentProject.tracks.map(track => ({
             ...track,
-            clips: track.clips.map(c =>
-              c.id === clipId
-                ? null
-                : c
-            ).filter(Boolean).concat(
-              c => c?.trackId === track.id ? [firstClip, secondClip] : []
-            ),
+            clips: track.clips
+              .filter(c => c.id !== clipId)
+              .concat(track.id === clip.trackId ? [firstClip, secondClip] : []),
           }));
 
           get().updateProject({ tracks: updatedTracks });

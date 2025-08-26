@@ -32,10 +32,11 @@ export function MediaItem({ file, viewMode, isSelected, onSelect }: MediaItemPro
     e.dataTransfer.effectAllowed = 'copy';
     
     // 设置拖拽的视觉反馈
+    const element = e.currentTarget as HTMLElement;
     e.dataTransfer.setDragImage(
-      e.currentTarget as HTMLElement,
-      e.currentTarget.offsetWidth / 2,
-      e.currentTarget.offsetHeight / 2
+      element,
+      element.offsetWidth / 2,
+      element.offsetHeight / 2
     );
   }, [file]);
 

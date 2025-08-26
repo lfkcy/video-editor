@@ -570,3 +570,6 @@ export const createNotification = {
     duration, // 错误通知不自动消失
   }),
 };
+
+// 导出类型
+export type { Notification, DialogConfig, TooltipConfig };

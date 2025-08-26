@@ -78,7 +78,8 @@ export type EditActionType =
   | 'change-property'
   | 'add-effect'
   | 'remove-effect'
-  | 'modify-effect';
+  | 'modify-effect'
+  | 'batch';
 
 /**
  * 编辑操作数据
@@ -90,6 +91,7 @@ export interface EditActionData {
   position?: Point;
   oldValues?: Record<string, any>;
   newValues?: Record<string, any>;
+  batchActions?: EditAction[];
 }
 
 /**
