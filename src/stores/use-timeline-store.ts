@@ -28,6 +28,7 @@ interface TimelineActions {
   toggleMute: () => void;
   setLoop: (loop: boolean) => void;
   toggleLoop: () => void;
+  setCurrentTime: (time: number) => void;
 
   // 时间轴控制
   setPlayhead: (time: number) => void;
@@ -225,6 +226,10 @@ export const useTimelineStore = create<TimelineStore>()(
       toggleLoop: () => {
         const { loopMode } = get();
         set({ loopMode: !loopMode });
+      },
+
+      setCurrentTime:(time)=>{
+        set({ currentTime: time });
       },
 
       // 时间轴控制

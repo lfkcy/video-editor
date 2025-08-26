@@ -31,6 +31,7 @@ export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
     seekTo,
     setVolume,
     toggleMute,
+    setCurrentTime,
   } = useTimelineStore();
 
   const {
@@ -86,10 +87,10 @@ export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
 
     try {
       if (isPlaying) {
-        await videoClipService.pause();
+        videoClipService.pause();
         pause();
       } else {
-        await videoClipService.play();
+        videoClipService.play(currentTime);
         play();
       }
     } catch (err) {
@@ -255,7 +256,7 @@ export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
       {/* 控制栏 */}
       <div
         className={cn(
-          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300",
+          "absolute bottom-0 z-[999] left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300",
           showControls || isPlaying ? "opacity-100" : "opacity-0"
         )}
       >

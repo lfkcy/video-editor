@@ -9,7 +9,7 @@ import {
   VisibleSprite,
   renderTxt2ImgBitmap,
 } from "@webav/av-cliper";
-import { AVCanvasManager, createAVCanvasManager } from "@/lib/av-canvas-manager";
+import { AVCanvasManager, avCanvasManager } from "@/lib/av-canvas-manager";
 import { ActionSpriteManager, createActionSpriteManager } from "@/lib/action-sprite-manager";
 import { TimelineAction } from '@xzdarcy/react-timeline-editor';
 
@@ -40,7 +40,7 @@ export class VideoClipService {
   private playStateListeners: ((isPlaying: boolean) => void)[] = [];
 
   constructor() {
-    this.avCanvasManager = createAVCanvasManager();
+    this.avCanvasManager = avCanvasManager;
     this.actionSpriteManager = createActionSpriteManager();
     this.setupManagerIntegration();
   }
@@ -110,10 +110,6 @@ export class VideoClipService {
    * 检查是否已初始化
    */
   private ensureInitialized(): void {
-    console.log(this.isInitialized,'this.isInitialized');
-    console.log(this.avCanvasManager,'this.avCanvasManager');
-    
-    
     if (!this.isInitialized || !this.avCanvasManager.getInitialized()) {
       throw new Error('视频剪辑服务未初始化，请先调用 initialize()');
     }

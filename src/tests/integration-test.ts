@@ -4,7 +4,7 @@
  */
 
 import { VideoClipService, videoClipService, isSupportedFormat, getFileType } from '@/services/video-clip-service';
-import { AVCanvasManager, createAVCanvasManager } from '@/lib/av-canvas-manager';
+import { AVCanvasManager, avCanvasManager } from '@/lib/av-canvas-manager';
 import { ActionSpriteManager, createActionSpriteManager } from '@/lib/action-sprite-manager';
 import { TimelineAVCanvasIntegrator, createTimelineAVCanvasIntegrator } from '@/lib/timeline-avcanvas-integrator';
 import { PlaybackSyncManager, createPlaybackSyncManager } from '@/lib/playback-sync-manager';
@@ -93,7 +93,7 @@ export class VideoEditorTestSuite {
    */
   private async testAVCanvasManager(): Promise<void> {
     await this.runTest('AVCanvas 管理器', async () => {
-      const manager = createAVCanvasManager();
+      const manager = avCanvasManager
       
       // 测试初始化
       await manager.initialize(this.mockContainer, {

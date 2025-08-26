@@ -267,8 +267,6 @@ export function MediaLibrary() {
             const fileType = getFileType(file);
             // 只添加支持的文件类型到时间轴
             if (fileType !== "unknown") {
-              console.log(videoClipService, "添加文件到时间轴");
-
               await timelineContext.addMediaFile(
                 file,
                 undefined,

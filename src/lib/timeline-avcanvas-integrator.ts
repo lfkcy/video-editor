@@ -72,6 +72,9 @@ export class TimelineAVCanvasIntegrator {
       // 更新 store 中的播放头位置
       useTimelineStore.getState().setPlayhead(time);
 
+      // 更新 store 中实时时间
+      useTimelineStore.getState().setCurrentTime(time)
+
       // 通知监听器
       this.timeUpdateListeners.forEach(listener => listener(time));
 

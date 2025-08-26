@@ -339,7 +339,7 @@ export function EnhancedTimelineToolbar({
       </div>
 
       {/* 快捷键提示 */}
-      <div className="mt-2 text-xs text-muted-foreground border-t border-border pt-2">
+      {/* <div className="mt-2 text-xs text-muted-foreground border-t border-border pt-2">
         <div className="flex gap-6">
           <span>
             <kbd>空格</kbd> 播放/暂停
@@ -372,7 +372,7 @@ export function EnhancedTimelineToolbar({
             <kbd>←/→</kbd> 前进/后退
           </span>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

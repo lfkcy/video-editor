@@ -41,7 +41,7 @@ export class AVCanvasManager {
       await this.destroy();
     }
 
-    const { width = 1280, height = 720, bgColor = '#000' } = options;
+    const { width = 1920, height = 1080, bgColor = '#000' } = options;
     
     this.container = container;
     this.avCanvas = new AVCanvas(container, {
@@ -464,6 +464,4 @@ export class AVCanvasManager {
 /**
  * 创建 AVCanvas 管理器实例
  */
-export function createAVCanvasManager(): AVCanvasManager {
-  return new AVCanvasManager();
-}
+export const avCanvasManager = new AVCanvasManager();

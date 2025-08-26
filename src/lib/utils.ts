@@ -8,17 +8,13 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * 格式化时间为 HH:MM:SS 格式
  */
-export function formatTime(timeInMs: number): string {
-  const totalSeconds = Math.floor(timeInMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  } else {
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
+export function formatTime(time: number): string {
+ if (time > -1) {
+        const m = Math.floor(time / 60);
+        const s = Math.floor(time % 60);
+        return `${m >= 10 ? m : `0${m}`}:${s >= 10 ? s : `0${s}`}`;
+    }
+    return '00:00';
 }
 
 /**
