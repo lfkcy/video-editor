@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useProjectStore, useTimelineStore, useUIStore } from '@/stores';
 import { videoClipService, canvasCompositionService, videoExportService } from '@/services';
 import { performanceMonitor } from '@/utils/performance-monitor';
-import cn from 'classnames';
+import { cn } from '@/lib/utils';
 
 /**
  * 测试项目接口
