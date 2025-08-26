@@ -200,9 +200,7 @@ export class VideoEditorTestSuite {
         fps: 30,
         sampleRate: 44100,
         channels: 2,
-        videoBitrate: 5000,
-        audioBitrate: 128,
-        format: 'mp4'
+        quality: 'high'
       });
 
       // 测试获取管理器
