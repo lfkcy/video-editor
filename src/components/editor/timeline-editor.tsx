@@ -8,7 +8,6 @@ import { timelineStateAdapter, TimelineEditorData } from '@/lib/timeline-state-a
 import { timelineEventHandler, TimelineEventCallbacks } from '@/lib/timeline-event-handler';
 import { createPlaybackControlIntegrator, PlaybackControlIntegrator } from '@/lib/playback-control-integrator';
 import { createTimelinePerformanceOptimizer, TimelinePerformanceOptimizer } from '@/lib/timeline-performance-optimizer';
-import { TimelineToolbar } from './timeline/timeline-toolbar';
 import { EnhancedTimelineToolbar } from './enhanced-timeline-toolbar';
 import { VideoClipService, createVideoClipService } from '@/services/video-clip-service';
 import { TimelineAVCanvasIntegrator, createTimelineAVCanvasIntegrator } from '@/lib/timeline-avcanvas-integrator';
@@ -496,86 +495,6 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>((
     );
   }, [effects, currentProject]);
 
-  if (!currentProject) {
-    return (
-      <div className={`timeline-editor-wrapper ${className}`}>
-        <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">没有加载项目</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`timeline-editor-wrapper ${className}`}>
-      {/* 工具栏 */}
-      {showToolbar && (
-        <EnhancedTimelineToolbar
-          onAddTrack={() => eventHandlerRef.current.handleRowAdd()}
-          onSplitAtPlayhead={() => {
-            const currentTimeSeconds = TimelineDataAdapter.timeUtils.msToSeconds(playhead);
-            eventHandlerRef.current.handleSplitAtPlayhead(currentTimeSeconds);
-          }}
-          onDeleteSelected={() => eventHandlerRef.current.handleActionDelete(selectedClips)}
-          onDuplicateSelected={() => eventHandlerRef.current.handleDuplicateSelected()}
-          onUndo={() => console.log('撤销')}
-          onRedo={() => console.log('重做')}
-          onShowSettings={() => console.log('设置')}
-        />
-      )}
-
-      {/* 时间轴编辑器 */}
-      <div 
-        className="timeline-editor-container"
-        style={{ height: showToolbar ? height - 50 : height }}
-      >
-        <Timeline
-          ref={timelineRef}
-          editorData={editorData}
-          effects={effects as any}
-          {...timelineConfig}
-          onChange={handleDataChange}
-        />
-      </div>
-
-      {/* 状态栏 */}
-      <div className="timeline-status-bar h-8 bg-muted/30 border-t border-border flex items-center px-4 text-xs text-muted-foreground">
-        <div className="flex items-center space-x-4">
-          {/* 播放控制按钮 */}
-          <div className="flex items-center space-x-2">
-            <button
-              className={`px-2 py-1 rounded text-xs ${
-                isPlaying ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
-              }`}
-              onClick={() => playbackControlRef.current?.togglePlayPause()}
-            >
-              {isPlaying ? '⏸' : '▶'}
-            </button>
-            <button
-              className="px-2 py-1 rounded text-xs bg-gray-500 text-white"
-              onClick={() => {
-                useTimelineStore.getState().stop();
-              }}
-            >
-              ⏹
-            </button>
-          </div>
-          
-          <span>时间: {TimelineDataAdapter.timeUtils.formatTime(
-            TimelineDataAdapter.timeUtils.secondsToMs(currentTime)
-          )}</span>
-          <span>缩放: {Math.round(editorScale)}px/s</span>
-          <span>网格: {snapToGrid ? '开启' : '关闭'}</span>
-          <span>轨道: {editorData.length}</span>
-          {selectedClips && selectedClips.length > 0 && (
-            <span>已选择: {selectedClips.length} 个片段</span>
-          )}
-          <span>总时长: {TimelineDataAdapter.timeUtils.formatTime(duration)}</span>
-        </div>
-      </div>
-    </div>
-  );
-  
   /**
    * 暴露给父组件的方法
    */
@@ -663,6 +582,86 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>((
     // 时间轴引用
     getTimelineRef: () => timelineRef.current
   }), [handlePlaybackToggle, currentTime, isPlaying, selectedClips]);
+
+  if (!currentProject) {
+    return (
+      <div className={`timeline-editor-wrapper ${className}`}>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground">没有加载项目</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`timeline-editor-wrapper ${className}`}>
+      {/* 工具栏 */}
+      {showToolbar && (
+        <EnhancedTimelineToolbar
+          onAddTrack={() => eventHandlerRef.current.handleRowAdd()}
+          onSplitAtPlayhead={() => {
+            const currentTimeSeconds = TimelineDataAdapter.timeUtils.msToSeconds(playhead);
+            eventHandlerRef.current.handleSplitAtPlayhead(currentTimeSeconds);
+          }}
+          onDeleteSelected={() => eventHandlerRef.current.handleActionDelete(selectedClips)}
+          onDuplicateSelected={() => eventHandlerRef.current.handleDuplicateSelected()}
+          onUndo={() => console.log('撤销')}
+          onRedo={() => console.log('重做')}
+          onShowSettings={() => console.log('设置')}
+        />
+      )}
+
+      {/* 时间轴编辑器 */}
+      <div 
+        className="timeline-editor-container"
+        style={{ height: showToolbar ? height - 50 : height }}
+      >
+        <Timeline
+          ref={timelineRef}
+          editorData={editorData}
+          effects={effects as any}
+          {...timelineConfig}
+          onChange={handleDataChange}
+        />
+      </div>
+
+      {/* 状态栏 */}
+      <div className="timeline-status-bar h-8 bg-muted/30 border-t border-border flex items-center px-4 text-xs text-muted-foreground">
+        <div className="flex items-center space-x-4">
+          {/* 播放控制按钮 */}
+          <div className="flex items-center space-x-2">
+            <button
+              className={`px-2 py-1 rounded text-xs ${
+                isPlaying ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+              }`}
+              onClick={() => playbackControlRef.current?.togglePlayPause()}
+            >
+              {isPlaying ? '⏸' : '▶'}
+            </button>
+            <button
+              className="px-2 py-1 rounded text-xs bg-gray-500 text-white"
+              onClick={() => {
+                useTimelineStore.getState().stop();
+              }}
+            >
+              ⏹
+            </button>
+          </div>
+          
+          <span>时间: {TimelineDataAdapter.timeUtils.formatTime(
+            TimelineDataAdapter.timeUtils.secondsToMs(currentTime)
+          )}</span>
+          <span>缩放: {Math.round(editorScale)}px/s</span>
+          <span>网格: {snapToGrid ? '开启' : '关闭'}</span>
+          <span>轨道: {editorData.length}</span>
+          {selectedClips && selectedClips.length > 0 && (
+            <span>已选择: {selectedClips.length} 个片段</span>
+          )}
+          <span>总时长: {TimelineDataAdapter.timeUtils.formatTime(duration)}</span>
+        </div>
+      </div>
+    </div>
+  );
 });
 
 // 显示名称用于调试

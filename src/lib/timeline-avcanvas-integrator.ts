@@ -2,6 +2,7 @@ import { TimelineAction, TimelineRow } from '@xzdarcy/react-timeline-editor';
 import { VisibleSprite } from '@webav/av-cliper';
 import { VideoClipService } from '@/services/video-clip-service';
 import { useProjectStore, useTimelineStore } from '@/stores';
+import { Clip, ClipType } from '@/types/project';
 
 /**
  * 时间轴与 AVCanvas 集成器
@@ -106,32 +107,47 @@ export class TimelineAVCanvasIntegrator {
    */
   private handleSpriteAdded(action: TimelineAction, sprite: VisibleSprite): void {
     try {
-      const { addClipToTrack } = useProjectStore.getState();
+      const { addClip } = useProjectStore.getState();
       
       // 确定目标轨道
       const trackId = (action as any).trackId || this.determineTrackId(sprite);
       
       // 创建 Clip 对象
-      const clip = {
-        id: action.id,
-        name: action.name || 'Media Clip',
+      const clip: Omit<Clip, 'id' | 'trackId'> = {
+        type: this.determineClipType(sprite),
         startTime: action.start,
         duration: action.end - action.start,
         trimStart: 0,
         trimEnd: action.end - action.start,
-        volume: 1,
-        speed: 1,
+        source: {
+          id: `sprite-${action.id}`,
+          type: 'file',
+          url: '',
+          name: `Media Clip ${action.id}`,
+          size: 0,
+          metadata: {
+            duration: sprite.time.duration / 1e6,
+            format: this.getMediaFormat(sprite),
+            ...this.getMediaSize(sprite)
+          }
+        },
         effects: [],
-        mediaId: '', // 这里可以根据需要设置
-        metadata: {
-          originalDuration: sprite.time.duration / 1e6,
-          format: this.getMediaFormat(sprite),
-          size: this.getMediaSize(sprite)
-        }
+        transform: {
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          anchorX: 0.5,
+          anchorY: 0.5
+        },
+        selected: false
       };
 
       // 添加到项目中
-      addClipToTrack(trackId, clip);
+      addClip(trackId, clip);
 
       console.log('精灵添加到时间轴:', { actionId: action.id, trackId, clip });
     } catch (error) {
@@ -303,6 +319,27 @@ export class TimelineAVCanvasIntegrator {
    * 工具方法
    */
   
+  /**
+   * 确定片段类型
+   */
+  private determineClipType(sprite: VisibleSprite): ClipType {
+    const clip = sprite.getClip();
+    const clipName = clip.constructor.name.toLowerCase();
+    
+    if (clipName.includes('mp4') || clipName.includes('video')) {
+      return 'video';
+    } else if (clipName.includes('audio')) {
+      return 'audio';
+    } else if (clipName.includes('img') || clipName.includes('image')) {
+      return 'image';
+    } else if (clipName.includes('text')) {
+      return 'text';
+    }
+    
+    // 默认返回 video 类型
+    return 'video';
+  }
+
   /**
    * 确定轨道 ID
    */

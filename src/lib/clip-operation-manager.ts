@@ -124,7 +124,10 @@ export class ClipOperationManager {
         historyStore.pushAction({
           type: 'move-clip',
           description: `移动 ${actionIds.length} 个片段`,
-          data: { actionIds, newStartTime, targetTrackId }
+          data: { 
+            clipIds: actionIds, 
+            newValues: { startTime: newStartTime, trackId: targetTrackId }
+          }
         });
       } finally {
         historyStore.endBatch();
@@ -204,7 +207,10 @@ export class ClipOperationManager {
         historyStore.pushAction({
           type: 'trim-clip',
           description: `修剪 ${actionIds.length} 个片段`,
-          data: { actionIds, newStartTime, newEndTime }
+          data: { 
+            clipIds: actionIds, 
+            newValues: { startTime: newStartTime, endTime: newEndTime }
+          }
         });
       } finally {
         historyStore.endBatch();
@@ -273,7 +279,10 @@ export class ClipOperationManager {
         historyStore.pushAction({
           type: 'split-clip',
           description: `分割 ${actionIds.length} 个片段`,
-          data: { actionIds, splitTime }
+          data: { 
+            clipIds: actionIds, 
+            properties: { splitTime }
+          }
         });
       } finally {
         historyStore.endBatch();
@@ -335,7 +344,7 @@ export class ClipOperationManager {
         historyStore.pushAction({
           type: 'remove-clip',
           description: `删除 ${actionIds.length} 个片段`,
-          data: { actionIds }
+          data: { clipIds: actionIds }
         });
       } finally {
         historyStore.endBatch();
@@ -413,8 +422,7 @@ export class ClipOperationManager {
             id: Math.random().toString(36).substr(2, 9),
             start: newStartTime,
             end: newStartTime + duration,
-            effectId: action.effectId,
-            name: `${action.name} (副本)`
+            effectId: action.effectId
           };
 
           // 注册映射关系
@@ -427,7 +435,10 @@ export class ClipOperationManager {
         historyStore.pushAction({
           type: 'add-clip',
           description: `复制 ${actionIds.length} 个片段`,
-          data: { actionIds, offset }
+          data: { 
+            clipIds: actionIds, 
+            properties: { offset }
+          }
         });
       } finally {
         historyStore.endBatch();

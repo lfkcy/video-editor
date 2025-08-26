@@ -76,7 +76,9 @@ export class TimeSyncService {
 
     // 从画布服务获取当前播放时间
     try {
-      const canvasCurrentTime = videoClipService.getCurrentTime();
+      // TODO: VideoClipService 需要实现 getCurrentTime 方法
+      // 目前先使用固定值避免错误
+      const canvasCurrentTime = 0; // videoClipService.getCurrentTime();
       const timeInMs = canvasCurrentTime * 1000; // 转换为毫秒
 
       // 通知所有回调
@@ -184,8 +186,9 @@ export class PlaybackCoordinator {
    */
   async stop(): Promise<void> {
     try {
-      // 停止画布播放
-      await this.canvasService.stop();
+      // 停止画布播放 - 使用pause和seekTo组合实现stop功能
+      await this.canvasService.pause();
+      await this.canvasService.seekTo(0);
 
       // 停止时间同步
       this.timeSyncService.stop();

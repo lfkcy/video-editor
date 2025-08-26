@@ -74,14 +74,17 @@ export function MediaLibrary() {
           const fileType = getFileType(file);
           
           try {
-            // 添加到时间轴
-            const result = await timelineContext.addMediaFile(file, undefined, fileType);
+            // 只添加支持的文件类型到时间轴
+            if (fileType !== 'unknown') {
+              const result = await timelineContext.addMediaFile(file, undefined, fileType as 'video' | 'audio' | 'image');
+              console.log('文件添加到时间轴成功:', result);
+            } else {
+              console.warn(`不支持的文件类型: ${file.type}`);
+            }
             
             // 同时添加到媒体库
             const mediaFile = await mediaProcessingService.processMediaFile(file);
             processedFiles.push(mediaFile);
-            
-            console.log('文件添加到时间轴成功:', result);
           } catch (error) {
             console.error(`添加文件 ${file.name} 到时间轴失败:`, error);
             // 即使添加到时间轴失败，也要添加到媒体库
@@ -199,9 +202,23 @@ export function MediaLibrary() {
     try {
       for (const fileId of selectedFiles) {
         const mediaFile = mediaFiles.find(f => f.id === fileId);
-        if (mediaFile && mediaFile.file) {
-          const fileType = getFileType(mediaFile.file);
-          await timelineContext.addMediaFile(mediaFile.file, undefined, fileType);
+        if (mediaFile && mediaFile.url) {
+          try {
+            // 从 URL 重新获取 File 对象
+            const response = await fetch(mediaFile.url);
+            const blob = await response.blob();
+            const file = new File([blob], mediaFile.name, { type: blob.type });
+            
+            const fileType = getFileType(file);
+            // 只添加支持的文件类型到时间轴
+            if (fileType !== 'unknown') {
+              await timelineContext.addMediaFile(file, undefined, fileType as 'video' | 'audio' | 'image');
+            } else {
+              console.warn(`不支持的文件类型: ${mediaFile.type}`);
+            }
+          } catch (error) {
+            console.error(`加载文件 ${mediaFile.name} 失败:`, error);
+          }
         }
       }
       

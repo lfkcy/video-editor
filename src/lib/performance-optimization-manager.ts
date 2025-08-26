@@ -60,4 +60,507 @@ export class PerformanceOptimizationManager {
     actionCount: 0,
     fps: 0,
     lastUpdateTime: 0
-  };\n\n  private memoryConfig: MemoryMonitorConfig = {\n    maxMemoryUsage: 512, // 512MB\n    checkInterval: 5000, // 5秒\n    warningThreshold: 256, // 256MB\n    cleanupThreshold: 384 // 384MB\n  };\n\n  private renderConfig: RenderOptimizationConfig = {\n    enableVirtualScrolling: true,\n    maxVisibleItems: 100,\n    debounceDelay: 16,\n    enableLazyLoading: true,\n    cacheSize: 50\n  };\n\n  private errorConfig: ErrorHandlingConfig = {\n    enableErrorBoundary: true,\n    enableRetry: true,\n    maxRetryAttempts: 3,\n    retryDelay: 1000,\n    enableLogging: true\n  };\n\n  private isMonitoring = false;\n  private monitoringInterval: number | null = null;\n  private renderCache = new Map<string, any>();\n  private errorLog: Array<{ timestamp: number; error: Error; context?: string }> = [];\n  \n  // 事件监听器\n  private memoryWarningListeners: ((usage: number) => void)[] = [];\n  private performanceIssueListeners: ((metrics: PerformanceMetrics) => void)[] = [];\n  private errorListeners: ((error: Error, context?: string) => void)[] = [];\n\n  /**\n   * 初始化性能优化管理器\n   */\n  initialize(): void {\n    this.startMonitoring();\n    this.setupErrorHandlers();\n    this.initializeRenderOptimizations();\n    \n    console.log('性能优化管理器初始化完成');\n  }\n\n  /**\n   * 开始性能监控\n   */\n  private startMonitoring(): void {\n    if (this.isMonitoring) return;\n\n    this.isMonitoring = true;\n    this.monitoringInterval = window.setInterval(() => {\n      this.updateMetrics();\n      this.checkMemoryUsage();\n      this.checkPerformanceIssues();\n    }, this.memoryConfig.checkInterval);\n\n    console.log('性能监控已启动');\n  }\n\n  /**\n   * 停止性能监控\n   */\n  private stopMonitoring(): void {\n    if (!this.isMonitoring) return;\n\n    this.isMonitoring = false;\n    if (this.monitoringInterval) {\n      clearInterval(this.monitoringInterval);\n      this.monitoringInterval = null;\n    }\n\n    console.log('性能监控已停止');\n  }\n\n  /**\n   * 更新性能指标\n   */\n  private updateMetrics(): void {\n    try {\n      // 内存使用情况\n      if ('memory' in performance) {\n        const memory = (performance as any).memory;\n        this.metrics.memoryUsage = memory.usedJSHeapSize / 1024 / 1024; // MB\n      }\n\n      // FPS 计算\n      const now = performance.now();\n      if (this.metrics.lastUpdateTime > 0) {\n        const deltaTime = now - this.metrics.lastUpdateTime;\n        this.metrics.fps = 1000 / deltaTime;\n      }\n      this.metrics.lastUpdateTime = now;\n\n      // 组件计数\n      this.metrics.componentCount = document.querySelectorAll('[data-component]').length;\n\n    } catch (error) {\n      this.handleError(error as Error, 'updateMetrics');\n    }\n  }\n\n  /**\n   * 检查内存使用情况\n   */\n  private checkMemoryUsage(): void {\n    const { memoryUsage } = this.metrics;\n    const { warningThreshold, cleanupThreshold } = this.memoryConfig;\n\n    if (memoryUsage > cleanupThreshold) {\n      this.performMemoryCleanup();\n    } else if (memoryUsage > warningThreshold) {\n      this.notifyMemoryWarning(memoryUsage);\n    }\n  }\n\n  /**\n   * 检查性能问题\n   */\n  private checkPerformanceIssues(): void {\n    const { fps, renderTime } = this.metrics;\n\n    // FPS 过低\n    if (fps < 30 && fps > 0) {\n      this.notifyPerformanceIssue('FPS过低');\n    }\n\n    // 渲染时间过长\n    if (renderTime > 16) { // 超过一帧的时间\n      this.notifyPerformanceIssue('渲染时间过长');\n    }\n  }\n\n  /**\n   * 执行内存清理\n   */\n  private performMemoryCleanup(): void {\n    try {\n      // 清理渲染缓存\n      this.clearRenderCache();\n\n      // 清理错误日志\n      this.clearOldErrorLogs();\n\n      // 强制垃圾回收（如果可用）\n      if (window.gc) {\n        window.gc();\n      }\n\n      console.log('内存清理完成');\n    } catch (error) {\n      this.handleError(error as Error, 'performMemoryCleanup');\n    }\n  }\n\n  /**\n   * 清理渲染缓存\n   */\n  private clearRenderCache(): void {\n    const cacheSize = this.renderCache.size;\n    if (cacheSize > this.renderConfig.cacheSize) {\n      const deleteCount = cacheSize - this.renderConfig.cacheSize;\n      const keysToDelete = Array.from(this.renderCache.keys()).slice(0, deleteCount);\n      \n      keysToDelete.forEach(key => {\n        this.renderCache.delete(key);\n      });\n\n      console.log(`清理了 ${deleteCount} 个渲染缓存项`);\n    }\n  }\n\n  /**\n   * 清理旧的错误日志\n   */\n  private clearOldErrorLogs(): void {\n    const now = Date.now();\n    const oneHourAgo = now - 60 * 60 * 1000; // 1小时前\n    \n    this.errorLog = this.errorLog.filter(log => log.timestamp > oneHourAgo);\n  }\n\n  /**\n   * 设置错误处理器\n   */\n  private setupErrorHandlers(): void {\n    if (!this.errorConfig.enableErrorBoundary) return;\n\n    // 全局错误处理\n    window.addEventListener('error', (event) => {\n      this.handleError(event.error, 'globalError');\n    });\n\n    // Promise 拒绝处理\n    window.addEventListener('unhandledrejection', (event) => {\n      this.handleError(new Error(event.reason), 'unhandledPromise');\n    });\n  }\n\n  /**\n   * 初始化渲染优化\n   */\n  private initializeRenderOptimizations(): void {\n    // 防抖函数创建\n    this.createDebouncedFunctions();\n    \n    // 虚拟滚动设置\n    this.setupVirtualScrolling();\n    \n    console.log('渲染优化设置完成');\n  }\n\n  /**\n   * 创建防抖函数\n   */\n  private createDebouncedFunctions(): void {\n    // 这里可以创建常用的防抖函数\n  }\n\n  /**\n   * 设置虚拟滚动\n   */\n  private setupVirtualScrolling(): void {\n    if (!this.renderConfig.enableVirtualScrolling) return;\n    \n    // 虚拟滚动逻辑\n    console.log('虚拟滚动已启用');\n  }\n\n  /**\n   * 处理错误\n   */\n  private handleError(error: Error, context?: string): void {\n    // 记录错误\n    this.errorLog.push({\n      timestamp: Date.now(),\n      error,\n      context\n    });\n\n    // 通知监听器\n    this.errorListeners.forEach(listener => {\n      try {\n        listener(error, context);\n      } catch (listenerError) {\n        console.error('错误监听器执行失败:', listenerError);\n      }\n    });\n\n    // 日志记录\n    if (this.errorConfig.enableLogging) {\n      console.error(`[${context || 'unknown'}]`, error);\n    }\n  }\n\n  /**\n   * 通知内存警告\n   */\n  private notifyMemoryWarning(usage: number): void {\n    this.memoryWarningListeners.forEach(listener => {\n      try {\n        listener(usage);\n      } catch (error) {\n        console.error('内存警告监听器执行失败:', error);\n      }\n    });\n  }\n\n  /**\n   * 通知性能问题\n   */\n  private notifyPerformanceIssue(issue: string): void {\n    this.performanceIssueListeners.forEach(listener => {\n      try {\n        listener({ ...this.metrics });\n      } catch (error) {\n        console.error('性能问题监听器执行失败:', error);\n      }\n    });\n\n    console.warn('性能问题:', issue, this.metrics);\n  }\n\n  /**\n   * 重试机制\n   */\n  async retry<T>(\n    operation: () => Promise<T>,\n    context?: string,\n    maxAttempts?: number\n  ): Promise<T> {\n    const attempts = maxAttempts || this.errorConfig.maxRetryAttempts;\n    \n    for (let i = 0; i < attempts; i++) {\n      try {\n        return await operation();\n      } catch (error) {\n        console.warn(`重试 ${i + 1}/${attempts} 失败:`, error);\n        \n        if (i === attempts - 1) {\n          this.handleError(error as Error, context);\n          throw error;\n        }\n        \n        // 等待后重试\n        await new Promise(resolve => setTimeout(resolve, this.errorConfig.retryDelay));\n      }\n    }\n    \n    throw new Error('重试失败');\n  }\n\n  /**\n   * 防抖函数\n   */\n  debounce<T extends (...args: any[]) => any>(\n    func: T,\n    delay?: number\n  ): (...args: Parameters<T>) => void {\n    const wait = delay || this.renderConfig.debounceDelay;\n    let timeoutId: number;\n    \n    return (...args: Parameters<T>) => {\n      clearTimeout(timeoutId);\n      timeoutId = window.setTimeout(() => func(...args), wait);\n    };\n  }\n\n  /**\n   * 节流函数\n   */\n  throttle<T extends (...args: any[]) => any>(\n    func: T,\n    delay?: number\n  ): (...args: Parameters<T>) => void {\n    const wait = delay || this.renderConfig.debounceDelay;\n    let lastCallTime = 0;\n    \n    return (...args: Parameters<T>) => {\n      const now = Date.now();\n      if (now - lastCallTime >= wait) {\n        lastCallTime = now;\n        func(...args);\n      }\n    };\n  }\n\n  /**\n   * 缓存管理\n   */\n  cacheResult<T>(key: string, generator: () => T): T {\n    if (this.renderCache.has(key)) {\n      return this.renderCache.get(key);\n    }\n    \n    const result = generator();\n    this.renderCache.set(key, result);\n    \n    return result;\n  }\n\n  /**\n   * 事件监听器管理\n   */\n  onMemoryWarning(callback: (usage: number) => void): () => void {\n    this.memoryWarningListeners.push(callback);\n    return () => {\n      const index = this.memoryWarningListeners.indexOf(callback);\n      if (index > -1) {\n        this.memoryWarningListeners.splice(index, 1);\n      }\n    };\n  }\n\n  onPerformanceIssue(callback: (metrics: PerformanceMetrics) => void): () => void {\n    this.performanceIssueListeners.push(callback);\n    return () => {\n      const index = this.performanceIssueListeners.indexOf(callback);\n      if (index > -1) {\n        this.performanceIssueListeners.splice(index, 1);\n      }\n    };\n  }\n\n  onError(callback: (error: Error, context?: string) => void): () => void {\n    this.errorListeners.push(callback);\n    return () => {\n      const index = this.errorListeners.indexOf(callback);\n      if (index > -1) {\n        this.errorListeners.splice(index, 1);\n      }\n    };\n  }\n\n  /**\n   * 获取性能指标\n   */\n  getMetrics(): PerformanceMetrics {\n    return { ...this.metrics };\n  }\n\n  /**\n   * 更新配置\n   */\n  updateMemoryConfig(config: Partial<MemoryMonitorConfig>): void {\n    this.memoryConfig = { ...this.memoryConfig, ...config };\n  }\n\n  updateRenderConfig(config: Partial<RenderOptimizationConfig>): void {\n    this.renderConfig = { ...this.renderConfig, ...config };\n  }\n\n  updateErrorConfig(config: Partial<ErrorHandlingConfig>): void {\n    this.errorConfig = { ...this.errorConfig, ...config };\n  }\n\n  /**\n   * 获取错误日志\n   */\n  getErrorLog(): typeof this.errorLog {\n    return [...this.errorLog];\n  }\n\n  /**\n   * 获取性能报告\n   */\n  getPerformanceReport(): {\n    metrics: PerformanceMetrics;\n    memoryStatus: string;\n    renderStatus: string;\n    errorCount: number;\n    recommendations: string[];\n  } {\n    const { memoryUsage, fps, renderTime } = this.metrics;\n    const recommendations: string[] = [];\n\n    // 内存状态\n    let memoryStatus = '正常';\n    if (memoryUsage > this.memoryConfig.cleanupThreshold) {\n      memoryStatus = '严重';\n      recommendations.push('建议清理内存或减少组件数量');\n    } else if (memoryUsage > this.memoryConfig.warningThreshold) {\n      memoryStatus = '警告';\n      recommendations.push('监控内存使用情况');\n    }\n\n    // 渲染状态\n    let renderStatus = '正常';\n    if (fps < 30 && fps > 0) {\n      renderStatus = '较差';\n      recommendations.push('优化渲染性能，减少复杂操作');\n    }\n    if (renderTime > 16) {\n      renderStatus = '缓慢';\n      recommendations.push('优化组件渲染逻辑');\n    }\n\n    return {\n      metrics: this.getMetrics(),\n      memoryStatus,\n      renderStatus,\n      errorCount: this.errorLog.length,\n      recommendations\n    };\n  }\n\n  /**\n   * 销毁管理器\n   */\n  destroy(): void {\n    this.stopMonitoring();\n    this.renderCache.clear();\n    this.errorLog = [];\n    this.memoryWarningListeners = [];\n    this.performanceIssueListeners = [];\n    this.errorListeners = [];\n    \n    console.log('性能优化管理器已销毁');\n  }\n}\n\n/**\n * 创建性能优化管理器实例\n */\nexport function createPerformanceOptimizationManager(): PerformanceOptimizationManager {\n  return new PerformanceOptimizationManager();\n}\n\n/**\n * 全局性能优化管理器实例\n */\nexport const performanceOptimizationManager = new PerformanceOptimizationManager();\n\n/**\n * 导出类型\n */\nexport type {\n  PerformanceMetrics,\n  MemoryMonitorConfig,\n  RenderOptimizationConfig,\n  ErrorHandlingConfig\n};
+  };
+
+  private memoryConfig: MemoryMonitorConfig = {
+    maxMemoryUsage: 512, // 512MB
+    checkInterval: 5000, // 5秒
+    warningThreshold: 256, // 256MB
+    cleanupThreshold: 384 // 384MB
+  };
+
+  private renderConfig: RenderOptimizationConfig = {
+    enableVirtualScrolling: true,
+    maxVisibleItems: 100,
+    debounceDelay: 16,
+    enableLazyLoading: true,
+    cacheSize: 50
+  };
+
+  private errorConfig: ErrorHandlingConfig = {
+    enableErrorBoundary: true,
+    enableRetry: true,
+    maxRetryAttempts: 3,
+    retryDelay: 1000,
+    enableLogging: true
+  };
+
+  private isMonitoring = false;
+  private monitoringInterval: number | null = null;
+  private renderCache = new Map<string, any>();
+  private errorLog: Array<{ timestamp: number; error: Error; context?: string }> = [];
+  
+  // 事件监听器
+  private memoryWarningListeners: ((usage: number) => void)[] = [];
+  private performanceIssueListeners: ((metrics: PerformanceMetrics) => void)[] = [];
+  private errorListeners: ((error: Error, context?: string) => void)[] = [];
+
+  /**
+   * 初始化性能优化管理器
+   */
+  initialize(): void {
+    this.startMonitoring();
+    this.setupErrorHandlers();
+    this.initializeRenderOptimizations();
+    
+    console.log('性能优化管理器初始化完成');
+  }
+
+  /**
+   * 开始性能监控
+   */
+  private startMonitoring(): void {
+    if (this.isMonitoring) return;
+
+    this.isMonitoring = true;
+    this.monitoringInterval = window.setInterval(() => {
+      this.updateMetrics();
+      this.checkMemoryUsage();
+      this.checkPerformanceIssues();
+    }, this.memoryConfig.checkInterval);
+
+    console.log('性能监控已启动');
+  }
+
+  /**
+   * 停止性能监控
+   */
+  private stopMonitoring(): void {
+    if (!this.isMonitoring) return;
+
+    this.isMonitoring = false;
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+
+    console.log('性能监控已停止');
+  }
+
+  /**
+   * 更新性能指标
+   */
+  private updateMetrics(): void {
+    try {
+      // 内存使用情况
+      if ('memory' in performance) {
+        const memory = (performance as any).memory;
+        this.metrics.memoryUsage = memory.usedJSHeapSize / 1024 / 1024; // MB
+      }
+
+      // FPS 计算
+      const now = performance.now();
+      if (this.metrics.lastUpdateTime > 0) {
+        const deltaTime = now - this.metrics.lastUpdateTime;
+        this.metrics.fps = 1000 / deltaTime;
+      }
+      this.metrics.lastUpdateTime = now;
+
+      // 组件计数
+      this.metrics.componentCount = document.querySelectorAll('[data-component]').length;
+
+    } catch (error) {
+      this.handleError(error as Error, 'updateMetrics');
+    }
+  }
+
+  /**
+   * 检查内存使用情况
+   */
+  private checkMemoryUsage(): void {
+    const { memoryUsage } = this.metrics;
+    const { warningThreshold, cleanupThreshold } = this.memoryConfig;
+
+    if (memoryUsage > cleanupThreshold) {
+      this.performMemoryCleanup();
+    } else if (memoryUsage > warningThreshold) {
+      this.notifyMemoryWarning(memoryUsage);
+    }
+  }
+
+  /**
+   * 检查性能问题
+   */
+  private checkPerformanceIssues(): void {
+    const { fps, renderTime } = this.metrics;
+
+    // FPS 过低
+    if (fps < 30 && fps > 0) {
+      this.notifyPerformanceIssue('FPS过低');
+    }
+
+    // 渲染时间过长
+    if (renderTime > 16) { // 超过一帧的时间
+      this.notifyPerformanceIssue('渲染时间过长');
+    }
+  }
+
+  /**
+   * 执行内存清理
+   */
+  private performMemoryCleanup(): void {
+    try {
+      // 清理渲染缓存
+      this.clearRenderCache();
+
+      // 清理错误日志
+      this.clearOldErrorLogs();
+
+      // 强制垃圾回收（如果可用）
+      if ((window as any).gc) {
+        (window as any).gc();
+      }
+
+      console.log('内存清理完成');
+    } catch (error) {
+      this.handleError(error as Error, 'performMemoryCleanup');
+    }
+  }
+
+  /**
+   * 清理渲染缓存
+   */
+  private clearRenderCache(): void {
+    const cacheSize = this.renderCache.size;
+    if (cacheSize > this.renderConfig.cacheSize) {
+      const deleteCount = cacheSize - this.renderConfig.cacheSize;
+      const keysToDelete = Array.from(this.renderCache.keys()).slice(0, deleteCount);
+      
+      keysToDelete.forEach(key => {
+        this.renderCache.delete(key);
+      });
+
+      console.log(`清理了 ${deleteCount} 个渲染缓存项`);
+    }
+  }
+
+  /**
+   * 清理旧的错误日志
+   */
+  private clearOldErrorLogs(): void {
+    const now = Date.now();
+    const oneHourAgo = now - 60 * 60 * 1000; // 1小时前
+    
+    this.errorLog = this.errorLog.filter(log => log.timestamp > oneHourAgo);
+  }
+
+  /**
+   * 设置错误处理器
+   */
+  private setupErrorHandlers(): void {
+    if (!this.errorConfig.enableErrorBoundary) return;
+
+    // 全局错误处理
+    window.addEventListener('error', (event) => {
+      this.handleError(event.error, 'globalError');
+    });
+
+    // Promise 拒绝处理
+    window.addEventListener('unhandledrejection', (event) => {
+      this.handleError(new Error(event.reason), 'unhandledPromise');
+    });
+  }
+
+  /**
+   * 初始化渲染优化
+   */
+  private initializeRenderOptimizations(): void {
+    // 防抖函数创建
+    this.createDebouncedFunctions();
+    
+    // 虚拟滚动设置
+    this.setupVirtualScrolling();
+    
+    console.log('渲染优化设置完成');
+  }
+
+  /**
+   * 创建防抖函数
+   */
+  private createDebouncedFunctions(): void {
+    // 这里可以创建常用的防抖函数
+  }
+
+  /**
+   * 设置虚拟滚动
+   */
+  private setupVirtualScrolling(): void {
+    if (!this.renderConfig.enableVirtualScrolling) return;
+    
+    // 虚拟滚动逻辑
+    console.log('虚拟滚动已启用');
+  }
+
+  /**
+   * 处理错误
+   */
+  private handleError(error: Error, context?: string): void {
+    // 记录错误
+    this.errorLog.push({
+      timestamp: Date.now(),
+      error,
+      context
+    });
+
+    // 通知监听器
+    this.errorListeners.forEach(listener => {
+      try {
+        listener(error, context);
+      } catch (listenerError) {
+        console.error('错误监听器执行失败:', listenerError);
+      }
+    });
+
+    // 日志记录
+    if (this.errorConfig.enableLogging) {
+      console.error(`[${context || 'unknown'}]`, error);
+    }
+  }
+
+  /**
+   * 通知内存警告
+   */
+  private notifyMemoryWarning(usage: number): void {
+    this.memoryWarningListeners.forEach(listener => {
+      try {
+        listener(usage);
+      } catch (error) {
+        console.error('内存警告监听器执行失败:', error);
+      }
+    });
+  }
+
+  /**
+   * 通知性能问题
+   */
+  private notifyPerformanceIssue(issue: string): void {
+    this.performanceIssueListeners.forEach(listener => {
+      try {
+        listener({ ...this.metrics });
+      } catch (error) {
+        console.error('性能问题监听器执行失败:', error);
+      }
+    });
+
+    console.warn('性能问题:', issue, this.metrics);
+  }
+
+  /**
+   * 重试机制
+   */
+  async retry<T>(
+    operation: () => Promise<T>,
+    context?: string,
+    maxAttempts?: number
+  ): Promise<T> {
+    const attempts = maxAttempts || this.errorConfig.maxRetryAttempts;
+    
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await operation();
+      } catch (error) {
+        console.warn(`重试 ${i + 1}/${attempts} 失败:`, error);
+        
+        if (i === attempts - 1) {
+          this.handleError(error as Error, context);
+          throw error;
+        }
+        
+        // 等待后重试
+        await new Promise(resolve => setTimeout(resolve, this.errorConfig.retryDelay));
+      }
+    }
+    
+    throw new Error('重试失败');
+  }
+
+  /**
+   * 防抖函数
+   */
+  debounce<T extends (...args: any[]) => any>(
+    func: T,
+    delay?: number
+  ): (...args: Parameters<T>) => void {
+    const wait = delay || this.renderConfig.debounceDelay;
+    let timeoutId: number;
+    
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => func(...args), wait);
+    };
+  }
+
+  /**
+   * 节流函数
+   */
+  throttle<T extends (...args: any[]) => any>(
+    func: T,
+    delay?: number
+  ): (...args: Parameters<T>) => void {
+    const wait = delay || this.renderConfig.debounceDelay;
+    let lastCallTime = 0;
+    
+    return (...args: Parameters<T>) => {
+      const now = Date.now();
+      if (now - lastCallTime >= wait) {
+        lastCallTime = now;
+        func(...args);
+      }
+    };
+  }
+
+  /**
+   * 缓存管理
+   */
+  cacheResult<T>(key: string, generator: () => T): T {
+    if (this.renderCache.has(key)) {
+      return this.renderCache.get(key);
+    }
+    
+    const result = generator();
+    this.renderCache.set(key, result);
+    
+    return result;
+  }
+
+  /**
+   * 事件监听器管理
+   */
+  onMemoryWarning(callback: (usage: number) => void): () => void {
+    this.memoryWarningListeners.push(callback);
+    return () => {
+      const index = this.memoryWarningListeners.indexOf(callback);
+      if (index > -1) {
+        this.memoryWarningListeners.splice(index, 1);
+      }
+    };
+  }
+
+  onPerformanceIssue(callback: (metrics: PerformanceMetrics) => void): () => void {
+    this.performanceIssueListeners.push(callback);
+    return () => {
+      const index = this.performanceIssueListeners.indexOf(callback);
+      if (index > -1) {
+        this.performanceIssueListeners.splice(index, 1);
+      }
+    };
+  }
+
+  onError(callback: (error: Error, context?: string) => void): () => void {
+    this.errorListeners.push(callback);
+    return () => {
+      const index = this.errorListeners.indexOf(callback);
+      if (index > -1) {
+        this.errorListeners.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * 获取性能指标
+   */
+  getMetrics(): PerformanceMetrics {
+    return { ...this.metrics };
+  }
+
+  /**
+   * 更新配置
+   */
+  updateMemoryConfig(config: Partial<MemoryMonitorConfig>): void {
+    this.memoryConfig = { ...this.memoryConfig, ...config };
+  }
+
+  updateRenderConfig(config: Partial<RenderOptimizationConfig>): void {
+    this.renderConfig = { ...this.renderConfig, ...config };
+  }
+
+  updateErrorConfig(config: Partial<ErrorHandlingConfig>): void {
+    this.errorConfig = { ...this.errorConfig, ...config };
+  }
+
+  /**
+   * 获取错误日志
+   */
+  getErrorLog(): typeof this.errorLog {
+    return [...this.errorLog];
+  }
+
+  /**
+   * 获取性能报告
+   */
+  getPerformanceReport(): {
+    metrics: PerformanceMetrics;
+    memoryStatus: string;
+    renderStatus: string;
+    errorCount: number;
+    recommendations: string[];
+  } {
+    const { memoryUsage, fps, renderTime } = this.metrics;
+    const recommendations: string[] = [];
+
+    // 内存状态
+    let memoryStatus = '正常';
+    if (memoryUsage > this.memoryConfig.cleanupThreshold) {
+      memoryStatus = '严重';
+      recommendations.push('建议清理内存或减少组件数量');
+    } else if (memoryUsage > this.memoryConfig.warningThreshold) {
+      memoryStatus = '警告';
+      recommendations.push('监控内存使用情况');
+    }
+
+    // 渲染状态
+    let renderStatus = '正常';
+    if (fps < 30 && fps > 0) {
+      renderStatus = '较差';
+      recommendations.push('优化渲染性能，减少复杂操作');
+    }
+    if (renderTime > 16) {
+      renderStatus = '缓慢';
+      recommendations.push('优化组件渲染逻辑');
+    }
+
+    return {
+      metrics: this.getMetrics(),
+      memoryStatus,
+      renderStatus,
+      errorCount: this.errorLog.length,
+      recommendations
+    };
+  }
+
+  /**
+   * 销毁管理器
+   */
+  destroy(): void {
+    this.stopMonitoring();
+    this.renderCache.clear();
+    this.errorLog = [];
+    this.memoryWarningListeners = [];
+    this.performanceIssueListeners = [];
+    this.errorListeners = [];
+    
+    console.log('性能优化管理器已销毁');
+  }
+}
+
+/**
+ * 创建性能优化管理器实例
+ */
+export function createPerformanceOptimizationManager(): PerformanceOptimizationManager {
+  return new PerformanceOptimizationManager();
+}
+
+/**
+ * 全局性能优化管理器实例
+ */
+export const performanceOptimizationManager = new PerformanceOptimizationManager();
+
+/**
+ * 导出类型
+ */
+export type {
+  PerformanceMetrics,
+  MemoryMonitorConfig,
+  RenderOptimizationConfig,
+  ErrorHandlingConfig
+};

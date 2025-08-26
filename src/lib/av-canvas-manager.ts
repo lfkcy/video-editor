@@ -236,8 +236,7 @@ export class AVCanvasManager {
       id: Math.random().toString(36).substr(2, 9),
       start,
       end,
-      effectId: '',
-      name,
+      effectId: ''
     };
   }
 
@@ -301,6 +300,10 @@ export class AVCanvasManager {
     try {
       const clip = sprite.getClip();
       const splitTimeMs = splitTime * 1e6;
+
+      if(!clip.split) {
+        throw new Error('没有分割方法');
+      }
       
       // 分割剪辑
       const clips = await clip.split(splitTimeMs);
@@ -324,7 +327,7 @@ export class AVCanvasManager {
         
         await this.avCanvas!.addSprite(newSprite);
         
-        const newAction = this.createTimelineAction(newSprite, action.name);
+        const newAction = this.createTimelineAction(newSprite, 'split-' + i);
         this.actionSpriteMap.set(newAction, newSprite);
         this.spriteActionMap.set(newSprite, newAction);
         
@@ -345,8 +348,8 @@ export class AVCanvasManager {
    */
   play(startTime?: number): void {
     this.ensureInitialized();
-    const options = startTime !== undefined ? { start: startTime * 1e6 } : undefined;
-    this.avCanvas!.play(options);
+    const start = startTime !== undefined ? startTime * 1e6 : 0;
+    this.avCanvas!.play({ start });
   }
 
   pause(): void {

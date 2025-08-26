@@ -29,8 +29,7 @@ export class ActionSpriteManager {
 
     console.log('注册映射关系:', { 
       actionId: action.id, 
-      spriteId: this.getSpriteId(sprite),
-      actionName: action.name 
+      spriteId: this.getSpriteId(sprite)
     });
   }
 

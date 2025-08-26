@@ -67,24 +67,18 @@ export function OverlayManager({
     setSelectedOverlayId(newOverlay.id);
     setEditingOverlayId(newOverlay.id);
 
-    // 添加到画布服务
-    videoClipService.addTextSprite(newOverlay.text, {
-      fontSize: newOverlay.fontSize,
-      fontFamily: newOverlay.fontFamily,
-      fontWeight: newOverlay.fontWeight,
-      color: newOverlay.color,
-      backgroundColor: newOverlay.background || 'transparent',
-      textAlign: newOverlay.textAlign,
-      lineHeight: 1.2,
-      letterSpacing: '0px',
-      shadow: {
-        enabled: newOverlay.shadow,
-        offsetX: 2,
-        offsetY: 2,
-        blur: 4,
-        color: 'rgba(0,0,0,0.5)',
-      },
-    }, newOverlay.id);
+    // TODO: 添加到画布服务 - 需要实现叠加层专用的方法
+    // 目前先注释掉，因为 VideoClipService.addTextSprite 方法不存在
+    // videoClipService.addTextSpriteToTrack(newOverlay.text, 'overlay-track', {
+    //   fontSize: newOverlay.fontSize,
+    //   fontFamily: newOverlay.fontFamily,
+    //   fontWeight: newOverlay.fontWeight,
+    //   color: newOverlay.color,
+    //   backgroundColor: newOverlay.background || 'transparent',
+    //   textAlign: newOverlay.textAlign,
+    //   lineHeight: 1.2,
+    //   letterSpacing: '0px',
+    // }, 5);
   }, [currentTime, textOverlays.length]);
 
   // 添加图片叠加
@@ -123,8 +117,9 @@ export function OverlayManager({
     setImageOverlays(prev => [...prev, newOverlay]);
     setSelectedOverlayId(newOverlay.id);
 
-    // 添加到画布服务
-    videoClipService.addImageSpriteFromUrl(imageUrl, newOverlay.id);
+    // TODO: 添加到画布服务 - 需要实现图片叠加层专用的方法
+    // 目前先注释掉，因为 VideoClipService.addImageSpriteFromUrl 方法不存在
+    // videoClipService.addImageSpriteToTrack(file, 'overlay-track', 5);
 
     // 清空文件输入
     event.target.value = '';
@@ -138,32 +133,24 @@ export function OverlayManager({
       )
     );
 
-    // 更新画布服务中的精灵
-    const overlay = textOverlays.find(o => o.id === id);
-    if (overlay) {
-      // if (updates.text !== undefined) {
-      //   videoClipService.updateTextSprite(id, {
-      //     ...overlay,
-      //     ...updates,
-      //   });
-      // }
-      
-      if (updates.position) {
-        const transform = {
-          x: (updates.position.x / 100) * containerWidth,
-          y: (updates.position.y / 100) * containerHeight,
-        };
-        videoClipService.updateSpriteTransform(id, transform);
-      }
-
-      if (updates.opacity !== undefined) {
-        videoClipService.updateSpriteOpacity(id, updates.opacity / 100);
-      }
-
-      if (updates.rotation !== undefined) {
-        videoClipService.updateSpriteTransform(id, { rotation: updates.rotation });
-      }
-    }
+    // TODO: 更新画布服务中的精灵 - 需要实现叠加层专用的更新方法
+    // 目前先注释掉，因为相关的更新方法不存在
+    // const overlay = textOverlays.find(o => o.id === id);
+    // if (overlay) {
+    //   if (updates.position) {
+    //     const transform = {
+    //       x: (updates.position.x / 100) * containerWidth,
+    //       y: (updates.position.y / 100) * containerHeight,
+    //     };
+    //     videoClipService.updateSpriteTransform(id, transform);
+    //   }
+    //   if (updates.opacity !== undefined) {
+    //     videoClipService.updateSpriteOpacity(id, updates.opacity / 100);
+    //   }
+    //   if (updates.rotation !== undefined) {
+    //     videoClipService.updateSpriteTransform(id, { rotation: updates.rotation });
+    //   }
+    // }
   }, [textOverlays, containerWidth, containerHeight]);
 
   // 更新图片叠加
@@ -174,24 +161,24 @@ export function OverlayManager({
       )
     );
 
-    // 更新画布服务中的精灵
-    if (updates.position || updates.size) {
-      const overlay = imageOverlays.find(o => o.id === id);
-      if (overlay) {
-        const transform = {
-          x: updates.position ? (updates.position.x / 100) * containerWidth : undefined,
-          y: updates.position ? (updates.position.y / 100) * containerHeight : undefined,
-          width: updates.size ? (updates.size.width / 100) * containerWidth : undefined,
-          height: updates.size ? (updates.size.height / 100) * containerHeight : undefined,
-          rotation: updates.rotation,
-        };
-        videoClipService.updateSpriteTransform(id, transform);
-      }
-    }
-
-    if (updates.opacity !== undefined) {
-      videoClipService.updateSpriteOpacity(id, updates.opacity / 100);
-    }
+    // TODO: 更新画布服务中的精灵 - 需要实现图片叠加层专用的更新方法
+    // 目前先注释掉，因为相关的更新方法不存在
+    // if (updates.position || updates.size) {
+    //   const overlay = imageOverlays.find(o => o.id === id);
+    //   if (overlay) {
+    //     const transform = {
+    //       x: updates.position ? (updates.position.x / 100) * containerWidth : undefined,
+    //       y: updates.position ? (updates.position.y / 100) * containerHeight : undefined,
+    //       width: updates.size ? (updates.size.width / 100) * containerWidth : undefined,
+    //       height: updates.size ? (updates.size.height / 100) * containerHeight : undefined,
+    //       rotation: updates.rotation,
+    //     };
+    //     videoClipService.updateSpriteTransform(id, transform);
+    //   }
+    // }
+    // if (updates.opacity !== undefined) {
+    //   videoClipService.updateSpriteOpacity(id, updates.opacity / 100);
+    // }
   }, [imageOverlays, containerWidth, containerHeight]);
 
   // 删除叠加层
@@ -206,8 +193,9 @@ export function OverlayManager({
       setEditingOverlayId(null);
     }
 
-    // 从画布服务中移除
-    videoClipService.removeSprite(id);
+    // TODO: 从画布服务中移除 - 需要实现叠加层专用的移除方法
+    // 目前先注释掉，因为 removeSprite 方法需要 TimelineAction 参数
+    // videoClipService.removeSprite({ id } as TimelineAction);
   }, [selectedOverlayId, editingOverlayId]);
 
   // 调整层级
@@ -226,7 +214,8 @@ export function OverlayManager({
         if (newZIndex < 0 || newZIndex >= prev.length) return prev;
 
         newArray[index] = { ...prev[index], zIndex: newZIndex };
-        videoClipService.setSpriteZIndex(id, newZIndex);
+        // TODO: 设置精灵层级 - 需要实现叠加层专用的层级设置方法
+        // videoClipService.setSpriteZIndex(id, newZIndex);
         
         return newArray;
       });
@@ -241,7 +230,8 @@ export function OverlayManager({
         if (newZIndex < 0 || newZIndex >= prev.length) return prev;
 
         newArray[index] = { ...prev[index], zIndex: newZIndex };
-        videoClipService.setSpriteZIndex(id, newZIndex);
+        // TODO: 设置精灵层级 - 需要实现叠加层专用的层级设置方法
+        // videoClipService.setSpriteZIndex(id, newZIndex);
         
         return newArray;
       });
