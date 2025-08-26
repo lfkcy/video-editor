@@ -1,19 +1,23 @@
-'use client';
+"use client";
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Play, Pause, Square, Volume2, VolumeX, Maximize } from 'lucide-react';
-import { useTimelineStore, useUIStore } from '@/stores';
-import { videoClipService } from '@/services';
-import { Button } from '@/components/ui/button';
-import { cn, formatTime } from '@/lib/utils';
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { Play, Pause, Square, Volume2, VolumeX, Maximize } from "lucide-react";
+import { useTimelineStore, useUIStore } from "@/stores";
+import { videoClipService } from "@/services";
+import { Button } from "@/components/ui/button";
+import { cn, formatTime } from "@/lib/utils";
+
+interface VideoPreviewProps {
+  onInitialized: (container: HTMLDivElement) => void;
+}
 
 /**
  * 视频预览器组件
  */
-export function VideoPreview() {
+export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   // 状态管理
   const {
     isPlaying,
@@ -28,13 +32,13 @@ export function VideoPreview() {
     setVolume,
     toggleMute,
   } = useTimelineStore();
-  
-  const { 
-    isFullscreen, 
+
+  const {
+    isFullscreen,
     toggleFullscreen,
     previewQuality,
     previewAudio,
-    showSafeArea 
+    showSafeArea,
   } = useUIStore();
 
   // 本地状态
@@ -42,27 +46,39 @@ export function VideoPreview() {
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
 
-  // 初始化画布服务
   useEffect(() => {
-    const initializeCanvas = async () => {
-      if (!containerRef.current) return;
+    // 使用本地 ref 来确保 DOM 节点已挂载
+    const container = containerRef.current;
 
+    if (!container) {
+      console.log("VideoPreview container not yet available.");
+      return;
+    }
+
+    // 确保只执行一次初始化逻辑
+    const initialize = async () => {
       try {
-        await videoClipService.initialize(containerRef.current);
+        // 在这里执行 VideoPreview 自己的初始化逻辑
+        // 例如，如果 AVCanvas 的初始化只需要容器，就放在这里
+        await videoClipService.initialize(containerRef.current!);
+
         setIsInitialized(true);
-        setError(null);
+        console.log("VideoPreview 内部初始化成功，通知父组件");
+
+        // 调用回调，把 DOM 节点传给父组件
+        onInitialized(container);
       } catch (err) {
-        console.error('Failed to initialize canvas service:', err);
-        setError('无法初始化视频预览器');
+        console.error("Failed to initialize VideoPreview:", err);
       }
     };
 
-    initializeCanvas();
+    initialize();
 
     return () => {
+      // 可以在这里做一些清理工作
       videoClipService.destroy();
     };
-  }, []);
+  }, []); // 依赖 onInitialized
 
   // 播放控制
   const handlePlayPause = useCallback(async () => {
@@ -77,7 +93,7 @@ export function VideoPreview() {
         play();
       }
     } catch (err) {
-      console.error('Playback control failed:', err);
+      console.error("Playback control failed:", err);
     }
   }, [isInitialized, isPlaying, play, pause]);
 
@@ -88,27 +104,33 @@ export function VideoPreview() {
       videoClipService.pause();
       stop();
     } catch (err) {
-      console.error('Stop failed:', err);
+      console.error("Stop failed:", err);
     }
   }, [isInitialized, stop]);
 
-  const handleSeek = useCallback(async (time: number) => {
-    if (!isInitialized) return;
+  const handleSeek = useCallback(
+    async (time: number) => {
+      if (!isInitialized) return;
 
-    try {
-      await videoClipService.seekTo(time / 1000); // 转换为秒
-      seekTo(time);
-    } catch (err) {
-      console.error('Seek failed:', err);
-    }
-  }, [isInitialized, seekTo]);
+      try {
+        await videoClipService.seekTo(time / 1000); // 转换为秒
+        seekTo(time);
+      } catch (err) {
+        console.error("Seek failed:", err);
+      }
+    },
+    [isInitialized, seekTo]
+  );
 
-  const handleVolumeChange = useCallback((newVolume: number) => {
-    if (!isInitialized) return;
+  const handleVolumeChange = useCallback(
+    (newVolume: number) => {
+      if (!isInitialized) return;
 
-    // videoClipService.setVolume(newVolume);
-    setVolume(newVolume);
-  }, [isInitialized, setVolume]);
+      // videoClipService.setVolume(newVolume);
+      setVolume(newVolume);
+    },
+    [isInitialized, setVolume]
+  );
 
   const handleMuteToggle = useCallback(() => {
     toggleMute();
@@ -118,14 +140,17 @@ export function VideoPreview() {
   }, [isInitialized, muted, volume, toggleMute]);
 
   // 进度条拖拽
-  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (duration === 0) return;
+  const handleProgressClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (duration === 0) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    const newTime = percent * duration;
-    handleSeek(newTime);
-  }, [duration, handleSeek]);
+      const rect = e.currentTarget.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      const newTime = percent * duration;
+      handleSeek(newTime);
+    },
+    [duration, handleSeek]
+  );
 
   // 键盘快捷键
   useEffect(() => {
@@ -133,35 +158,35 @@ export function VideoPreview() {
       if (e.target instanceof HTMLInputElement) return;
 
       switch (e.code) {
-        case 'Space':
+        case "Space":
           e.preventDefault();
           handlePlayPause();
           break;
-        case 'KeyK':
+        case "KeyK":
           e.preventDefault();
           handlePlayPause();
           break;
-        case 'KeyM':
+        case "KeyM":
           e.preventDefault();
           handleMuteToggle();
           break;
-        case 'ArrowLeft':
+        case "ArrowLeft":
           e.preventDefault();
           handleSeek(Math.max(0, currentTime - 1000));
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           e.preventDefault();
           handleSeek(Math.min(duration, currentTime + 1000));
           break;
-        case 'Home':
+        case "Home":
           e.preventDefault();
           handleSeek(0);
           break;
-        case 'End':
+        case "End":
           e.preventDefault();
           handleSeek(duration);
           break;
-        case 'KeyF':
+        case "KeyF":
           if (!e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             toggleFullscreen();
@@ -170,9 +195,16 @@ export function VideoPreview() {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTime, duration, handlePlayPause, handleSeek, handleMuteToggle, toggleFullscreen]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    currentTime,
+    duration,
+    handlePlayPause,
+    handleSeek,
+    handleMuteToggle,
+    toggleFullscreen,
+  ]);
 
   // 鼠标悬停控制显示
   const handleMouseEnter = () => setShowControls(true);
@@ -191,6 +223,7 @@ export function VideoPreview() {
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         "video-preview relative h-full bg-black rounded-lg overflow-hidden group",
         isFullscreen && "fixed inset-0 z-50 rounded-none"
@@ -199,7 +232,7 @@ export function VideoPreview() {
       onMouseLeave={handleMouseLeave}
     >
       {/* 画布容器 */}
-      <div 
+      <div
         ref={containerRef}
         className="absolute inset-0 flex items-center justify-center"
       >
@@ -227,14 +260,14 @@ export function VideoPreview() {
         )}
       >
         {/* 进度条 */}
-        <div 
+        <div
           className="w-full h-1 bg-white/30 rounded-full mb-3 cursor-pointer"
           onClick={handleProgressClick}
         >
           <div
             className="h-full bg-primary rounded-full transition-all duration-100"
             style={{
-              width: duration > 0 ? `${(currentTime / duration) * 100}%` : '0%'
+              width: duration > 0 ? `${(currentTime / duration) * 100}%` : "0%",
             }}
           />
         </div>
@@ -289,7 +322,7 @@ export function VideoPreview() {
                   <Volume2 className="h-5 w-5" />
                 )}
               </Button>
-              
+
               <input
                 type="range"
                 min="0"
@@ -321,4 +354,4 @@ export function VideoPreview() {
       </div>
     </div>
   );
-}
+};

@@ -1,12 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: false,
   webpack: (config, { isServer }) => {
     // WebAV 需要的 WASM 支持
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
     };
-    
+
     // 处理 WebAV 的 worker 文件
     config.module.rules.push({
       test: /\.worker\.js$/,
