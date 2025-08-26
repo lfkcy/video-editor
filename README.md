@@ -1,5 +1,7 @@
 # 视频编辑器 (Video Editor)
 
+# 未开发完成,还需完善
+
 > 基于 Next.js 和 WebAV 构建的现代化网页视频编辑器
 
 ![视频编辑器预览](./docs/preview.png)
