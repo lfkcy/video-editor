@@ -10,6 +10,8 @@ import { createPlaybackControlIntegrator, PlaybackControlIntegrator } from '@/li
 import { createTimelinePerformanceOptimizer, TimelinePerformanceOptimizer } from '@/lib/timeline-performance-optimizer';
 import { TimelineToolbar } from './timeline/timeline-toolbar';
 import { EnhancedTimelineToolbar } from './enhanced-timeline-toolbar';
+import { VideoClipService, createVideoClipService } from '@/services/video-clip-service';
+import { TimelineAVCanvasIntegrator, createTimelineAVCanvasIntegrator } from '@/lib/timeline-avcanvas-integrator';
 
 /**
  * TimelineEditor 组件属性
@@ -27,14 +29,17 @@ interface TimelineEditorProps {
  * 新的时间轴编辑器组件
  * 使用 react-timeline-editor 替换原有的自定义实现
  */
-export function TimelineEditor({
-  height = 400,
-  showToolbar = true,
-  className = '',
-  onTimelineChange,
-  onTimeChange,
-  onSelectionChange
-}: TimelineEditorProps) {
+export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>((
+  {
+    height = 400,
+    showToolbar = true,
+    className = '',
+    onTimelineChange,
+    onTimeChange,
+    onSelectionChange
+  },
+  ref
+) => {
   // 状态管理
   const { currentProject } = useProjectStore();
   const {
@@ -59,6 +64,8 @@ export function TimelineEditor({
   const eventHandlerRef = useRef(timelineEventHandler);
   const playbackControlRef = useRef<PlaybackControlIntegrator>();
   const performanceOptimizerRef = useRef<TimelinePerformanceOptimizer>();
+  const videoClipServiceRef = useRef<VideoClipService>();
+  const timelineIntegratorRef = useRef<TimelineAVCanvasIntegrator>();
 
   /**
    * 从 stores 同步数据
@@ -193,13 +200,33 @@ export function TimelineEditor({
    * 处理播放控制
    */
   const handlePlaybackToggle = useCallback(() => {
-    stateAdapterRef.current.handlePlaybackControl(!isPlaying);
+    if (timelineIntegratorRef.current) {
+      timelineIntegratorRef.current.togglePlayPause();
+    } else {
+      // 退补处理
+      stateAdapterRef.current.handlePlaybackControl(!isPlaying);
+    }
   }, [isPlaying]);
 
   /**
    * 初始化组件
    */
   useEffect(() => {
+    // 创建 VideoClipService
+    if (!videoClipServiceRef.current) {
+      videoClipServiceRef.current = createVideoClipService();
+    }
+
+    // 创建时间轴集成器
+    if (!timelineIntegratorRef.current && videoClipServiceRef.current) {
+      timelineIntegratorRef.current = createTimelineAVCanvasIntegrator(
+        videoClipServiceRef.current
+      );
+      
+      // 初始化集成器
+      timelineIntegratorRef.current.initialize(timelineRef);
+    }
+
     // 创建性能优化器
     if (!performanceOptimizerRef.current) {
       performanceOptimizerRef.current = createTimelinePerformanceOptimizer({
@@ -247,15 +274,35 @@ export function TimelineEditor({
       },
       onActionMove: (action, row, newStart) => {
         console.log('移动片段:', action.id, '新位置:', newStart);
+        // 使用集成器处理移动
+        if (timelineIntegratorRef.current) {
+          timelineIntegratorRef.current.handleActionMove(action);
+        }
       },
       onActionResize: (action, row, newStart, newEnd) => {
         console.log('调整片段大小:', action.id, newStart, newEnd);
+        // 使用集成器处理调整大小
+        if (timelineIntegratorRef.current) {
+          return timelineIntegratorRef.current.handleActionResize(action, newStart, newEnd);
+        }
+        return false;
       },
       onActionDelete: (actionIds) => {
         console.log('删除片段:', actionIds);
+        // 处理批量删除
+        if (timelineIntegratorRef.current) {
+          actionIds.forEach(actionId => {
+            const action = { id: actionId } as TimelineAction;
+            timelineIntegratorRef.current!.handleActionDelete(action);
+          });
+        }
       },
       onTimeChange: (time) => {
         handleTimeChange(time);
+        // 使用集成器处理时间变化
+        if (timelineIntegratorRef.current) {
+          timelineIntegratorRef.current.handleTimelineTimeChange(time);
+        }
       },
       onScaleChange: (scale) => {
         handleScaleChange(scale);
@@ -275,6 +322,12 @@ export function TimelineEditor({
       }
       if (performanceOptimizerRef.current) {
         performanceOptimizerRef.current.dispose();
+      }
+      if (timelineIntegratorRef.current) {
+        timelineIntegratorRef.current.destroy();
+      }
+      if (videoClipServiceRef.current) {
+        videoClipServiceRef.current.destroy();
       }
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -522,4 +575,95 @@ export function TimelineEditor({
       </div>
     </div>
   );
-}
+  
+  /**
+   * 暴露给父组件的方法
+   */
+  React.useImperativeHandle(ref, () => ({
+    // 获取 VideoClipService 实例
+    getVideoClipService: () => videoClipServiceRef.current,
+    
+    // 获取时间轴集成器
+    getTimelineIntegrator: () => timelineIntegratorRef.current,
+    
+    // 手动添加媒体文件
+    addMediaFile: async (file: File, trackId?: string, fileType?: 'video' | 'audio' | 'image') => {
+      if (!videoClipServiceRef.current) {
+        throw new Error('VideoClipService 未初始化');
+      }
+
+      try {
+        let result;
+        const targetTrackId = trackId || `${fileType || 'default'}-track-1`;
+        
+        switch (fileType || file.type.split('/')[0]) {
+          case 'video':
+            result = await videoClipServiceRef.current.addVideoSpriteToTrack(file, targetTrackId);
+            break;
+          case 'audio':
+            result = await videoClipServiceRef.current.addAudioSpriteToTrack(file, targetTrackId);
+            break;
+          case 'image':
+            result = await videoClipServiceRef.current.addImageSpriteToTrack(file, targetTrackId);
+            break;
+          default:
+            throw new Error('不支持的文件类型');
+        }
+
+        console.log('媒体文件添加成功:', result);
+        return result;
+      } catch (error) {
+        console.error('添加媒体文件失败:', error);
+        throw error;
+      }
+    },
+    
+    // 添加文字精灵
+    addTextSprite: async (
+      text: string,
+      style?: any,
+      trackId: string = 'text-track-1',
+      duration: number = 5
+    ) => {
+      if (!videoClipServiceRef.current) {
+        throw new Error('VideoClipService 未初始化');
+      }
+
+      try {
+        const result = await videoClipServiceRef.current.addTextSpriteToTrack(
+          text, 
+          trackId, 
+          style, 
+          duration
+        );
+        
+        console.log('文字精灵添加成功:', result);
+        return result;
+      } catch (error) {
+        console.error('添加文字精灵失败:', error);
+        throw error;
+      }
+    },
+    
+    // 播放控制
+    togglePlayPause: handlePlaybackToggle,
+    
+    // 时间轴操作
+    seekTo: (time: number) => {
+      if (timelineIntegratorRef.current) {
+        timelineIntegratorRef.current.seekTo(time);
+      }
+    },
+    
+    // 获取当前状态
+    getCurrentTime: () => currentTime,
+    getIsPlaying: () => isPlaying,
+    getSelectedClips: () => selectedClips,
+    
+    // 时间轴引用
+    getTimelineRef: () => timelineRef.current
+  }), [handlePlaybackToggle, currentTime, isPlaying, selectedClips]);
+});
+
+// 显示名称用于调试
+TimelineEditor.displayName = 'TimelineEditor';

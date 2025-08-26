@@ -20,12 +20,32 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatTime, cn } from '@/lib/utils';
-import { videoClipService } from '@/services';
+
+/**
+ * PlayerControls 组件属性
+ */
+interface PlayerControlsProps {
+  // 从 VideoEditor 传入的集成器引用
+  onPlayPause?: () => void;
+  onStop?: () => void;
+  onSeek?: (time: number) => void;
+  onSkipBack?: (seconds?: number) => void;
+  onSkipForward?: (seconds?: number) => void;
+  className?: string;
+}
 
 /**
  * 播放器控制组件
+ * 重构以支持与 AVCanvas 的双向同步
  */
-export function PlayerControls() {
+export function PlayerControls({
+  onPlayPause,
+  onStop,
+  onSeek,
+  onSkipBack,
+  onSkipForward,
+  className = ''
+}: PlayerControlsProps) {
   const {
     isPlaying,
     playhead,
@@ -65,57 +85,82 @@ export function PlayerControls() {
     }
   }, [playhead, isDraggingProgress]);
 
-  // 播放/暂停控制
+  // 播放/暂停控制（重构版）
   const handlePlayPause = useCallback(async () => {
     try {
-      if (isPlaying) {
-        await videoClipService.pause();
-        pause();
+      if (onPlayPause) {
+        // 使用传入的回调函数
+        onPlayPause();
       } else {
-        await videoClipService.play();
-        play();
+        // 退补处理
+        if (isPlaying) {
+          pause();
+        } else {
+          play();
+        }
       }
     } catch (error) {
-      console.error('Playback control failed:', error);
+      console.error('播放控制失败:', error);
     }
-  }, [isPlaying, play, pause]);
+  }, [isPlaying, play, pause, onPlayPause]);
 
-  // 停止播放
+  // 停止播放（重构版）
   const handleStop = useCallback(async () => {
     try {
-      await videoClipService.stop();
-      stop();
-      setPlayhead(0);
+      if (onStop) {
+        onStop();
+      } else {
+        // 退补处理
+        stop();
+        setPlayhead(0);
+      }
     } catch (error) {
-      console.error('Stop failed:', error);
+      console.error('停止失败:', error);
     }
-  }, [stop, setPlayhead]);
+  }, [stop, setPlayhead, onStop]);
 
-  // 跳转控制
+  // 跳转控制（重构版）
   const handleSkipBack = useCallback(() => {
-    const newTime = Math.max(0, playhead - 5000); // 后退5秒
-    setPlayhead(newTime);
-    videoClipService.seekTo(newTime / 1000);
-  }, [playhead, setPlayhead]);
+    const skipSeconds = 5; // 后退秒数
+    if (onSkipBack) {
+      onSkipBack(skipSeconds);
+    } else {
+      // 退补处理
+      const newTime = Math.max(0, playhead - skipSeconds * 1000);
+      setPlayhead(newTime);
+    }
+  }, [playhead, setPlayhead, onSkipBack]);
 
   const handleSkipForward = useCallback(() => {
-    const newTime = Math.min(duration, playhead + 5000); // 前进5秒
-    setPlayhead(newTime);
-    videoClipService.seekTo(newTime / 1000);
-  }, [playhead, duration, setPlayhead]);
+    const skipSeconds = 5; // 前进秒数
+    if (onSkipForward) {
+      onSkipForward(skipSeconds);
+    } else {
+      // 退补处理
+      const newTime = Math.min(duration, playhead + skipSeconds * 1000);
+      setPlayhead(newTime);
+    }
+  }, [playhead, duration, setPlayhead, onSkipForward]);
 
-  // 跳转到开始/结束
+  // 跳转到开始/结束（重构版）
   const handleJumpToStart = useCallback(() => {
-    setPlayhead(0);
-    videoClipService.seekTo(0);
-  }, [setPlayhead]);
+    if (onSeek) {
+      onSeek(0);
+    } else {
+      setPlayhead(0);
+    }
+  }, [setPlayhead, onSeek]);
 
   const handleJumpToEnd = useCallback(() => {
-    setPlayhead(duration);
-    videoClipService.seekTo(duration / 1000);
-  }, [duration, setPlayhead]);
+    const endTime = duration;
+    if (onSeek) {
+      onSeek(endTime / 1000); // 转换为秒
+    } else {
+      setPlayhead(endTime);
+    }
+  }, [duration, setPlayhead, onSeek]);
 
-  // 进度条拖拽处理
+  // 进度条拖拽处理（重构版）
   const handleProgressMouseDown = useCallback((e: React.MouseEvent) => {
     if (!progressRef.current || duration === 0) return;
 
@@ -135,15 +180,21 @@ export function PlayerControls() {
 
     const handleMouseUp = () => {
       setIsDraggingProgress(false);
-      setPlayhead(tempPlayhead);
-      videoClipService.seekTo(tempPlayhead / 1000);
+      
+      // 使用回调函数或退补处理
+      if (onSeek) {
+        onSeek(tempPlayhead / 1000); // 转换为秒
+      } else {
+        setPlayhead(tempPlayhead);
+      }
+      
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [duration, tempPlayhead, setPlayhead]);
+  }, [duration, tempPlayhead, setPlayhead, onSeek]);
 
   // 音量控制
   const handleVolumeChange = useCallback((newVolume: number) => {
@@ -179,7 +230,7 @@ export function PlayerControls() {
   const progressPercent = duration > 0 ? (currentPlayhead / duration) * 100 : 0;
 
   return (
-    <div className="player-controls bg-card border-t border-border p-3">
+    <div className={cn("player-controls bg-card border-t border-border p-3", className)}>
       {/* 主控制区 */}
       <div className="flex items-center space-x-4">
         {/* 播放控制按钮 */}

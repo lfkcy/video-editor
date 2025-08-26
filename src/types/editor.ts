@@ -196,6 +196,54 @@ export interface LayoutConfig {
 }
 
 /**
+ * AVCanvas 配置选项
+ */
+export interface AVCanvasOptions {
+  width?: number;
+  height?: number;
+  bgColor?: string;
+}
+
+/**
+ * 文字样式配置
+ */
+export interface TextStyle {
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string | number;
+  color?: string;
+  backgroundColor?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  lineHeight?: number;
+  letterSpacing?: string;
+  textShadow?: string;
+  strokeWidth?: number;
+  strokeColor?: string;
+}
+
+/**
+ * 精灵操作事件
+ */
+export interface SpriteOperationEvent {
+  type: 'add' | 'remove' | 'update' | 'split';
+  spriteId: string;
+  actionId: string;
+  timestamp: number;
+  data?: any;
+}
+
+/**
+ * 时间轴同步状态
+ */
+export interface TimelineSyncState {
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  playbackRate: number;
+  lastSyncTime: number;
+}
+
+/**
  * 编辑器工具
  */
 export interface EditorTool {

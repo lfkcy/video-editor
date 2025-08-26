@@ -85,7 +85,7 @@ export function VideoPreview() {
     if (!isInitialized) return;
 
     try {
-      await videoClipService.stop();
+      videoClipService.pause();
       stop();
     } catch (err) {
       console.error('Stop failed:', err);

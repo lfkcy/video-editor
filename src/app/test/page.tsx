@@ -1,19 +1,30 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { CheckCircle, XCircle, Clock, AlertTriangle, Play, RotateCcw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useProjectStore, useTimelineStore, useUIStore } from '@/stores';
-import { videoClipService, canvasCompositionService, videoExportService } from '@/services';
 import { performanceMonitor } from '@/utils/performance-monitor';
 import { cn } from '@/lib/utils';
+import { createVideoEditorTestSuite, runQuickTest } from '@/tests/integration-test';
+import type { VideoEditorTestSuite } from '@/tests/integration-test';
 
 /**
- * 测试项目接口
+ * 测试结果接口
  */
-interface TestCase {
+interface TestResult {
+  name: string;
+  passed: boolean;
+  error?: string;
+  duration?: number;
+}
+
+/**
+ * 简单测试项目接口
+ */
+interface SimpleTestCase {
   id: string;
   name: string;
   description: string;
@@ -24,22 +35,31 @@ interface TestCase {
 }
 
 /**
- * 功能测试页面
+ * 功能测试页面（重构版）
  */
 export default function TestPage() {
-  const [tests, setTests] = useState<TestCase[]>([]);
+  // 集成测试状态
+  const [integrationResults, setIntegrationResults] = useState<TestResult[]>([]);
+  const [isIntegrationRunning, setIsIntegrationRunning] = useState(false);
+  const [integrationProgress, setIntegrationProgress] = useState(0);
+  
+  // 简单测试状态
+  const [simpleTests, setSimpleTests] = useState<SimpleTestCase[]>([]);
   const [currentTestIndex, setCurrentTestIndex] = useState(-1);
-  const [overallProgress, setOverallProgress] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
+  const [simpleProgress, setSimpleProgress] = useState(0);
+  const [isSimpleRunning, setIsSimpleRunning] = useState(false);
+  
+  // 测试套件引用
+  const testSuiteRef = useRef<VideoEditorTestSuite | null>(null);
 
   // Store hooks
   const { createNewProject, currentProject } = useProjectStore();
   const { setPlayhead, setDuration } = useTimelineStore();
   const { setTheme, toggleLeftPanel } = useUIStore();
 
-  // 初始化测试用例
+  // 初始化简单测试用例
   useEffect(() => {
-    const testCases: TestCase[] = [
+    const testCases: SimpleTestCase[] = [
       {
         id: 'project-store',
         name: '项目状态管理',
@@ -76,64 +96,6 @@ export default function TestPage() {
         status: 'pending',
       },
       {
-        id: 'video-service-init',
-        name: '视频服务初始化',
-        description: '测试视频合成服务初始化',
-        test: async () => {
-          try {
-            await canvasCompositionService.initialize(1920, 1080, 30);
-            return true;
-          } catch (error) {
-            console.error('Video service init failed:', error);
-            return false;
-          }
-        },
-        status: 'pending',
-      },
-      {
-        id: 'canvas-service-mock',
-        name: '画布服务测试',
-        description: '测试画布合成服务功能',
-        test: async () => {
-          try {
-            // 创建一个模拟容器
-            const mockContainer = document.createElement('div');
-            mockContainer.style.width = '100px';
-            mockContainer.style.height = '100px';
-            document.body.appendChild(mockContainer);
-            
-            await videoClipService.initialize(mockContainer, 100, 100);
-            
-            // 清理
-            document.body.removeChild(mockContainer);
-            return true;
-          } catch (error) {
-            console.error('Canvas service test failed:', error);
-            return false;
-          }
-        },
-        status: 'pending',
-      },
-      {
-        id: 'export-service-validation',
-        name: '导出服务验证',
-        description: '测试导出设置验证功能',
-        test: async () => {
-          const errors = videoExportService.validateExportSettings({
-            format: 'mp4',
-            quality: 'medium',
-            width: 1920,
-            height: 1080,
-            fps: 30,
-            bitrate: 5000000,
-            audioCodec: 'aac',
-            videoCodec: 'h264',
-          });
-          return errors.length === 0;
-        },
-        status: 'pending',
-      },
-      {
         id: 'performance-monitor',
         name: '性能监控',
         description: '测试性能监控功能',
@@ -162,18 +124,76 @@ export default function TestPage() {
       },
     ];
 
-    setTests(testCases);
+    setSimpleTests(testCases);
   }, [createNewProject, currentProject, setPlayhead, setDuration, setTheme, toggleLeftPanel]);
 
-  // 运行单个测试
-  const runSingleTest = async (testIndex: number) => {
-    const test = tests[testIndex];
+  // 运行集成测试
+  const runIntegrationTests = async () => {
+    setIsIntegrationRunning(true);
+    setIntegrationProgress(0);
+    setIntegrationResults([]);
+
+    try {
+      // 创建测试套件
+      if (testSuiteRef.current) {
+        testSuiteRef.current.cleanup();
+      }
+      testSuiteRef.current = createVideoEditorTestSuite();
+
+      // 运行所有测试
+      const results = await testSuiteRef.current.runAllTests();
+      setIntegrationResults(results);
+      setIntegrationProgress(100);
+
+    } catch (error) {
+      console.error('集成测试失败:', error);
+      setIntegrationResults([{
+        name: '集成测试',
+        passed: false,
+        error: error instanceof Error ? error.message : '未知错误'
+      }]);
+    } finally {
+      setIsIntegrationRunning(false);
+      if (testSuiteRef.current) {
+        testSuiteRef.current.cleanup();
+        testSuiteRef.current = null;
+      }
+    }
+  };
+
+  // 运行快速测试
+  const runQuickTests = async () => {
+    setIsIntegrationRunning(true);
+    setIntegrationProgress(0);
+
+    try {
+      const success = await runQuickTest();
+      setIntegrationResults([{
+        name: '快速测试',
+        passed: success,
+        error: success ? undefined : '存在失败的测试项目'
+      }]);
+      setIntegrationProgress(100);
+    } catch (error) {
+      console.error('快速测试失败:', error);
+      setIntegrationResults([{
+        name: '快速测试',
+        passed: false,
+        error: error instanceof Error ? error.message : '未知错误'
+      }]);
+    } finally {
+      setIsIntegrationRunning(false);
+    }
+  };
+
+  // 运行单个简单测试
+  const runSingleSimpleTest = async (testIndex: number) => {
+    const test = simpleTests[testIndex];
     if (!test) return;
 
     setCurrentTestIndex(testIndex);
     
-    // 更新测试状态为运行中
-    setTests(prev => prev.map((t, i) => 
+    setSimpleTests(prev => prev.map((t, i) => 
       i === testIndex ? { ...t, status: 'running' as const } : t
     ));
 
@@ -184,7 +204,7 @@ export default function TestPage() {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      setTests(prev => prev.map((t, i) => 
+      setSimpleTests(prev => prev.map((t, i) => 
         i === testIndex ? { 
           ...t, 
           status: result ? 'passed' : 'failed',
@@ -196,197 +216,269 @@ export default function TestPage() {
       const endTime = performance.now();
       const duration = endTime - startTime;
 
-      setTests(prev => prev.map((t, i) => 
+      setSimpleTests(prev => prev.map((t, i) => 
         i === testIndex ? { 
           ...t, 
-          status: 'failed' as const,
+          status: 'failed',
           duration,
-          error: error instanceof Error ? error.message : '未知错误'
+          error: error instanceof Error ? error.message : String(error)
         } : t
       ));
     }
   };
 
-  // 运行所有测试
-  const runAllTests = async () => {
-    setIsRunning(true);
-    setOverallProgress(0);
+  // 运行所有简单测试
+  const runAllSimpleTests = async () => {
+    setIsSimpleRunning(true);
+    setCurrentTestIndex(-1);
+    setSimpleProgress(0);
 
-    for (let i = 0; i < tests.length; i++) {
-      await runSingleTest(i);
-      setOverallProgress(((i + 1) / tests.length) * 100);
+    // 重置所有测试状态
+    setSimpleTests(prev => prev.map(test => ({ ...test, status: 'pending' as const, error: undefined, duration: undefined })));
+
+    for (let i = 0; i < simpleTests.length; i++) {
+      await runSingleSimpleTest(i);
+      setSimpleProgress(((i + 1) / simpleTests.length) * 100);
     }
 
+    setIsSimpleRunning(false);
     setCurrentTestIndex(-1);
-    setIsRunning(false);
-  };
-
-  // 重置所有测试
-  const resetTests = () => {
-    setTests(prev => prev.map(test => ({ 
-      ...test, 
-      status: 'pending' as const,
-      error: undefined,
-      duration: undefined
-    })));
-    setCurrentTestIndex(-1);
-    setOverallProgress(0);
-  };
-
-  // 获取状态图标
-  const getStatusIcon = (status: TestCase['status']) => {
-    switch (status) {
-      case 'passed':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'failed':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      case 'running':
-        return <Clock className="h-5 w-5 text-blue-500 animate-spin" />;
-      default:
-        return <div className="h-5 w-5 rounded-full border-2 border-gray-300" />;
-    }
   };
 
   // 计算测试统计
-  const stats = {
-    total: tests.length,
-    passed: tests.filter(t => t.status === 'passed').length,
-    failed: tests.filter(t => t.status === 'failed').length,
-    pending: tests.filter(t => t.status === 'pending').length,
+  const getTestStats = (results: TestResult[]) => {
+    const total = results.length;
+    const passed = results.filter(r => r.passed).length;
+    const failed = total - passed;
+    const passRate = total > 0 ? (passed / total) * 100 : 0;
+    return { total, passed, failed, passRate };
   };
+
+  const getSimpleTestStats = (tests: SimpleTestCase[]) => {
+    const total = tests.length;
+    const passed = tests.filter(t => t.status === 'passed').length;
+    const failed = tests.filter(t => t.status === 'failed').length;
+    const running = tests.filter(t => t.status === 'running').length;
+    const pending = tests.filter(t => t.status === 'pending').length;
+    const passRate = total > 0 ? (passed / total) * 100 : 0;
+    return { total, passed, failed, running, pending, passRate };
+  };
+
+  const integrationStats = getTestStats(integrationResults);
+  const simpleStats = getSimpleTestStats(simpleTests);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">功能测试</h1>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-2">视频编辑器功能测试</h1>
         <p className="text-muted-foreground">
-          验证视频编辑器的核心功能是否正常工作
+          测试核心功能是否正常工作，确保系统稳定性和可靠性
         </p>
       </div>
 
-      {/* 总体进度 */}
+      {/* 集成测试部分 */}
       <Card>
         <CardHeader>
-          <CardTitle>测试进度</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <span>🧪</span>
+            <span>集成测试</span>
+          </CardTitle>
           <CardDescription>
-            总共 {stats.total} 个测试，{stats.passed} 个通过，{stats.failed} 个失败，{stats.pending} 个待运行
+            完整的系统集成测试，验证所有组件协同工作
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Progress value={overallProgress} className="w-full" />
-            <div className="flex gap-2">
-              <Button 
-                onClick={runAllTests} 
-                disabled={isRunning}
-                className="flex-1"
-              >
-                {isRunning ? '运行中...' : '运行所有测试'}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={resetTests}
-                disabled={isRunning}
-              >
-                重置
-              </Button>
-            </div>
+        <CardContent className="space-y-4">
+          <div className="flex space-x-2">
+            <Button 
+              onClick={runIntegrationTests}
+              disabled={isIntegrationRunning}
+              className="flex items-center space-x-2"
+            >
+              <Play className="h-4 w-4" />
+              <span>运行完整测试</span>
+            </Button>
+            
+            <Button 
+              onClick={runQuickTests}
+              disabled={isIntegrationRunning}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>快速测试</span>
+            </Button>
           </div>
+
+          {isIntegrationRunning && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>测试进行中...</span>
+                <span>{integrationProgress.toFixed(0)}%</span>
+              </div>
+              <Progress value={integrationProgress} />
+            </div>
+          )}
+
+          {integrationResults.length > 0 && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-4 gap-4 text-center">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{integrationStats.total}</div>
+                  <div className="text-sm text-blue-600">总测试</div>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{integrationStats.passed}</div>
+                  <div className="text-sm text-green-600">通过</div>
+                </div>
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">{integrationStats.failed}</div>
+                  <div className="text-sm text-red-600">失败</div>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">{integrationStats.passRate.toFixed(1)}%</div>
+                  <div className="text-sm text-purple-600">通过率</div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {integrationResults.map((result, index) => (
+                  <div key={index} className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border",
+                    result.passed ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+                  )}>
+                    <div className="flex items-center space-x-3">
+                      {result.passed ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600" />
+                      )}
+                      <div>
+                        <div className="font-medium">{result.name}</div>
+                        {result.error && (
+                          <div className="text-sm text-red-600">{result.error}</div>
+                        )}
+                      </div>
+                    </div>
+                    {result.duration && (
+                      <div className="text-sm text-muted-foreground">
+                        {result.duration.toFixed(2)}ms
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* 测试列表 */}
-      <div className="grid gap-4">
-        {tests.map((test, index) => (
-          <Card 
-            key={test.id}
-            className={cn(
-              "transition-all",
-              currentTestIndex === index && "ring-2 ring-primary",
-              test.status === 'failed' && "border-red-200",
-              test.status === 'passed' && "border-green-200"
-            )}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  {getStatusIcon(test.status)}
-                  <div>
-                    <CardTitle className="text-lg">{test.name}</CardTitle>
-                    <CardDescription>{test.description}</CardDescription>
-                  </div>
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => runSingleTest(index)}
-                  disabled={isRunning || test.status === 'running'}
-                >
-                  运行
-                </Button>
-              </div>
-            </CardHeader>
-            
-            {(test.error || test.duration !== undefined) && (
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  {test.duration !== undefined && (
-                    <div className="text-sm text-muted-foreground">
-                      执行时间: {test.duration.toFixed(2)}ms
-                    </div>
-                  )}
-                  {test.error && (
-                    <div className="flex items-start space-x-2 text-sm text-red-600">
-                      <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <span>{test.error}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        ))}
-      </div>
-
-      {/* 性能信息 */}
+      {/* 简单测试部分 */}
       <Card>
         <CardHeader>
-          <CardTitle>性能信息</CardTitle>
-          <CardDescription>当前应用性能状态</CardDescription>
+          <CardTitle className="flex items-center space-x-2">
+            <span>⚡</span>
+            <span>基础功能测试</span>
+          </CardTitle>
+          <CardDescription>
+            测试基础组件和状态管理功能
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <div className="font-medium">内存使用</div>
-              <div className="text-muted-foreground">
-                {((performance as any).memory?.usedJSHeapSize / 1024 / 1024).toFixed(1) || 'N/A'} MB
+        <CardContent className="space-y-4">
+          <div className="flex space-x-2">
+            <Button 
+              onClick={runAllSimpleTests}
+              disabled={isSimpleRunning}
+              className="flex items-center space-x-2"
+            >
+              <Play className="h-4 w-4" />
+              <span>运行所有测试</span>
+            </Button>
+          </div>
+
+          {isSimpleRunning && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>测试进行中...</span>
+                <span>{simpleProgress.toFixed(0)}%</span>
               </div>
+              <Progress value={simpleProgress} />
             </div>
-            <div>
-              <div className="font-medium">页面加载时间</div>
-              <div className="text-muted-foreground">
-                {performance.timing ? 
-                  `${performance.timing.loadEventEnd - performance.timing.navigationStart}ms` : 
-                  'N/A'
-                }
+          )}
+
+          <div className="grid grid-cols-5 gap-4 text-center text-sm">
+            <div className="p-2 bg-blue-50 rounded">
+              <div className="font-bold text-blue-600">{simpleStats.total}</div>
+              <div className="text-blue-600">总计</div>
+            </div>
+            <div className="p-2 bg-green-50 rounded">
+              <div className="font-bold text-green-600">{simpleStats.passed}</div>
+              <div className="text-green-600">通过</div>
+            </div>
+            <div className="p-2 bg-red-50 rounded">
+              <div className="font-bold text-red-600">{simpleStats.failed}</div>
+              <div className="text-red-600">失败</div>
+            </div>
+            <div className="p-2 bg-yellow-50 rounded">
+              <div className="font-bold text-yellow-600">{simpleStats.running}</div>
+              <div className="text-yellow-600">运行中</div>
+            </div>
+            <div className="p-2 bg-gray-50 rounded">
+              <div className="font-bold text-gray-600">{simpleStats.pending}</div>
+              <div className="text-gray-600">等待</div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {simpleTests.map((test, index) => (
+              <div key={test.id} className={cn(
+                "flex items-center justify-between p-4 rounded-lg border transition-colors",
+                test.status === 'passed' && "bg-green-50 border-green-200",
+                test.status === 'failed' && "bg-red-50 border-red-200",
+                test.status === 'running' && "bg-yellow-50 border-yellow-200",
+                test.status === 'pending' && "bg-gray-50 border-gray-200"
+              )}>
+                <div className="flex items-center space-x-3 flex-1">
+                  <div className="flex-shrink-0">
+                    {test.status === 'passed' && <CheckCircle className="h-5 w-5 text-green-600" />}
+                    {test.status === 'failed' && <XCircle className="h-5 w-5 text-red-600" />}
+                    {test.status === 'running' && <Clock className="h-5 w-5 text-yellow-600 animate-spin" />}
+                    {test.status === 'pending' && <AlertTriangle className="h-5 w-5 text-gray-400" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium">{test.name}</div>
+                    <div className="text-sm text-muted-foreground">{test.description}</div>
+                    {test.error && (
+                      <div className="text-sm text-red-600 mt-1">{test.error}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {test.duration && (
+                    <span className="text-sm text-muted-foreground">
+                      {test.duration.toFixed(2)}ms
+                    </span>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => runSingleSimpleTest(index)}
+                    disabled={isSimpleRunning}
+                  >
+                    运行
+                  </Button>
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="font-medium">测试通过率</div>
-              <div className="text-muted-foreground">
-                {stats.total > 0 ? `${((stats.passed / stats.total) * 100).toFixed(1)}%` : '0%'}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium">网络状态</div>
-              <div className="text-muted-foreground">
-                {navigator.onLine ? '在线' : '离线'}
-              </div>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
+
+      {/* 组件清理 */}
+      {typeof window !== 'undefined' && (
+        <div className="text-center text-sm text-muted-foreground">
+          <p>测试将在浏览器控制台输出详细日志</p>
+        </div>
+      )}
     </div>
   );
 }
