@@ -3,9 +3,15 @@
  * 负责协调现有状态管理与 react-timeline-editor 的状态同步
  */
 
-import { useProjectStore, useTimelineStore } from '@/stores';
-import { timelineDataAdapter, TimelineRow, TimelineEffect, TimelineAction, TimelineDataAdapter } from './timeline-data-adapter';
-import { Track, Clip } from '@/types/project';
+import { useProjectStore, useTimelineStore } from "@/stores";
+import {
+  timelineDataAdapter,
+  TimelineRow,
+  TimelineEffect,
+  TimelineAction,
+  TimelineDataAdapter,
+} from "./timeline-data-adapter";
+import { Track, Clip } from "@/types/project";
 
 export interface TimelineEditorData {
   editorData: TimelineRow[];
@@ -20,7 +26,7 @@ export interface TimelineEditorData {
 export class TimelineStateAdapter {
   private projectStore = useProjectStore.getState();
   private timelineStore = useTimelineStore.getState();
-  
+
   // 状态变更监听器
   private onDataChangeCallback?: (data: TimelineEditorData) => void;
   private onTimeChangeCallback?: (time: number) => void;
@@ -64,7 +70,7 @@ export class TimelineStateAdapter {
         editorData: [],
         effects: {},
         currentTime: 0,
-        scale: 1
+        scale: 1,
       };
     }
 
@@ -74,8 +80,10 @@ export class TimelineStateAdapter {
     return {
       editorData: timelineDataAdapter.convertTracksToRows(tracks),
       effects: timelineDataAdapter.createEffectsMap(allClips),
-      currentTime: TimelineDataAdapter.timeUtils.msToSeconds(timelineState.playhead),
-      scale: this.calculateTimelineScale(timelineState.scale)
+      currentTime: TimelineDataAdapter.timeUtils.msToSeconds(
+        timelineState.playhead
+      ),
+      scale: this.calculateTimelineScale(timelineState.scale),
     };
   }
 
@@ -87,8 +95,11 @@ export class TimelineStateAdapter {
     if (!currentProject) return;
 
     const originalTracks = currentProject.tracks;
-    const updatedTracks = timelineDataAdapter.convertRowsToTracks(data, originalTracks);
-    
+    const updatedTracks = timelineDataAdapter.convertRowsToTracks(
+      data,
+      originalTracks
+    );
+
     // 更新项目数据
     useProjectStore.getState().updateProject({ tracks: updatedTracks });
   }
@@ -99,7 +110,7 @@ export class TimelineStateAdapter {
   handleTimeChange(time: number): void {
     const timeInMs = TimelineDataAdapter.timeUtils.secondsToMs(time);
     useTimelineStore.getState().seekTo(timeInMs);
-    
+
     if (this.onTimeChangeCallback) {
       this.onTimeChangeCallback(time);
     }
@@ -113,25 +124,27 @@ export class TimelineStateAdapter {
     if (!currentProject) return;
 
     // 找到对应的轨道和片段
-    const track = currentProject.tracks.find(t => t.id === rowId);
+    const track = currentProject.tracks.find((t) => t.id === rowId);
     if (!track) return;
 
-    const clipIndex = track.clips.findIndex(c => c.id === action.id);
+    const clipIndex = track.clips.findIndex((c) => c.id === action.id);
     if (clipIndex === -1) return;
 
     // 更新片段数据
     const updatedClip: Clip = {
       ...track.clips[clipIndex],
       startTime: TimelineDataAdapter.timeUtils.secondsToMs(action.start),
-      duration: TimelineDataAdapter.timeUtils.secondsToMs(action.end - action.start),
-      selected: action.selected || false
+      duration: TimelineDataAdapter.timeUtils.secondsToMs(
+        action.end - action.start
+      ),
+      selected: action.selected || false,
     };
 
     // 更新 store
     useProjectStore.getState().updateClip(updatedClip.id, {
       startTime: updatedClip.startTime,
       duration: updatedClip.duration,
-      selected: updatedClip.selected
+      selected: updatedClip.selected,
     });
   }
 
@@ -142,12 +155,15 @@ export class TimelineStateAdapter {
     const currentProject = this.projectStore.currentProject;
     if (!currentProject) return;
 
-    const originalTrack = currentProject.tracks.find(t => t.id === row.id);
+    const originalTrack = currentProject.tracks.find((t) => t.id === row.id);
     if (!originalTrack) return;
 
-    const updatedTrack = timelineDataAdapter.convertRowsToTracks([row], [originalTrack])[0];
+    const updatedTrack = timelineDataAdapter.convertRowsToTracks(
+      [row],
+      [originalTrack]
+    )[0];
     useProjectStore.getState().updateTrack(updatedTrack.id, {
-      clips: updatedTrack.clips
+      clips: updatedTrack.clips,
     });
   }
 
@@ -156,7 +172,7 @@ export class TimelineStateAdapter {
    */
   handleSelection(actionIds: string[]): void {
     useTimelineStore.getState().selectClips(actionIds);
-    
+
     if (this.onSelectionChangeCallback) {
       this.onSelectionChangeCallback(actionIds);
     }
@@ -222,7 +238,9 @@ export class TimelineStateAdapter {
    */
   private notifyTimeChange(): void {
     if (this.onTimeChangeCallback) {
-      const timeInSeconds = TimelineDataAdapter.timeUtils.msToSeconds(this.timelineStore.playhead);
+      const timeInSeconds = TimelineDataAdapter.timeUtils.msToSeconds(
+        this.timelineStore.playhead
+      );
       this.onTimeChangeCallback(timeInSeconds);
     }
   }
@@ -246,7 +264,11 @@ export class TimelineStateAdapter {
   /**
    * 处理拖拽操作
    */
-  handleDragOperation(operation: 'move' | 'trim-start' | 'trim-end', actionId: string, newTime: number): void {
+  handleDragOperation(
+    operation: "move" | "trim-start" | "trim-end",
+    actionId: string,
+    newTime: number
+  ): void {
     const currentProject = this.projectStore.currentProject;
     if (!currentProject) return;
 
@@ -255,7 +277,7 @@ export class TimelineStateAdapter {
     let targetTrack: Track | null = null;
 
     for (const track of currentProject.tracks) {
-      const clip = track.clips.find(c => c.id === actionId);
+      const clip = track.clips.find((c) => c.id === actionId);
       if (clip) {
         targetClip = clip;
         targetTrack = track;
@@ -270,26 +292,29 @@ export class TimelineStateAdapter {
     let updatedClip: Clip;
 
     switch (operation) {
-      case 'move':
+      case "move":
         updatedClip = {
           ...targetClip,
-          startTime: newTimeMs
+          startTime: newTimeMs,
         };
         break;
-      case 'trim-start':
-        const newDuration = targetClip.duration - (newTimeMs - targetClip.startTime);
+      case "trim-start":
+        const newDuration =
+          targetClip.duration - (newTimeMs - targetClip.startTime);
         updatedClip = {
           ...targetClip,
           startTime: newTimeMs,
           duration: Math.max(100, newDuration), // 最小100ms
-          trimStart: targetClip.trimStart + (newTimeMs - targetClip.startTime)
+          trimStart: targetClip.trimStart + (newTimeMs - targetClip.startTime),
         };
         break;
-      case 'trim-end':
+      case "trim-end":
         updatedClip = {
           ...targetClip,
           duration: Math.max(100, newTimeMs - targetClip.startTime),
-          trimEnd: targetClip.trimEnd + (targetClip.duration - (newTimeMs - targetClip.startTime))
+          trimEnd:
+            targetClip.trimEnd +
+            (targetClip.duration - (newTimeMs - targetClip.startTime)),
         };
         break;
       default:
@@ -300,7 +325,7 @@ export class TimelineStateAdapter {
       startTime: updatedClip.startTime,
       duration: updatedClip.duration,
       trimStart: updatedClip.trimStart,
-      trimEnd: updatedClip.trimEnd
+      trimEnd: updatedClip.trimEnd,
     });
   }
 

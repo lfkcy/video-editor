@@ -1,6 +1,12 @@
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { ProjectData, ProjectSettings, Track, Clip, ProjectState } from '@/types';
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import {
+  ProjectData,
+  ProjectSettings,
+  Track,
+  Clip,
+  ProjectState,
+} from "@/types";
 
 /**
  * 项目操作接口
@@ -13,28 +19,28 @@ interface ProjectActions {
   updateProject: (updates: Partial<ProjectData>) => void;
   setProjectName: (name: string) => void;
   setProjectSettings: (settings: Partial<ProjectSettings>) => void;
-  
+
   // 轨道操作
-  addTrack: (track: Omit<Track, 'id'>) => string;
+  addTrack: (track: Omit<Track, "id">) => string;
   removeTrack: (trackId: string) => void;
   updateTrack: (trackId: string, updates: Partial<Track>) => void;
   reorderTracks: (fromIndex: number, toIndex: number) => void;
   duplicateTrack: (trackId: string) => string;
-  
+
   // 片段操作
-  addClip: (trackId: string, clip: Omit<Clip, 'id' | 'trackId'>) => string;
+  addClip: (trackId: string, clip: Omit<Clip, "id" | "trackId">) => string;
   removeClip: (clipId: string) => void;
   updateClip: (clipId: string, updates: Partial<Clip>) => void;
   moveClip: (clipId: string, newTrackId: string, newStartTime: number) => void;
   duplicateClip: (clipId: string) => string;
   splitClip: (clipId: string, splitTime: number) => string[];
-  
+
   // 状态管理
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   markUnsaved: () => void;
   markSaved: () => void;
-  
+
   // 工具方法
   getClipById: (clipId: string) => Clip | undefined;
   getTrackById: (trackId: string) => Track | undefined;
@@ -57,7 +63,7 @@ const defaultProjectSettings: ProjectSettings = {
   fps: 30,
   sampleRate: 48000,
   channels: 2,
-  quality: 'high',
+  quality: "high",
 };
 
 /**
@@ -68,15 +74,17 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 /**
  * 创建默认项目
  */
-const createDefaultProject = (settings?: Partial<ProjectSettings>): ProjectData => ({
+const createDefaultProject = (
+  settings?: Partial<ProjectSettings>
+): ProjectData => ({
   id: generateId(),
-  name: '未命名项目',
+  name: "未命名项目",
   duration: 0,
   tracks: [
     {
-      id: generateId(),
-      type: 'video',
-      name: '视频轨道 1',
+      id: "video-track-1",
+      type: "video",
+      name: "视频轨道 1",
       clips: [],
       isVisible: true,
       isMuted: false,
@@ -85,9 +93,9 @@ const createDefaultProject = (settings?: Partial<ProjectSettings>): ProjectData 
       order: 0,
     },
     {
-      id: generateId(),
-      type: 'audio',
-      name: '音频轨道 1',
+      id: "audio-track-1",
+      type: "audio",
+      name: "音频轨道 1",
       clips: [],
       isVisible: true,
       isMuted: false,
@@ -141,10 +149,10 @@ export const useProjectStore = create<ProjectStore>()(
           try {
             // 这里应该调用实际的保存 API
             // await projectApi.save(currentProject);
-            
+
             // 模拟保存延迟
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
             set({
               hasUnsavedChanges: false,
               isLoading: false,
@@ -155,7 +163,7 @@ export const useProjectStore = create<ProjectStore>()(
             });
           } catch (error) {
             set({
-              error: error instanceof Error ? error.message : '保存失败',
+              error: error instanceof Error ? error.message : "保存失败",
               isLoading: false,
             });
           }
@@ -191,7 +199,7 @@ export const useProjectStore = create<ProjectStore>()(
         // 轨道操作
         addTrack: (trackData) => {
           const { currentProject } = get();
-          if (!currentProject) return '';
+          if (!currentProject) return "";
 
           const trackId = generateId();
           const newTrack: Track = {
@@ -212,7 +220,7 @@ export const useProjectStore = create<ProjectStore>()(
           if (!currentProject) return;
 
           const updatedTracks = currentProject.tracks.filter(
-            track => track.id !== trackId
+            (track) => track.id !== trackId
           );
 
           get().updateProject({ tracks: updatedTracks });
@@ -222,7 +230,7 @@ export const useProjectStore = create<ProjectStore>()(
           const { currentProject } = get();
           if (!currentProject) return;
 
-          const updatedTracks = currentProject.tracks.map(track =>
+          const updatedTracks = currentProject.tracks.map((track) =>
             track.id === trackId ? { ...track, ...updates } : track
           );
 
@@ -248,10 +256,10 @@ export const useProjectStore = create<ProjectStore>()(
 
         duplicateTrack: (trackId) => {
           const { currentProject } = get();
-          if (!currentProject) return '';
+          if (!currentProject) return "";
 
-          const track = currentProject.tracks.find(t => t.id === trackId);
-          if (!track) return '';
+          const track = currentProject.tracks.find((t) => t.id === trackId);
+          if (!track) return "";
 
           const newTrackId = generateId();
           const duplicatedTrack: Track = {
@@ -259,7 +267,7 @@ export const useProjectStore = create<ProjectStore>()(
             id: newTrackId,
             name: `${track.name} 副本`,
             order: currentProject.tracks.length,
-            clips: track.clips.map(clip => ({
+            clips: track.clips.map((clip) => ({
               ...clip,
               id: generateId(),
               trackId: newTrackId,
@@ -276,7 +284,7 @@ export const useProjectStore = create<ProjectStore>()(
         // 片段操作
         addClip: (trackId, clipData) => {
           const { currentProject } = get();
-          if (!currentProject) return '';
+          if (!currentProject) return "";
 
           const clipId = generateId();
           const newClip: Clip = {
@@ -286,7 +294,7 @@ export const useProjectStore = create<ProjectStore>()(
             selected: false,
           };
 
-          const updatedTracks = currentProject.tracks.map(track =>
+          const updatedTracks = currentProject.tracks.map((track) =>
             track.id === trackId
               ? { ...track, clips: [...track.clips, newClip] }
               : track
@@ -300,9 +308,9 @@ export const useProjectStore = create<ProjectStore>()(
           const { currentProject } = get();
           if (!currentProject) return;
 
-          const updatedTracks = currentProject.tracks.map(track => ({
+          const updatedTracks = currentProject.tracks.map((track) => ({
             ...track,
-            clips: track.clips.filter(clip => clip.id !== clipId),
+            clips: track.clips.filter((clip) => clip.id !== clipId),
           }));
 
           get().updateProject({ tracks: updatedTracks });
@@ -312,9 +320,9 @@ export const useProjectStore = create<ProjectStore>()(
           const { currentProject } = get();
           if (!currentProject) return;
 
-          const updatedTracks = currentProject.tracks.map(track => ({
+          const updatedTracks = currentProject.tracks.map((track) => ({
             ...track,
-            clips: track.clips.map(clip =>
+            clips: track.clips.map((clip) =>
               clip.id === clipId ? { ...clip, ...updates } : clip
             ),
           }));
@@ -329,9 +337,9 @@ export const useProjectStore = create<ProjectStore>()(
           let clipToMove: Clip | undefined;
 
           // 从原轨道移除片段
-          const tracksWithoutClip = currentProject.tracks.map(track => ({
+          const tracksWithoutClip = currentProject.tracks.map((track) => ({
             ...track,
-            clips: track.clips.filter(clip => {
+            clips: track.clips.filter((clip) => {
               if (clip.id === clipId) {
                 clipToMove = clip;
                 return false;
@@ -343,13 +351,17 @@ export const useProjectStore = create<ProjectStore>()(
           if (!clipToMove) return;
 
           // 添加到新轨道
-          const updatedTracks = tracksWithoutClip.map(track =>
+          const updatedTracks = tracksWithoutClip.map((track) =>
             track.id === newTrackId
               ? {
                   ...track,
                   clips: [
                     ...track.clips,
-                    { ...clipToMove!, trackId: newTrackId, startTime: newStartTime },
+                    {
+                      ...clipToMove!,
+                      trackId: newTrackId,
+                      startTime: newStartTime,
+                    },
                   ],
                 }
               : track
@@ -360,10 +372,10 @@ export const useProjectStore = create<ProjectStore>()(
 
         duplicateClip: (clipId) => {
           const { currentProject, addClip } = get();
-          if (!currentProject) return '';
+          if (!currentProject) return "";
 
           const clip = get().getClipById(clipId);
-          if (!clip) return '';
+          if (!clip) return "";
 
           const { id, trackId, ...clipData } = clip;
           const newClipId = addClip(trackId, {
@@ -379,7 +391,11 @@ export const useProjectStore = create<ProjectStore>()(
           if (!currentProject) return [];
 
           const clip = get().getClipById(clipId);
-          if (!clip || splitTime <= clip.startTime || splitTime >= clip.startTime + clip.duration) {
+          if (
+            !clip ||
+            splitTime <= clip.startTime ||
+            splitTime >= clip.startTime + clip.duration
+          ) {
             return [];
           }
 
@@ -401,10 +417,10 @@ export const useProjectStore = create<ProjectStore>()(
             trimStart: clip.trimStart + (splitTime - clip.startTime),
           };
 
-          const updatedTracks = currentProject.tracks.map(track => ({
+          const updatedTracks = currentProject.tracks.map((track) => ({
             ...track,
             clips: track.clips
-              .filter(c => c.id !== clipId)
+              .filter((c) => c.id !== clipId)
               .concat(track.id === clip.trackId ? [firstClip, secondClip] : []),
           }));
 
@@ -424,7 +440,7 @@ export const useProjectStore = create<ProjectStore>()(
           if (!currentProject) return undefined;
 
           for (const track of currentProject.tracks) {
-            const clip = track.clips.find(c => c.id === clipId);
+            const clip = track.clips.find((c) => c.id === clipId);
             if (clip) return clip;
           }
           return undefined;
@@ -434,21 +450,21 @@ export const useProjectStore = create<ProjectStore>()(
           const { currentProject } = get();
           if (!currentProject) return undefined;
 
-          return currentProject.tracks.find(track => track.id === trackId);
+          return currentProject.tracks.find((track) => track.id === trackId);
         },
 
         getAllClips: () => {
           const { currentProject } = get();
           if (!currentProject) return [];
 
-          return currentProject.tracks.flatMap(track => track.clips);
+          return currentProject.tracks.flatMap((track) => track.clips);
         },
 
         getClipsByTrack: (trackId) => {
           const { currentProject } = get();
           if (!currentProject) return [];
 
-          const track = currentProject.tracks.find(t => t.id === trackId);
+          const track = currentProject.tracks.find((t) => t.id === trackId);
           return track ? track.clips : [];
         },
 
@@ -467,13 +483,13 @@ export const useProjectStore = create<ProjectStore>()(
         },
       }),
       {
-        name: 'video-editor-project',
+        name: "video-editor-project",
         partialize: (state) => ({
           currentProject: state.currentProject,
           hasUnsavedChanges: state.hasUnsavedChanges,
         }),
       }
     ),
-    { name: 'ProjectStore' }
+    { name: "ProjectStore" }
   )
 );

@@ -96,6 +96,8 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
      */
     const syncFromStores = useCallback(() => {
       const data = stateAdapterRef.current.syncFromStores();
+      console.log(data, "data 同步数据");
+
       setEditorData(data.editorData);
       setEffects(data.effects);
       setCurrentTime(data.currentTime);
@@ -409,7 +411,7 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
       scaleSplitCount: 10,
 
       // 时间轴高度
-      startLeft: 200, // 轨道头部宽度
+      startLeft: 100, // 轨道头部宽度
 
       // 自动滚动
       autoScroll: true,

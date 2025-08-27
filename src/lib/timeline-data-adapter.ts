@@ -3,7 +3,7 @@
  * 负责在现有数据模型与 react-timeline-editor 数据格式之间进行转换
  */
 
-import { Track, Clip, ClipType } from '@/types/project';
+import { Track, Clip, ClipType } from "@/types/project";
 
 // react-timeline-editor 的数据结构类型定义
 export interface TimelineRow {
@@ -36,12 +36,11 @@ export interface TimelineEffect {
  * 时间轴数据适配器类
  */
 export class TimelineDataAdapter {
-  
   /**
    * 将项目的 Track 数组转换为 react-timeline-editor 的 TimelineRow 数组
    */
   convertTracksToRows(tracks: Track[]): TimelineRow[] {
-    return tracks.map(track => this.trackToRow(track));
+    return tracks.map((track) => this.trackToRow(track));
   }
 
   /**
@@ -49,7 +48,8 @@ export class TimelineDataAdapter {
    */
   convertRowsToTracks(rows: TimelineRow[], originalTracks: Track[]): Track[] {
     return rows.map((row, index) => {
-      const originalTrack = originalTracks.find(t => t.id === row.id) || originalTracks[index];
+      const originalTrack =
+        originalTracks.find((t) => t.id === row.id) || originalTracks[index];
       return this.rowToTrack(row, originalTrack);
     });
   }
@@ -60,7 +60,7 @@ export class TimelineDataAdapter {
   private trackToRow(track: Track): TimelineRow {
     return {
       id: track.id,
-      actions: track.clips.map(clip => this.clipToAction(clip))
+      actions: track.clips.map((clip) => this.clipToAction(clip)),
     };
   }
 
@@ -71,7 +71,9 @@ export class TimelineDataAdapter {
     return {
       ...originalTrack,
       id: row.id,
-      clips: row.actions.map(action => this.actionToClip(action, originalTrack.clips))
+      clips: row.actions.map((action) =>
+        this.actionToClip(action, originalTrack.clips)
+      ),
     };
   }
 
@@ -81,13 +83,13 @@ export class TimelineDataAdapter {
   private clipToAction(clip: Clip): TimelineAction {
     return {
       id: clip.id,
-      start: clip.startTime / 1000, // 转换为秒
-      end: (clip.startTime + clip.duration) / 1000, // 转换为秒
+      start: clip.startTime, // 转换为秒
+      end: clip.startTime + clip.duration, // 转换为秒
       effectId: clip.id, // 使用 clip.id 作为 effectId
       disable: false,
       flexible: true,
       movable: !clip.trackId || true, // 可移动
-      selected: clip.selected
+      selected: clip.selected,
     };
   }
 
@@ -96,8 +98,8 @@ export class TimelineDataAdapter {
    */
   private actionToClip(action: TimelineAction, originalClips: Clip[]): Clip {
     // 查找原始的 clip 数据
-    const originalClip = originalClips.find(c => c.id === action.id);
-    
+    const originalClip = originalClips.find((c) => c.id === action.id);
+
     if (!originalClip) {
       // 如果找不到原始数据，创建一个基本的 Clip
       return this.createDefaultClip(action);
@@ -109,7 +111,7 @@ export class TimelineDataAdapter {
       id: action.id,
       startTime: action.start * 1000, // 转换为毫秒
       duration: (action.end - action.start) * 1000, // 转换为毫秒
-      selected: action.selected || false
+      selected: action.selected || false,
     };
   }
 
@@ -119,18 +121,18 @@ export class TimelineDataAdapter {
   private createDefaultClip(action: TimelineAction): Clip {
     return {
       id: action.id,
-      type: 'video' as ClipType,
+      type: "video" as ClipType,
       startTime: action.start * 1000,
       duration: (action.end - action.start) * 1000,
       trimStart: 0,
       trimEnd: 0,
       source: {
         id: action.effectId,
-        type: 'file',
-        url: '',
-        name: '未知片段',
+        type: "file",
+        url: "",
+        name: "未知片段",
         size: 0,
-        metadata: {}
+        metadata: {},
       },
       effects: [],
       transform: {
@@ -142,10 +144,10 @@ export class TimelineDataAdapter {
         scaleX: 1,
         scaleY: 1,
         anchorX: 0.5,
-        anchorY: 0.5
+        anchorY: 0.5,
       },
       selected: action.selected || false,
-      trackId: ''
+      trackId: "",
     };
   }
 
@@ -154,8 +156,8 @@ export class TimelineDataAdapter {
    */
   createEffectsMap(clips: Clip[]): Record<string, TimelineEffect> {
     const effects: Record<string, TimelineEffect> = {};
-    
-    clips.forEach(clip => {
+
+    clips.forEach((clip) => {
       effects[clip.id] = this.clipToEffect(clip);
     });
 
@@ -178,14 +180,17 @@ export class TimelineDataAdapter {
     return {
       id: clip.id,
       name: clip.source.name || `${clip.type}片段`,
-      source: clip.source.url || clip.source.metadata.thumbnail ? {
-        src: clip.source.url || clip.source.metadata.thumbnail || '',
-        type: clip.type,
-        duration: clip.duration,
-        startTime: clip.startTime,
-        trimStart: clip.trimStart,
-        trimEnd: clip.trimEnd
-      } : undefined,
+      source:
+        clip.source.url || clip.source.metadata.thumbnail
+          ? {
+              src: clip.source.url || clip.source.metadata.thumbnail || "",
+              type: clip.type,
+              duration: clip.duration,
+              startTime: clip.startTime,
+              trimStart: clip.trimStart,
+              trimEnd: clip.trimEnd,
+            }
+          : undefined,
       type: clip.type,
       duration: clip.duration,
       startTime: clip.startTime,
@@ -196,26 +201,33 @@ export class TimelineDataAdapter {
         width: clip.source.metadata.width,
         height: clip.source.metadata.height,
         fps: clip.source.metadata.fps,
-        format: clip.source.metadata.format
-      }
+        format: clip.source.metadata.format,
+      },
     };
   }
 
   /**
    * 验证数据完整性
    */
-  validateTimelineData(rows: TimelineRow[], effects: Record<string, TimelineEffect>): boolean {
+  validateTimelineData(
+    rows: TimelineRow[],
+    effects: Record<string, TimelineEffect>
+  ): boolean {
     for (const row of rows) {
       for (const action of row.actions) {
         // 检查是否存在对应的 effect
         if (!effects[action.effectId]) {
-          console.warn(`Missing effect for action ${action.id} with effectId ${action.effectId}`);
+          console.warn(
+            `Missing effect for action ${action.id} with effectId ${action.effectId}`
+          );
           return false;
         }
-        
+
         // 检查时间范围是否有效
         if (action.start < 0 || action.end <= action.start) {
-          console.warn(`Invalid time range for action ${action.id}: start=${action.start}, end=${action.end}`);
+          console.warn(
+            `Invalid time range for action ${action.id}: start=${action.start}, end=${action.end}`
+          );
           return false;
         }
       }
@@ -233,7 +245,7 @@ export class TimelineDataAdapter {
       label: track.name,
       visible: track.isVisible,
       muted: track.isMuted,
-      locked: track.isLocked
+      locked: track.isLocked,
     };
 
     return baseConfig;
@@ -244,12 +256,12 @@ export class TimelineDataAdapter {
    */
   private getTrackColor(type: string): string {
     const colorMap: Record<string, string> = {
-      video: '#3b82f6', // 蓝色
-      audio: '#10b981', // 绿色  
-      image: '#f59e0b', // 橙色
-      text: '#8b5cf6'   // 紫色
+      video: "#3b82f6", // 蓝色
+      audio: "#10b981", // 绿色
+      image: "#f59e0b", // 橙色
+      text: "#8b5cf6", // 紫色
     };
-    return colorMap[type] || '#6b7280'; // 默认灰色
+    return colorMap[type] || "#6b7280"; // 默认灰色
   }
 
   /**
@@ -258,17 +270,19 @@ export class TimelineDataAdapter {
   static timeUtils = {
     // 毫秒转秒
     msToSeconds: (ms: number): number => ms / 1000,
-    
+
     // 秒转毫秒
     secondsToMs: (seconds: number): number => seconds * 1000,
-    
+
     // 格式化时间显示
     formatTime: (ms: number): string => {
       const totalSeconds = Math.floor(ms / 1000);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
-      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
+      return `${minutes.toString().padStart(2, "0")}:${seconds
+        .toString()
+        .padStart(2, "0")}`;
+    },
   };
 }
 
