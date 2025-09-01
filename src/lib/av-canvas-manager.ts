@@ -1,13 +1,13 @@
-import { AVCanvas } from '@webav/av-canvas';
+import { AVCanvas } from "@webav/av-canvas";
 import {
   AudioClip,
   ImgClip,
   MP4Clip,
   VisibleSprite,
   renderTxt2ImgBitmap,
-} from '@webav/av-cliper';
-import { TimelineAction } from '@xzdarcy/react-timeline-editor';
-import { TextStyle } from '@/types';
+} from "@webav/av-cliper";
+import { TimelineAction } from "@xzdarcy/react-timeline-editor";
+import { TextStyle } from "@/types";
 
 /**
  * AVCanvas 管理器
@@ -20,11 +20,12 @@ export class AVCanvasManager {
   private spriteActionMap = new WeakMap<VisibleSprite, TimelineAction>();
   private container: HTMLElement | null = null;
   private isInitialized = false;
-  
+
   // 事件监听器
   private timeUpdateListeners: ((time: number) => void)[] = [];
   private playingStateListeners: ((isPlaying: boolean) => void)[] = [];
-  private spriteChangeListeners: ((sprite: VisibleSprite | null) => void)[] = [];
+  private spriteChangeListeners: ((sprite: VisibleSprite | null) => void)[] =
+    [];
 
   /**
    * 初始化 AVCanvas
@@ -41,8 +42,8 @@ export class AVCanvasManager {
       await this.destroy();
     }
 
-    const { width = 1920, height = 1080, bgColor = '#000' } = options;
-    
+    const { width = 1920, height = 1080, bgColor = "#000" } = options;
+
     this.container = container;
     this.avCanvas = new AVCanvas(container, {
       width,
@@ -52,8 +53,8 @@ export class AVCanvasManager {
 
     this.setupEventListeners();
     this.isInitialized = true;
-    
-    console.log('AVCanvas 管理器初始化完成', { width, height, bgColor });
+
+    console.log("AVCanvas 管理器初始化完成", { width, height, bgColor });
   }
 
   /**
@@ -63,23 +64,23 @@ export class AVCanvasManager {
     if (!this.avCanvas) return;
 
     // 时间更新事件
-    this.avCanvas.on('timeupdate', (time: number) => {
-      this.timeUpdateListeners.forEach(listener => listener(time / 1e6));
+    this.avCanvas.on("timeupdate", (time: number) => {
+      this.timeUpdateListeners.forEach((listener) => listener(time / 1e6));
     });
 
     // 播放状态变化事件
-    this.avCanvas.on('playing', () => {
-      this.playingStateListeners.forEach(listener => listener(true));
+    this.avCanvas.on("playing", () => {
+      this.playingStateListeners.forEach((listener) => listener(true));
     });
 
-    this.avCanvas.on('paused', () => {
-      this.playingStateListeners.forEach(listener => listener(false));
+    this.avCanvas.on("paused", () => {
+      this.playingStateListeners.forEach((listener) => listener(false));
     });
 
     // 精灵选择变化事件
-    this.avCanvas.on('activeSpriteChange', (sprite: VisibleSprite | null) => {
-      this.spriteChangeListeners.forEach(listener => listener(sprite));
-      console.log('活动精灵变化:', sprite);
+    this.avCanvas.on("activeSpriteChange", (sprite: VisibleSprite | null) => {
+      this.spriteChangeListeners.forEach((listener) => listener(sprite));
+      console.log("活动精灵变化:", sprite);
     });
   }
 
@@ -88,36 +89,44 @@ export class AVCanvasManager {
    */
   private ensureInitialized(): void {
     if (!this.isInitialized || !this.avCanvas) {
-      throw new Error('AVCanvas 管理器未初始化，请先调用 initialize()');
+      throw new Error("AVCanvas 管理器未初始化，请先调用 initialize()");
     }
   }
 
   /**
    * 添加视频片段
    */
-  async addVideoClip(file: File): Promise<{action: TimelineAction, sprite: VisibleSprite}> {
+  async addVideoClip(
+    file: File,
+    startTime: number
+  ): Promise<{ action: TimelineAction; sprite: VisibleSprite }> {
     this.ensureInitialized();
 
     try {
       const stream = file.stream();
       const clip = new MP4Clip(stream);
       await clip.ready;
-      
+
       const sprite = new VisibleSprite(clip);
       await this.avCanvas!.addSprite(sprite);
 
+      sprite.time.offset = startTime * 1e6;
+
       // 创建对应的时间轴动作
-      const action = this.createTimelineAction(sprite, '视频');
-      
+      const action = this.createTimelineAction(sprite, "视频");
+
       // 建立映射关系
       this.actionSpriteMap.set(action, sprite);
       this.spriteActionMap.set(sprite, action);
 
-      console.log('添加视频片段成功:', { actionId: action.id, duration: sprite.time.duration / 1e6 });
-      
+      console.log("添加视频片段成功:", {
+        actionId: action.id,
+        duration: sprite.time.duration / 1e6,
+      });
+
       return { action, sprite };
     } catch (error) {
-      console.error('添加视频片段失败:', error);
+      console.error("添加视频片段失败:", error);
       throw error;
     }
   }
@@ -125,27 +134,32 @@ export class AVCanvasManager {
   /**
    * 添加音频片段
    */
-  async addAudioClip(file: File): Promise<{action: TimelineAction, sprite: VisibleSprite}> {
+  async addAudioClip(
+    file: File
+  ): Promise<{ action: TimelineAction; sprite: VisibleSprite }> {
     this.ensureInitialized();
 
     try {
       const stream = file.stream();
       const clip = new AudioClip(stream);
       await clip.ready;
-      
+
       const sprite = new VisibleSprite(clip);
       await this.avCanvas!.addSprite(sprite);
 
-      const action = this.createTimelineAction(sprite, '音频');
-      
+      const action = this.createTimelineAction(sprite, "音频");
+
       this.actionSpriteMap.set(action, sprite);
       this.spriteActionMap.set(sprite, action);
 
-      console.log('添加音频片段成功:', { actionId: action.id, duration: sprite.time.duration / 1e6 });
-      
+      console.log("添加音频片段成功:", {
+        actionId: action.id,
+        duration: sprite.time.duration / 1e6,
+      });
+
       return { action, sprite };
     } catch (error) {
-      console.error('添加音频片段失败:', error);
+      console.error("添加音频片段失败:", error);
       throw error;
     }
   }
@@ -153,33 +167,38 @@ export class AVCanvasManager {
   /**
    * 添加图片片段
    */
-  async addImageClip(file: File): Promise<{action: TimelineAction, sprite: VisibleSprite}> {
+  async addImageClip(
+    file: File
+  ): Promise<{ action: TimelineAction; sprite: VisibleSprite }> {
     this.ensureInitialized();
 
     try {
       const stream = file.stream();
       const clip = new ImgClip(stream);
       await clip.ready;
-      
+
       const sprite = new VisibleSprite(clip);
-      
+
       // 图片默认时长设置为 10 秒
       if (sprite.time.duration === Infinity) {
         sprite.time.duration = 10e6;
       }
-      
+
       await this.avCanvas!.addSprite(sprite);
 
-      const action = this.createTimelineAction(sprite, '图片');
-      
+      const action = this.createTimelineAction(sprite, "图片");
+
       this.actionSpriteMap.set(action, sprite);
       this.spriteActionMap.set(sprite, action);
 
-      console.log('添加图片片段成功:', { actionId: action.id, duration: sprite.time.duration / 1e6 });
-      
+      console.log("添加图片片段成功:", {
+        actionId: action.id,
+        duration: sprite.time.duration / 1e6,
+      });
+
       return { action, sprite };
     } catch (error) {
-      console.error('添加图片片段失败:', error);
+      console.error("添加图片片段失败:", error);
       throw error;
     }
   }
@@ -187,40 +206,47 @@ export class AVCanvasManager {
   /**
    * 添加文字片段
    */
-  async addTextClip(text: string, style?: Partial<TextStyle>): Promise<{action: TimelineAction, sprite: VisibleSprite}> {
+  async addTextClip(
+    text: string,
+    style?: Partial<TextStyle>
+  ): Promise<{ action: TimelineAction; sprite: VisibleSprite }> {
     this.ensureInitialized();
 
     try {
       const defaultStyle = {
         fontSize: 80,
-        color: 'red',
-        fontFamily: 'Arial',
-        ...style
+        color: "red",
+        fontFamily: "Arial",
+        ...style,
       };
 
       const styleString = `font-size: ${defaultStyle.fontSize}px; color: ${defaultStyle.color}; font-family: ${defaultStyle.fontFamily};`;
-      
+
       const bitmap = await renderTxt2ImgBitmap(text, styleString);
       const clip = new ImgClip(bitmap);
       await clip.ready;
-      
+
       const sprite = new VisibleSprite(clip);
-      
+
       // 文字默认时长设置为 5 秒
       sprite.time.duration = 5e6;
-      
+
       await this.avCanvas!.addSprite(sprite);
 
-      const action = this.createTimelineAction(sprite, '文字');
-      
+      const action = this.createTimelineAction(sprite, "文字");
+
       this.actionSpriteMap.set(action, sprite);
       this.spriteActionMap.set(sprite, action);
 
-      console.log('添加文字片段成功:', { actionId: action.id, text, duration: sprite.time.duration / 1e6 });
-      
+      console.log("添加文字片段成功:", {
+        actionId: action.id,
+        text,
+        duration: sprite.time.duration / 1e6,
+      });
+
       return { action, sprite };
     } catch (error) {
-      console.error('添加文字片段失败:', error);
+      console.error("添加文字片段失败:", error);
       throw error;
     }
   }
@@ -228,7 +254,10 @@ export class AVCanvasManager {
   /**
    * 创建时间轴动作
    */
-  private createTimelineAction(sprite: VisibleSprite, name: string): TimelineAction {
+  private createTimelineAction(
+    sprite: VisibleSprite,
+    name: string
+  ): TimelineAction {
     const start = sprite.time.offset / 1e6;
     const end = (sprite.time.offset + sprite.time.duration) / 1e6;
 
@@ -236,7 +265,7 @@ export class AVCanvasManager {
       id: Math.random().toString(36).substr(2, 9),
       start,
       end,
-      effectId: ''
+      effectId: "",
     };
   }
 
@@ -248,20 +277,20 @@ export class AVCanvasManager {
 
     const sprite = this.actionSpriteMap.get(action);
     if (!sprite) {
-      console.warn('未找到对应的精灵:', action.id);
+      console.warn("未找到对应的精灵:", action.id);
       return;
     }
 
     try {
       await this.avCanvas!.removeSprite(sprite);
-      
+
       // 清除映射关系
       this.actionSpriteMap.delete(action);
       this.spriteActionMap.delete(sprite);
 
-      console.log('移除精灵成功:', action.id);
+      console.log("移除精灵成功:", action.id);
     } catch (error) {
-      console.error('移除精灵失败:', error);
+      console.error("移除精灵失败:", error);
       throw error;
     }
   }
@@ -272,73 +301,79 @@ export class AVCanvasManager {
   updateSpriteTime(action: TimelineAction): void {
     const sprite = this.actionSpriteMap.get(action);
     if (!sprite) {
-      console.warn('未找到对应的精灵:', action.id);
+      console.warn("未找到对应的精灵:", action.id);
       return;
     }
 
     sprite.time.offset = action.start * 1e6;
     sprite.time.duration = (action.end - action.start) * 1e6;
 
-    console.log('更新精灵时间:', { 
-      actionId: action.id, 
-      start: action.start, 
-      end: action.end 
+    console.log("更新精灵时间:", {
+      actionId: action.id,
+      start: action.start,
+      end: action.end,
     });
   }
 
   /**
    * 分割精灵
    */
-  async splitSprite(action: TimelineAction, splitTime: number): Promise<TimelineAction[]> {
+  async splitSprite(
+    action: TimelineAction,
+    splitTime: number
+  ): Promise<TimelineAction[]> {
     this.ensureInitialized();
 
     const sprite = this.actionSpriteMap.get(action);
     if (!sprite) {
-      throw new Error('未找到对应的精灵');
+      throw new Error("未找到对应的精灵");
     }
 
     try {
       const clip = sprite.getClip();
       const splitTimeMs = splitTime * 1e6;
 
-      if(!clip.split) {
-        throw new Error('没有分割方法');
+      if (!clip.split) {
+        throw new Error("没有分割方法");
       }
-      
+
       // 分割剪辑
       const clips = await clip.split(splitTimeMs);
-      
+
       // 移除原精灵
       await this.removeSprite(action);
-      
+
       // 创建新的精灵和动作
       const newActions: TimelineAction[] = [];
-      
+
       for (let i = 0; i < clips.length; i++) {
         const newClip = clips[i];
         const newSprite = new VisibleSprite(newClip);
-        
+
         // 设置时间偏移
         if (i === 0) {
           newSprite.time.offset = action.start * 1e6;
         } else {
           newSprite.time.offset = splitTimeMs;
         }
-        
+
         await this.avCanvas!.addSprite(newSprite);
-        
-        const newAction = this.createTimelineAction(newSprite, 'split-' + i);
+
+        const newAction = this.createTimelineAction(newSprite, "split-" + i);
         this.actionSpriteMap.set(newAction, newSprite);
         this.spriteActionMap.set(newSprite, newAction);
-        
+
         newActions.push(newAction);
       }
 
-      console.log('分割精灵成功:', { originalId: action.id, newCount: newActions.length });
-      
+      console.log("分割精灵成功:", {
+        originalId: action.id,
+        newCount: newActions.length,
+      });
+
       return newActions;
     } catch (error) {
-      console.error('分割精灵失败:', error);
+      console.error("分割精灵失败:", error);
       throw error;
     }
   }
@@ -434,7 +469,7 @@ export class AVCanvasManager {
       this.avCanvas.destroy();
       this.avCanvas = null;
     }
-    
+
     this.actionSpriteMap = new WeakMap();
     this.spriteActionMap = new WeakMap();
     this.timeUpdateListeners = [];
@@ -442,8 +477,8 @@ export class AVCanvasManager {
     this.spriteChangeListeners = [];
     this.container = null;
     this.isInitialized = false;
-    
-    console.log('AVCanvas 管理器已销毁');
+
+    console.log("AVCanvas 管理器已销毁");
   }
 
   /**

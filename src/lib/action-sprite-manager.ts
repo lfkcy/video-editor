@@ -1,5 +1,5 @@
-import { VisibleSprite } from '@webav/av-cliper';
-import { TimelineAction } from '@xzdarcy/react-timeline-editor';
+import { VisibleSprite } from "@webav/av-cliper";
+import { TimelineAction } from "@xzdarcy/react-timeline-editor";
 
 /**
  * Action 与 Sprite 映射关系管理器
@@ -19,17 +19,17 @@ export class ActionSpriteManager {
     // 建立双向映射
     this.actionToSprite.set(action, sprite);
     this.spriteToAction.set(sprite, action);
-    
+
     // 建立 ID 映射便于查找
     this.actionIdMap.set(action.id, action);
     this.spriteIdMap.set(this.getSpriteId(sprite), sprite);
 
     // 通知监听器
-    this.notifyListeners('register', action, sprite);
+    this.notifyListeners("register", action, sprite);
 
-    console.log('注册映射关系:', { 
-      actionId: action.id, 
-      spriteId: this.getSpriteId(sprite)
+    console.log("注册映射关系:", {
+      actionId: action.id,
+      spriteId: this.getSpriteId(sprite),
     });
   }
 
@@ -38,7 +38,7 @@ export class ActionSpriteManager {
    */
   unregister(action: TimelineAction): void {
     const sprite = this.actionToSprite.get(action);
-    
+
     if (sprite) {
       // 清除映射关系
       this.actionToSprite.delete(action);
@@ -47,11 +47,11 @@ export class ActionSpriteManager {
       this.spriteIdMap.delete(this.getSpriteId(sprite));
 
       // 通知监听器
-      this.notifyListeners('unregister', action, sprite);
+      this.notifyListeners("unregister", action, sprite);
 
-      console.log('取消注册映射关系:', { 
+      console.log("取消注册映射关系:", {
         actionId: action.id,
-        spriteId: this.getSpriteId(sprite)
+        spriteId: this.getSpriteId(sprite),
       });
     }
   }
@@ -91,7 +91,7 @@ export class ActionSpriteManager {
    */
   getAllMappings(): { action: TimelineAction; sprite: VisibleSprite }[] {
     const mappings: { action: TimelineAction; sprite: VisibleSprite }[] = [];
-    
+
     this.actionIdMap.forEach((action) => {
       const sprite = this.actionToSprite.get(action);
       if (sprite) {
@@ -109,7 +109,7 @@ export class ActionSpriteManager {
   syncActionToSprite(action: TimelineAction): boolean {
     const sprite = this.actionToSprite.get(action);
     if (!sprite) {
-      console.warn('同步失败: 未找到对应的 Sprite:', action.id);
+      console.warn("同步失败: 未找到对应的 Sprite:", action.id);
       return false;
     }
 
@@ -119,19 +119,19 @@ export class ActionSpriteManager {
       sprite.time.duration = (action.end - action.start) * 1e6;
 
       // 通知监听器
-      this.notifyListeners('syncActionToSprite', action, sprite);
+      this.notifyListeners("syncActionToSprite", action, sprite);
 
-      console.log('同步 Action 到 Sprite 成功:', {
+      console.log("同步 Action 到 Sprite 成功:", {
         actionId: action.id,
         start: action.start,
         end: action.end,
         offset: sprite.time.offset,
-        duration: sprite.time.duration
+        duration: sprite.time.duration,
       });
 
       return true;
     } catch (error) {
-      console.error('同步 Action 到 Sprite 失败:', error);
+      console.error("同步 Action 到 Sprite 失败:", error);
       return false;
     }
   }
@@ -143,7 +143,7 @@ export class ActionSpriteManager {
   syncSpriteToAction(sprite: VisibleSprite): boolean {
     const action = this.spriteToAction.get(sprite);
     if (!action) {
-      console.warn('同步失败: 未找到对应的 Action');
+      console.warn("同步失败: 未找到对应的 Action");
       return false;
     }
 
@@ -153,19 +153,19 @@ export class ActionSpriteManager {
       action.end = (sprite.time.offset + sprite.time.duration) / 1e6;
 
       // 通知监听器
-      this.notifyListeners('syncSpriteToAction', action, sprite);
+      this.notifyListeners("syncSpriteToAction", action, sprite);
 
-      console.log('同步 Sprite 到 Action 成功:', {
+      console.log("同步 Sprite 到 Action 成功:", {
         actionId: action.id,
         start: action.start,
         end: action.end,
         offset: sprite.time.offset,
-        duration: sprite.time.duration
+        duration: sprite.time.duration,
       });
 
       return true;
     } catch (error) {
-      console.error('同步 Sprite 到 Action 失败:', error);
+      console.error("同步 Sprite 到 Action 失败:", error);
       return false;
     }
   }
@@ -175,7 +175,7 @@ export class ActionSpriteManager {
    */
   batchSyncActionToSprite(actions: TimelineAction[]): number {
     let successCount = 0;
-    
+
     actions.forEach((action) => {
       if (this.syncActionToSprite(action)) {
         successCount++;
@@ -215,13 +215,15 @@ export class ActionSpriteManager {
     this.getAllMappings().forEach(({ action, sprite }) => {
       const actionStart = action.start * 1e6;
       const actionDuration = (action.end - action.start) * 1e6;
-      
-      if (Math.abs(sprite.time.offset - actionStart) > 1000) { // 1ms 容差
+
+      if (Math.abs(sprite.time.offset - actionStart) > 1000) {
+        // 1ms 容差
         errors.push(`时间偏移不一致: Action ${action.id}`);
         valid = false;
       }
-      
-      if (Math.abs(sprite.time.duration - actionDuration) > 1000) { // 1ms 容差
+
+      if (Math.abs(sprite.time.duration - actionDuration) > 1000) {
+        // 1ms 容差
         errors.push(`时长不一致: Action ${action.id}`);
         valid = false;
       }
@@ -246,7 +248,7 @@ export class ActionSpriteManager {
    */
   addListener(listener: ActionSpriteManagerListener): () => void {
     this.listeners.push(listener);
-    
+
     return () => {
       const index = this.listeners.indexOf(listener);
       if (index > -1) {
@@ -267,7 +269,7 @@ export class ActionSpriteManager {
       try {
         listener(event, action, sprite);
       } catch (error) {
-        console.error('监听器执行失败:', error);
+        console.error("监听器执行失败:", error);
       }
     });
   }
@@ -280,8 +282,8 @@ export class ActionSpriteManager {
     this.spriteToAction = new WeakMap();
     this.actionIdMap.clear();
     this.spriteIdMap.clear();
-    
-    console.log('清除所有映射关系');
+
+    console.log("清除所有映射关系");
   }
 
   /**
@@ -303,11 +305,11 @@ export class ActionSpriteManager {
 /**
  * 事件类型
  */
-export type ActionSpriteManagerEvent = 
-  | 'register' 
-  | 'unregister' 
-  | 'syncActionToSprite' 
-  | 'syncSpriteToAction';
+export type ActionSpriteManagerEvent =
+  | "register"
+  | "unregister"
+  | "syncActionToSprite"
+  | "syncSpriteToAction";
 
 /**
  * 事件监听器类型

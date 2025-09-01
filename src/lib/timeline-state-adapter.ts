@@ -62,10 +62,15 @@ export class TimelineStateAdapter {
    * 从 stores 同步数据到 react-timeline-editor
    */
   syncFromStores(): TimelineEditorData {
-    const currentProject = this.projectStore.currentProject;
-    const timelineState = this.timelineStore;
+    // 总是获取最新的状态，而不是使用缓存的状态
+    const currentProject = useProjectStore.getState().currentProject;
+    const timelineState = useTimelineStore.getState();
+
+    console.log("syncFromStores - 当前项目:", currentProject);
+    console.log("syncFromStores - 时间轴状态:", timelineState);
 
     if (!currentProject) {
+      console.log("syncFromStores - 没有当前项目，返回空数据");
       return {
         editorData: [],
         effects: {},
@@ -75,23 +80,35 @@ export class TimelineStateAdapter {
     }
 
     const tracks = currentProject.tracks;
-    const allClips = timelineDataAdapter.getAllClips(tracks);
+    console.log("syncFromStores - 轨道数据:", tracks);
 
-    return {
-      editorData: timelineDataAdapter.convertTracksToRows(tracks),
-      effects: timelineDataAdapter.createEffectsMap(allClips),
+    const allClips = timelineDataAdapter.getAllClips(tracks);
+    console.log("syncFromStores - 所有片段:", allClips);
+
+    const editorData = timelineDataAdapter.convertTracksToRows(tracks);
+    console.log("syncFromStores - 转换后的编辑器数据:", editorData);
+
+    const effects = timelineDataAdapter.createEffectsMap(allClips);
+    console.log("syncFromStores - Effects 映射:", effects);
+
+    const result = {
+      editorData,
+      effects,
       currentTime: TimelineDataAdapter.timeUtils.msToSeconds(
         timelineState.playhead
       ),
       scale: this.calculateTimelineScale(timelineState.scale),
     };
+
+    console.log("syncFromStores - 最终返回结果:", result);
+    return result;
   }
 
   /**
    * 从 react-timeline-editor 同步数据到 stores
    */
   syncToStores(data: TimelineRow[]): void {
-    const currentProject = this.projectStore.currentProject;
+    const currentProject = useProjectStore.getState().currentProject;
     if (!currentProject) return;
 
     const originalTracks = currentProject.tracks;
@@ -120,7 +137,7 @@ export class TimelineStateAdapter {
    * 处理 Action 变更
    */
   handleActionChange(action: TimelineAction, rowId: string): void {
-    const currentProject = this.projectStore.currentProject;
+    const currentProject = useProjectStore.getState().currentProject;
     if (!currentProject) return;
 
     // 找到对应的轨道和片段
@@ -152,7 +169,7 @@ export class TimelineStateAdapter {
    * 处理轨道变更
    */
   handleRowChange(row: TimelineRow): void {
-    const currentProject = this.projectStore.currentProject;
+    const currentProject = useProjectStore.getState().currentProject;
     if (!currentProject) return;
 
     const originalTrack = currentProject.tracks.find((t) => t.id === row.id);
@@ -182,7 +199,7 @@ export class TimelineStateAdapter {
    * 获取当前选中的 Actions
    */
   getSelectedActions(): string[] {
-    return this.timelineStore.selectedClips;
+    return useTimelineStore.getState().selectedClips;
   }
 
   /**
@@ -269,7 +286,7 @@ export class TimelineStateAdapter {
     actionId: string,
     newTime: number
   ): void {
-    const currentProject = this.projectStore.currentProject;
+    const currentProject = useProjectStore.getState().currentProject;
     if (!currentProject) return;
 
     // 找到对应的片段

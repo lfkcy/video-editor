@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { MediaItem } from "./media-item";
 import { cn, formatFileSize } from "@/lib/utils";
 import { useProjectStore } from "@/stores";
+import { timelineDataAdapter } from "@/lib/timeline-data-adapter";
 
 /**
  * 时间轴编辑器上下文
@@ -37,7 +38,14 @@ interface TimelineEditorContextType {
   addMediaFile?: (
     file: File,
     trackId?: string,
-    fileType?: "video" | "audio" | "image"
+    fileType?: "video" | "audio" | "image",
+    options?: {
+      startTime?: number;
+      endTime?: number;
+      duration?: number;
+      effectId?: string;
+      effectOptions?: Record<string, any>;
+    }
   ) => Promise<any>;
   addTextSprite?: (
     text: string,
@@ -56,7 +64,7 @@ const TimelineEditorContext = createContext<TimelineEditorContextType>({});
 export function MediaLibrary() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timelineContext = useContext(TimelineEditorContext);
-  const { currentProject } = useProjectStore();
+  const currentProject = useProjectStore((state) => state.currentProject);
 
   // 本地状态
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
@@ -265,12 +273,35 @@ export function MediaLibrary() {
             const file = new File([blob], mediaFile.name, { type: blob.type });
 
             const fileType = getFileType(file);
+
+            // 设置下个片段的开始时间
+            let startTime = 0;
+            const curProject = useProjectStore.getState().currentProject;
+            const editorData = timelineDataAdapter.convertTracksToRows(
+              curProject?.tracks || []
+            );
+            const targetTrackId = `${fileType || "default"}-track-1`;
+
+            const fideTrack = editorData.find(
+              (data) => data.id === targetTrackId
+            );
+
+            if (fideTrack) {
+              startTime = fideTrack.actions.reduce(
+                (acc, pre) => acc + pre.end,
+                0
+              );
+            }
+
             // 只添加支持的文件类型到时间轴
             if (fileType !== "unknown") {
               await timelineContext.addMediaFile(
                 file,
                 undefined,
-                fileType as "video" | "audio" | "image"
+                fileType as "video" | "audio" | "image",
+                {
+                  startTime,
+                }
               );
             } else {
               console.warn(`不支持的文件类型: ${mediaFile.type}`);

@@ -96,7 +96,6 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
      */
     const syncFromStores = useCallback(() => {
       const data = stateAdapterRef.current.syncFromStores();
-      console.log(data, "data 同步数据");
 
       setEditorData(data.editorData);
       setEffects(data.effects);
@@ -399,7 +398,7 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
      */
     useEffect(() => {
       syncFromStores();
-    }, [currentProject, playhead, selectedClips, syncFromStores]);
+    }, [currentProject, playhead, selectedClips]);
 
     /**
      * 计算时间轴配置
@@ -571,7 +570,14 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
         addMediaFile: async (
           file: File,
           trackId?: string,
-          fileType?: "video" | "audio" | "image"
+          fileType?: "video" | "audio" | "image",
+          options?: {
+            startTime?: number;
+            endTime?: number;
+            duration?: number;
+            effectId?: string;
+            effectOptions?: Record<string, any>;
+          }
         ) => {
           if (!videoClipServiceRef.current) {
             throw new Error("VideoClipService 未初始化");
@@ -583,10 +589,14 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
 
             switch (fileType || file.type.split("/")[0]) {
               case "video":
+                let startTime = options?.startTime || 0;
+
                 result =
                   await videoClipServiceRef.current.addVideoSpriteToTrack(
                     file,
-                    targetTrackId
+                    targetTrackId,
+                    true,
+                    startTime
                   );
                 break;
               case "audio":
