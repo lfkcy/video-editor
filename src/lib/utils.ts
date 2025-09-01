@@ -1,33 +1,33 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
  * 格式化时间为 HH:MM:SS 格式
  */
 export function formatTime(time: number): string {
- if (time > -1) {
-        const m = Math.floor(time / 60);
-        const s = Math.floor(time % 60);
-        return `${m >= 10 ? m : `0${m}`}:${s >= 10 ? s : `0${s}`}`;
-    }
-    return '00:00';
+  if (time > -1) {
+    const m = Math.floor(time / 60);
+    const s = Math.floor(time % 60);
+    return `${m >= 10 ? m : `0${m}`}:${s >= 10 ? s : `0${s}`}`;
+  }
+  return "00:00";
 }
 
 /**
  * 格式化文件大小
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  
+  if (bytes === 0) return "0 B";
+
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 /**
@@ -41,7 +41,7 @@ export function generateId(): string {
  * 延迟函数
  */
 export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -52,13 +52,13 @@ export function debounce<T extends (...args: any[]) => any>(
   wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout;
-  
+
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {
       clearTimeout(timeout);
       func(...args);
     };
-    
+
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
@@ -72,7 +72,7 @@ export function throttle<T extends (...args: any[]) => any>(
   limit: number
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
-  
+
   return function executedFunction(this: any, ...args: Parameters<T>) {
     if (!inThrottle) {
       func.apply(this, args);
@@ -86,7 +86,7 @@ export function throttle<T extends (...args: any[]) => any>(
  * 深拷贝对象
  */
 export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== "object") {
     return obj;
   }
 
@@ -95,10 +95,10 @@ export function deepClone<T>(obj: T): T {
   }
 
   if (obj instanceof Array) {
-    return obj.map(item => deepClone(item)) as T;
+    return obj.map((item) => deepClone(item)) as T;
   }
 
-  if (typeof obj === 'object') {
+  if (typeof obj === "object") {
     const clonedObj = {} as T;
     for (const key in obj) {
       if (obj.hasOwnProperty(key)) {
@@ -127,21 +127,29 @@ export function isValidUrl(string: string): boolean {
  * 获取文件扩展名
  */
 export function getFileExtension(filename: string): string {
-  return filename.slice((filename.lastIndexOf('.') - 1 >>> 0) + 2);
+  return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2);
 }
 
 /**
  * 将像素转换为时间（基于缩放比例）
  */
-export function pixelToTime(pixel: number, scale: number, scrollPosition: number = 0): number {
+export function pixelToTime(
+  pixel: number,
+  scale: number,
+  scrollPosition: number = 0
+): number {
   return (pixel + scrollPosition) / scale;
 }
 
 /**
  * 将时间转换为像素（基于缩放比例）
  */
-export function timeToPixel(time: number, scale: number, scrollPosition: number = 0): number {
-  return (time * scale) - scrollPosition;
+export function timeToPixel(
+  time: number,
+  scale: number,
+  scrollPosition: number = 0
+): number {
+  return time * scale - scrollPosition;
 }
 
 /**
@@ -226,5 +234,5 @@ export function isMobile(): boolean {
  * 检查是否支持触摸
  */
 export function isTouchDevice(): boolean {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }

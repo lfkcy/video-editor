@@ -119,6 +119,14 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
     );
 
     /**
+     * 点击时间轴
+     * @param time 时间
+     */
+    const handleClickTimeArea = (time: number) => {
+      console.log("点击时间轴:", time);
+    };
+
+    /**
      * 处理时间变更
      */
     const handleTimeChange = useCallback(
@@ -719,6 +727,14 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
             style={{ width: "100%", height: "100%" }}
             {...timelineConfig}
             onChange={handleDataChange}
+            onClickTimeArea={(time) => {
+              handleTimeChange(time);
+              return true;
+            }}
+            onCursorDragEnd={(time) => {
+              handleTimeChange(time);
+              return true;
+            }}
           />
         </div>
 

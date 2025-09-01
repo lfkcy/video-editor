@@ -25,27 +25,27 @@ export interface EditorState {
 /**
  * 编辑器模式
  */
-export type EditorMode = 
-  | 'edit'      // 编辑模式
-  | 'preview'   // 预览模式
-  | 'export';   // 导出模式
+export type EditorMode =
+  | "edit" // 编辑模式
+  | "preview" // 预览模式
+  | "export"; // 导出模式
 
 /**
  * 编辑器面板
  */
-export type EditorPanel = 
-  | 'timeline'   // 时间轴面板
-  | 'media'      // 媒体库面板
-  | 'effects'    // 效果面板
-  | 'properties' // 属性面板
-  | 'audio'      // 音频面板
-  | 'text';      // 文本面板
+export type EditorPanel =
+  | "timeline" // 时间轴面板
+  | "media" // 媒体库面板
+  | "effects" // 效果面板
+  | "properties" // 属性面板
+  | "audio" // 音频面板
+  | "text"; // 文本面板
 
 /**
  * 剪贴板数据
  */
 export interface ClipboardData {
-  type: 'clips' | 'tracks';
+  type: "clips" | "tracks";
   data: Clip[] | Track[];
   timestamp: Date;
 }
@@ -66,20 +66,20 @@ export interface EditAction {
  * 编辑操作类型
  */
 export type EditActionType =
-  | 'add-clip'
-  | 'remove-clip'
-  | 'move-clip'
-  | 'trim-clip'
-  | 'split-clip'
-  | 'merge-clips'
-  | 'add-track'
-  | 'remove-track'
-  | 'reorder-tracks'
-  | 'change-property'
-  | 'add-effect'
-  | 'remove-effect'
-  | 'modify-effect'
-  | 'batch';
+  | "add-clip"
+  | "remove-clip"
+  | "move-clip"
+  | "trim-clip"
+  | "split-clip"
+  | "merge-clips"
+  | "add-track"
+  | "remove-track"
+  | "reorder-tracks"
+  | "change-property"
+  | "add-effect"
+  | "remove-effect"
+  | "modify-effect"
+  | "batch";
 
 /**
  * 编辑操作数据
@@ -106,7 +106,7 @@ export interface ZoomState {
 /**
  * 缩放适配模式
  */
-export type ZoomFitMode = 'none' | 'fit' | 'fill' | 'width' | 'height';
+export type ZoomFitMode = "none" | "fit" | "fill" | "width" | "height";
 
 /**
  * 网格状态
@@ -149,7 +149,7 @@ export interface EditorConfig {
 /**
  * 编辑器主题
  */
-export type EditorTheme = 'light' | 'dark' | 'auto';
+export type EditorTheme = "light" | "dark" | "auto";
 
 /**
  * 编辑器快捷键
@@ -181,7 +181,7 @@ export interface UIConfig {
 /**
  * 缩略图大小
  */
-export type ThumbnailSize = 'small' | 'medium' | 'large';
+export type ThumbnailSize = "small" | "medium" | "large";
 
 /**
  * 布局配置
@@ -213,7 +213,7 @@ export interface TextStyle {
   fontWeight?: string | number;
   color?: string;
   backgroundColor?: string;
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: "left" | "center" | "right";
   lineHeight?: number;
   letterSpacing?: string;
   textShadow?: string;
@@ -225,7 +225,7 @@ export interface TextStyle {
  * 精灵操作事件
  */
 export interface SpriteOperationEvent {
-  type: 'add' | 'remove' | 'update' | 'split';
+  type: "add" | "remove" | "update" | "split";
   spriteId: string;
   actionId: string;
   timestamp: number;
@@ -259,13 +259,13 @@ export interface EditorTool {
 /**
  * 工具分类
  */
-export type ToolCategory = 
-  | 'selection'  // 选择工具
-  | 'editing'    // 编辑工具
-  | 'effects'    // 效果工具
-  | 'text'       // 文本工具
-  | 'drawing'    // 绘图工具
-  | 'navigation'; // 导航工具
+export type ToolCategory =
+  | "selection" // 选择工具
+  | "editing" // 编辑工具
+  | "effects" // 效果工具
+  | "text" // 文本工具
+  | "drawing" // 绘图工具
+  | "navigation"; // 导航工具
 
 /**
  * 预览配置
@@ -282,7 +282,7 @@ export interface PreviewConfig {
 /**
  * 预览质量
  */
-export type PreviewQuality = 'low' | 'medium' | 'high' | 'full';
+export type PreviewQuality = "low" | "medium" | "high" | "full";
 
 /**
  * 宽高比
@@ -318,7 +318,7 @@ export interface Marker {
 /**
  * 标记点类型
  */
-export type MarkerType = 'point' | 'range' | 'chapter' | 'cue';
+export type MarkerType = "point" | "range" | "chapter" | "cue";
 
 /**
  * 渲染状态
@@ -335,13 +335,13 @@ export interface RenderState {
 /**
  * 渲染阶段
  */
-export type RenderStage = 
-  | 'preparing'   // 准备阶段
-  | 'processing'  // 处理阶段
-  | 'encoding'    // 编码阶段
-  | 'finalizing'  // 完成阶段
-  | 'completed'   // 已完成
-  | 'failed';     // 失败
+export type RenderStage =
+  | "preparing" // 准备阶段
+  | "processing" // 处理阶段
+  | "encoding" // 编码阶段
+  | "finalizing" // 完成阶段
+  | "completed" // 已完成
+  | "failed"; // 失败
 
 /**
  * 性能监控

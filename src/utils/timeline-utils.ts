@@ -19,7 +19,11 @@ export function timeToPixel(time: number, scale: number): number {
  * @param scrollOffset 滚动偏移量
  * @returns 时间（秒）
  */
-export function pixelToTime(pixel: number, scale: number, scrollOffset: number = 0): number {
+export function pixelToTime(
+  pixel: number,
+  scale: number,
+  scrollOffset: number = 0
+): number {
   return (pixel + scrollOffset) / scale;
 }
 
@@ -67,7 +71,10 @@ export function clamp(value: number, min: number, max: number): number {
  * @param showMilliseconds 是否显示毫秒
  * @returns 格式化的时间字符串
  */
-export function formatTimeDisplay(seconds: number, showMilliseconds: boolean = false): string {
+export function formatTimeDisplay(
+  seconds: number,
+  showMilliseconds: boolean = false
+): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
@@ -75,15 +82,25 @@ export function formatTimeDisplay(seconds: number, showMilliseconds: boolean = f
 
   if (hours > 0) {
     if (showMilliseconds) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}.${ms
+        .toString()
+        .padStart(3, "0")}`;
     } else {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
   } else {
     if (showMilliseconds) {
-      return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+      return `${minutes.toString().padStart(2, "0")}:${secs
+        .toString()
+        .padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
     } else {
-      return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      return `${minutes.toString().padStart(2, "0")}:${secs
+        .toString()
+        .padStart(2, "0")}`;
     }
   }
 }
@@ -105,8 +122,10 @@ export function calculateTimeIntervals(
   const rawInterval = duration / targetMarksCount;
 
   // 标准间隔值
-  const intervals = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 1200, 1800, 3600];
-  
+  const intervals = [
+    0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 1200, 1800, 3600,
+  ];
+
   // 找到最接近的间隔
   let majorInterval = intervals[0];
   for (const interval of intervals) {
@@ -139,20 +158,20 @@ export function generateTimeMarks(
   minorInterval: number
 ): Array<{ time: number; isMajor: boolean }> {
   const marks: Array<{ time: number; isMajor: boolean }> = [];
-  
+
   // 生成主要标记
   for (let time = 0; time <= duration; time += majorInterval) {
     marks.push({ time, isMajor: true });
   }
-  
+
   // 生成次要标记
   for (let time = minorInterval; time < duration; time += minorInterval) {
     // 检查是否与主要标记重叠
-    const isOverlap = marks.some(mark => Math.abs(mark.time - time) < 0.001);
+    const isOverlap = marks.some((mark) => Math.abs(mark.time - time) < 0.001);
     if (!isOverlap) {
       marks.push({ time, isMajor: false });
     }
   }
-  
+
   return marks.sort((a, b) => a.time - b.time);
 }

@@ -21,6 +21,8 @@ import {
   Plus,
   Settings,
 } from "lucide-react";
+import { formatTime } from "@/lib/utils";
+import { videoClipService } from "@/services";
 
 interface EnhancedTimelineToolbarProps {
   onAddTrack?: () => void;
@@ -47,6 +49,7 @@ export function EnhancedTimelineToolbar({
   const {
     isPlaying,
     playhead,
+    currentTime,
     duration,
     scale,
     snapToGrid,
@@ -65,24 +68,40 @@ export function EnhancedTimelineToolbar({
     setGridSize,
   } = useTimelineStore();
 
+  /**
+   * 播放/暂停控制（重构版）
+   * @returns
+   */
   const handlePlayPause = () => {
-    if (isPlaying) {
-      pause();
-    } else {
-      play();
+    try {
+      if (currentTime === 0 && !currentProject?.tracks.length) return;
+
+      if (isPlaying) {
+        videoClipService.pause();
+        pause();
+      } else {
+        videoClipService.play(currentTime);
+        play();
+      }
+    } catch (err) {
+      console.error("Playback control failed:", err);
     }
   };
 
+  /**
+   * 停止
+   * @returns
+   */
   const handleStop = () => {
     stop();
   };
 
   const handleSeekBackward = () => {
-    seekBy(-1000); // 后退1秒
+    seekBy(-1); // 后退1秒
   };
 
   const handleSeekForward = () => {
-    seekBy(1000); // 前进1秒
+    seekBy(1); // 前进1秒
   };
 
   const handleZoomIn = () => {
@@ -107,15 +126,6 @@ export function EnhancedTimelineToolbar({
 
   const handleGridSizeChange = (value: number[]) => {
     setGridSize(value[0]);
-  };
-
-  const formatTime = (timeMs: number): string => {
-    const seconds = Math.floor(timeMs / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-      .toString()
-      .padStart(2, "0")}`;
   };
 
   if (!currentProject) {
@@ -171,7 +181,7 @@ export function EnhancedTimelineToolbar({
         {/* 时间显示 */}
         <div className="flex items-center gap-2 text-sm border-r border-border pr-4">
           <span className="font-mono">
-            {formatTime(playhead)} / {formatTime(duration)}
+            {formatTime(currentTime)} / {formatTime(duration)}
           </span>
         </div>
 

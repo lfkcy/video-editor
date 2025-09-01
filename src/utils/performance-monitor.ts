@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * 性能监控服务
@@ -14,23 +14,23 @@ export interface PerformanceMetrics {
   domContentLoadedTime: number;
   firstContentfulPaint?: number;
   largestContentfulPaint?: number;
-  
+
   // 交互性能
   firstInputDelay?: number;
   totalBlockingTime?: number;
-  
+
   // 内存使用
   memoryUsage?: {
     usedJSHeapSize: number;
     totalJSHeapSize: number;
     jsHeapSizeLimit: number;
   };
-  
+
   // 自定义指标
   videoLoadTime?: number;
   timelineRenderTime?: number;
   exportTime?: number;
-  
+
   // 错误统计
   errorCount: number;
   errorRate: number;
@@ -76,23 +76,23 @@ export class PerformanceMonitor {
    */
   private initializeMonitoring() {
     // 检查是否在客户端环境
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       // 服务端环境，不执行浏览器相关监控
       return;
     }
-    
+
     // 监控页面加载性能
     this.measurePageLoad();
-    
+
     // 监控Core Web Vitals
     this.measureWebVitals();
-    
+
     // 监控内存使用
     this.measureMemoryUsage();
-    
+
     // 监控错误
     this.monitorErrors();
-    
+
     // 定期收集指标
     setInterval(() => {
       this.collectMetrics();
@@ -103,20 +103,24 @@ export class PerformanceMonitor {
    * 测量页面加载性能
    */
   private measurePageLoad() {
-    if (typeof window === 'undefined' || typeof performance === 'undefined') {
+    if (typeof window === "undefined" || typeof performance === "undefined") {
       return; // 服务端环境不执行
     }
-    
-    window.addEventListener('load', () => {
+
+    window.addEventListener("load", () => {
       try {
-        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+        const navigation = performance.getEntriesByType(
+          "navigation"
+        )[0] as PerformanceNavigationTiming;
         if (navigation) {
           // 使用 fetchStart 作为基准时间，因为 navigationStart 在新版本中已弃用
-          this.metrics.loadTime = navigation.loadEventEnd - navigation.fetchStart;
-          this.metrics.domContentLoadedTime = navigation.domContentLoadedEventEnd - navigation.fetchStart;
+          this.metrics.loadTime =
+            navigation.loadEventEnd - navigation.fetchStart;
+          this.metrics.domContentLoadedTime =
+            navigation.domContentLoadedEventEnd - navigation.fetchStart;
         }
       } catch (error) {
-        console.warn('Failed to measure page load performance:', error);
+        console.warn("Failed to measure page load performance:", error);
       }
     });
   }
@@ -126,20 +130,25 @@ export class PerformanceMonitor {
    */
   private measureWebVitals() {
     // 检查是否在客户端环境且PerformanceObserver可用
-    if (typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') {
+    if (
+      typeof window === "undefined" ||
+      typeof PerformanceObserver === "undefined"
+    ) {
       return; // 服务端环境不执行
     }
-    
+
     try {
       // First Contentful Paint (FCP)
       const fcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        const fcpEntry = entries.find(entry => entry.name === 'first-contentful-paint');
+        const fcpEntry = entries.find(
+          (entry) => entry.name === "first-contentful-paint"
+        );
         if (fcpEntry) {
           this.metrics.firstContentfulPaint = fcpEntry.startTime;
         }
       });
-      fcpObserver.observe({ entryTypes: ['paint'] });
+      fcpObserver.observe({ entryTypes: ["paint"] });
       this.observers.push(fcpObserver);
 
       // Largest Contentful Paint (LCP)
@@ -150,7 +159,7 @@ export class PerformanceMonitor {
           this.metrics.largestContentfulPaint = lastEntry.startTime;
         }
       });
-      lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+      lcpObserver.observe({ entryTypes: ["largest-contentful-paint"] });
       this.observers.push(lcpObserver);
 
       // First Input Delay (FID)
@@ -159,15 +168,15 @@ export class PerformanceMonitor {
         entries.forEach((entry) => {
           const eventEntry = entry as PerformanceEventTiming;
           if (eventEntry.processingStart && eventEntry.startTime) {
-            this.metrics.firstInputDelay = eventEntry.processingStart - eventEntry.startTime;
+            this.metrics.firstInputDelay =
+              eventEntry.processingStart - eventEntry.startTime;
           }
         });
       });
-      fidObserver.observe({ entryTypes: ['first-input'] });
+      fidObserver.observe({ entryTypes: ["first-input"] });
       this.observers.push(fidObserver);
-
     } catch (error) {
-      console.warn('Performance Observer not supported:', error);
+      console.warn("Performance Observer not supported:", error);
     }
   }
 
@@ -176,10 +185,14 @@ export class PerformanceMonitor {
    */
   private measureMemoryUsage() {
     // 检查是否在客户端环境且performance.memory可用
-    if (typeof window === 'undefined' || typeof performance === 'undefined' || !(performance as any).memory) {
+    if (
+      typeof window === "undefined" ||
+      typeof performance === "undefined" ||
+      !(performance as any).memory
+    ) {
       return; // 服务端环境或不支持memory API不执行
     }
-    
+
     const updateMemory = () => {
       const memory = (performance as any).memory;
       this.metrics.memoryUsage = {
@@ -198,15 +211,15 @@ export class PerformanceMonitor {
    */
   private monitorErrors() {
     // 检查是否在客户端环境
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return; // 服务端环境不执行
     }
-    
-    window.addEventListener('error', (event) => {
+
+    window.addEventListener("error", (event) => {
       this.errorCount++;
       this.updateErrorRate();
-      
-      console.error('Performance Monitor - JavaScript Error:', {
+
+      console.error("Performance Monitor - JavaScript Error:", {
         message: event.message,
         filename: event.filename,
         lineno: event.lineno,
@@ -215,11 +228,14 @@ export class PerformanceMonitor {
       });
     });
 
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener("unhandledrejection", (event) => {
       this.errorCount++;
       this.updateErrorRate();
-      
-      console.error('Performance Monitor - Unhandled Promise Rejection:', event.reason);
+
+      console.error(
+        "Performance Monitor - Unhandled Promise Rejection:",
+        event.reason
+      );
     });
   }
 
@@ -244,10 +260,10 @@ export class PerformanceMonitor {
    */
   public startTiming(name: string): () => void {
     // 检查是否在客户端环境且performance可用
-    if (typeof performance === 'undefined') {
+    if (typeof performance === "undefined") {
       return () => 0; // 服务端环境返回空函数
     }
-    
+
     const startTime = performance.now();
     return () => {
       const endTime = performance.now();
@@ -262,24 +278,24 @@ export class PerformanceMonitor {
    */
   private collectMetrics() {
     // 检查是否在客户端环境且performance可用
-    if (typeof performance === 'undefined') {
+    if (typeof performance === "undefined") {
       return; // 服务端环境不执行
     }
-    
+
     // 计算应用运行时间
     const runTime = performance.now() - this.startTime;
-    
+
     // 记录当前指标
     const currentMetrics = { ...this.metrics, runTime };
-    
+
     // 分析性能并给出建议
     const analysis = this.analyzePerformance(currentMetrics);
-    
+
     // 在开发环境下输出性能信息
-    if (process.env.NODE_ENV === 'development') {
-      console.group('Performance Metrics');
+    if (process.env.NODE_ENV === "development") {
+      console.group("Performance Metrics");
       console.table(currentMetrics);
-      console.log('Analysis:', analysis);
+      console.log("Analysis:", analysis);
       console.groupEnd();
     }
   }
@@ -292,71 +308,111 @@ export class PerformanceMonitor {
     const suggestions: string[] = [];
 
     // 检查加载时间
-    if (metrics.loadTime && metrics.loadTime > PERFORMANCE_THRESHOLDS.loadTime) {
-      issues.push('页面加载时间过长');
-      suggestions.push('优化资源加载、使用代码分割、启用缓存');
+    if (
+      metrics.loadTime &&
+      metrics.loadTime > PERFORMANCE_THRESHOLDS.loadTime
+    ) {
+      issues.push("页面加载时间过长");
+      suggestions.push("优化资源加载、使用代码分割、启用缓存");
     }
 
     // 检查First Contentful Paint
-    if (metrics.firstContentfulPaint && metrics.firstContentfulPaint > PERFORMANCE_THRESHOLDS.firstContentfulPaint) {
-      issues.push('首次内容绘制时间过长');
-      suggestions.push('优化关键渲染路径、减少渲染阻塞资源');
+    if (
+      metrics.firstContentfulPaint &&
+      metrics.firstContentfulPaint > PERFORMANCE_THRESHOLDS.firstContentfulPaint
+    ) {
+      issues.push("首次内容绘制时间过长");
+      suggestions.push("优化关键渲染路径、减少渲染阻塞资源");
     }
 
     // 检查内存使用
     if (metrics.memoryUsage) {
-      const memoryPercentage = (metrics.memoryUsage.usedJSHeapSize / metrics.memoryUsage.jsHeapSizeLimit) * 100;
+      const memoryPercentage =
+        (metrics.memoryUsage.usedJSHeapSize /
+          metrics.memoryUsage.jsHeapSizeLimit) *
+        100;
       if (memoryPercentage > PERFORMANCE_THRESHOLDS.memoryUsagePercentage) {
-        issues.push('内存使用率过高');
-        suggestions.push('检查内存泄漏、优化大型对象的使用、及时清理不必要的引用');
+        issues.push("内存使用率过高");
+        suggestions.push(
+          "检查内存泄漏、优化大型对象的使用、及时清理不必要的引用"
+        );
       }
     }
 
     // 检查错误率
-    if (metrics.errorRate && metrics.errorRate > PERFORMANCE_THRESHOLDS.errorRate) {
-      issues.push('错误率过高');
-      suggestions.push('修复错误、添加错误边界、改善错误处理');
+    if (
+      metrics.errorRate &&
+      metrics.errorRate > PERFORMANCE_THRESHOLDS.errorRate
+    ) {
+      issues.push("错误率过高");
+      suggestions.push("修复错误、添加错误边界、改善错误处理");
     }
 
     return {
       score: this.calculatePerformanceScore(metrics),
       issues,
       suggestions,
-      status: issues.length === 0 ? 'good' : issues.length <= 2 ? 'warning' : 'critical',
+      status:
+        issues.length === 0
+          ? "good"
+          : issues.length <= 2
+          ? "warning"
+          : "critical",
     };
   }
 
   /**
    * 计算性能分数
    */
-  private calculatePerformanceScore(metrics: Partial<PerformanceMetrics>): number {
+  private calculatePerformanceScore(
+    metrics: Partial<PerformanceMetrics>
+  ): number {
     let score = 100;
 
     // 根据各项指标扣分
-    if (metrics.loadTime && metrics.loadTime > PERFORMANCE_THRESHOLDS.loadTime) {
+    if (
+      metrics.loadTime &&
+      metrics.loadTime > PERFORMANCE_THRESHOLDS.loadTime
+    ) {
       score -= 20;
     }
 
-    if (metrics.firstContentfulPaint && metrics.firstContentfulPaint > PERFORMANCE_THRESHOLDS.firstContentfulPaint) {
+    if (
+      metrics.firstContentfulPaint &&
+      metrics.firstContentfulPaint > PERFORMANCE_THRESHOLDS.firstContentfulPaint
+    ) {
       score -= 15;
     }
 
-    if (metrics.largestContentfulPaint && metrics.largestContentfulPaint > PERFORMANCE_THRESHOLDS.largestContentfulPaint) {
+    if (
+      metrics.largestContentfulPaint &&
+      metrics.largestContentfulPaint >
+        PERFORMANCE_THRESHOLDS.largestContentfulPaint
+    ) {
       score -= 15;
     }
 
-    if (metrics.firstInputDelay && metrics.firstInputDelay > PERFORMANCE_THRESHOLDS.firstInputDelay) {
+    if (
+      metrics.firstInputDelay &&
+      metrics.firstInputDelay > PERFORMANCE_THRESHOLDS.firstInputDelay
+    ) {
       score -= 10;
     }
 
     if (metrics.memoryUsage) {
-      const memoryPercentage = (metrics.memoryUsage.usedJSHeapSize / metrics.memoryUsage.jsHeapSizeLimit) * 100;
+      const memoryPercentage =
+        (metrics.memoryUsage.usedJSHeapSize /
+          metrics.memoryUsage.jsHeapSizeLimit) *
+        100;
       if (memoryPercentage > PERFORMANCE_THRESHOLDS.memoryUsagePercentage) {
         score -= 20;
       }
     }
 
-    if (metrics.errorRate && metrics.errorRate > PERFORMANCE_THRESHOLDS.errorRate) {
+    if (
+      metrics.errorRate &&
+      metrics.errorRate > PERFORMANCE_THRESHOLDS.errorRate
+    ) {
       score -= 20;
     }
 
@@ -376,7 +432,7 @@ export class PerformanceMonitor {
   public getPerformanceReport() {
     const metrics = this.getMetrics();
     const analysis = this.analyzePerformance(metrics);
-    
+
     return {
       metrics,
       analysis,
@@ -389,7 +445,7 @@ export class PerformanceMonitor {
    * 销毁监控器
    */
   public destroy() {
-    this.observers.forEach(observer => observer.disconnect());
+    this.observers.forEach((observer) => observer.disconnect());
     this.observers = [];
   }
 }
@@ -408,7 +464,7 @@ export function usePerformanceMonitoring() {
     const updateMetrics = () => {
       const currentMetrics = performanceMonitor.getMetrics();
       const report = performanceMonitor.getPerformanceReport();
-      
+
       setMetrics(currentMetrics);
       setAnalysis(report.analysis);
     };
@@ -423,9 +479,12 @@ export function usePerformanceMonitoring() {
     return performanceMonitor.startTiming(name);
   }, []);
 
-  const measureCustomMetric = React.useCallback((name: keyof PerformanceMetrics, value: number) => {
-    performanceMonitor.measureCustomMetric(name, value);
-  }, []);
+  const measureCustomMetric = React.useCallback(
+    (name: keyof PerformanceMetrics, value: number) => {
+      performanceMonitor.measureCustomMetric(name, value);
+    },
+    []
+  );
 
   return {
     metrics,

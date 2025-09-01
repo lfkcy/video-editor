@@ -1,6 +1,6 @@
 // 媒体相关类型定义
 
-import { MediaMetadata as CustomMediaMetadata } from './project';
+import { MediaMetadata as CustomMediaMetadata } from "./project";
 
 /**
  * 媒体文件信息
@@ -20,32 +20,39 @@ export interface MediaFile {
 /**
  * 媒体类型
  */
-export type MediaType = 'video' | 'audio' | 'image';
+export type MediaType = "video" | "audio" | "image";
 
 /**
  * 支持的视频格式
  */
-export type VideoFormat = 'mp4' | 'webm' | 'mov' | 'avi' | 'mkv' | 'flv';
+export type VideoFormat = "mp4" | "webm" | "mov" | "avi" | "mkv" | "flv";
 
 /**
  * 支持的音频格式
  */
-export type AudioFormat = 'mp3' | 'wav' | 'aac' | 'ogg' | 'flac' | 'm4a';
+export type AudioFormat = "mp3" | "wav" | "aac" | "ogg" | "flac" | "m4a";
 
 /**
  * 支持的图片格式
  */
-export type ImageFormat = 'jpg' | 'jpeg' | 'png' | 'gif' | 'bmp' | 'webp' | 'svg';
+export type ImageFormat =
+  | "jpg"
+  | "jpeg"
+  | "png"
+  | "gif"
+  | "bmp"
+  | "webp"
+  | "svg";
 
 /**
  * 媒体处理状态
  */
-export type MediaProcessingStatus = 
-  | 'pending'     // 等待处理
-  | 'processing'  // 处理中
-  | 'completed'   // 处理完成
-  | 'failed'      // 处理失败
-  | 'cancelled';  // 已取消
+export type MediaProcessingStatus =
+  | "pending" // 等待处理
+  | "processing" // 处理中
+  | "completed" // 处理完成
+  | "failed" // 处理失败
+  | "cancelled"; // 已取消
 
 /**
  * 媒体处理任务
@@ -113,7 +120,7 @@ export interface UploadProgress {
   fileId: string;
   fileName: string;
   progress: number; // 进度 0-100
-  status: 'uploading' | 'processing' | 'completed' | 'failed';
+  status: "uploading" | "processing" | "completed" | "failed";
   error?: string;
 }
 
@@ -121,8 +128,8 @@ export interface UploadProgress {
  * 媒体过滤器
  */
 export interface MediaFilter {
-  type: MediaType | 'all';
-  format: string | 'all';
+  type: MediaType | "all";
+  format: string | "all";
   duration: {
     min: number;
     max: number;
@@ -137,20 +144,20 @@ export interface MediaFilter {
 /**
  * 媒体排序方式
  */
-export type MediaSortBy = 
-  | 'name-asc'
-  | 'name-desc'
-  | 'date-asc'
-  | 'date-desc'
-  | 'size-asc'
-  | 'size-desc'
-  | 'duration-asc'
-  | 'duration-desc';
+export type MediaSortBy =
+  | "name-asc"
+  | "name-desc"
+  | "date-asc"
+  | "date-desc"
+  | "size-asc"
+  | "size-desc"
+  | "duration-asc"
+  | "duration-desc";
 
 /**
  * 媒体视图模式
  */
-export type MediaViewMode = 'grid' | 'list' | 'timeline';
+export type MediaViewMode = "grid" | "list" | "timeline";
 
 /**
  * 视频流信息
@@ -224,7 +231,7 @@ export interface MediaImportOptions {
   detectScenes: boolean;
   extractMetadata: boolean;
   createProxy: boolean;
-  proxyQuality: 'low' | 'medium' | 'high';
+  proxyQuality: "low" | "medium" | "high";
 }
 
 /**

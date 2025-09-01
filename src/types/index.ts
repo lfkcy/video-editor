@@ -1,16 +1,16 @@
 // 统一导出所有类型定义
 
 // 项目相关类型
-export * from './project';
+export * from "./project";
 
 // 时间轴相关类型
-export * from './timeline';
+export * from "./timeline";
 
 // 媒体相关类型
-export * from './media';
+export * from "./media";
 
 // 编辑器相关类型
-export * from './editor';
+export * from "./editor";
 
 // 通用工具类型
 export interface Point2D {
@@ -60,7 +60,7 @@ export interface PaginationParams {
   page: number;
   pageSize: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface PaginatedResponse<T> {

@@ -1,4 +1,4 @@
-import { MediaType } from '@/types';
+import { MediaType } from "@/types";
 
 /**
  * 文件验证和处理工具函数
@@ -6,31 +6,31 @@ import { MediaType } from '@/types';
 export class FileUtils {
   // 支持的文件格式
   static readonly SUPPORTED_VIDEO_FORMATS = [
-    'video/mp4',
-    'video/webm',
-    'video/quicktime', // .mov
-    'video/x-msvideo', // .avi
+    "video/mp4",
+    "video/webm",
+    "video/quicktime", // .mov
+    "video/x-msvideo", // .avi
   ];
 
   static readonly SUPPORTED_AUDIO_FORMATS = [
-    'audio/mp3',
-    'audio/mpeg',
-    'audio/wav',
-    'audio/wave',
-    'audio/x-wav',
-    'audio/aac',
-    'audio/ogg',
-    'audio/flac',
+    "audio/mp3",
+    "audio/mpeg",
+    "audio/wav",
+    "audio/wave",
+    "audio/x-wav",
+    "audio/aac",
+    "audio/ogg",
+    "audio/flac",
   ];
 
   static readonly SUPPORTED_IMAGE_FORMATS = [
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/bmp',
-    'image/svg+xml',
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+    "image/svg+xml",
   ];
 
   // 文件大小限制（字节）
@@ -42,31 +42,32 @@ export class FileUtils {
    */
   static validateFile(file: File): { isValid: boolean; error?: string } {
     // 检查文件大小
-    const maxSize = this.getMediaType(file) === 'image' 
-      ? this.MAX_IMAGE_SIZE 
-      : this.MAX_FILE_SIZE;
-      
+    const maxSize =
+      this.getMediaType(file) === "image"
+        ? this.MAX_IMAGE_SIZE
+        : this.MAX_FILE_SIZE;
+
     if (file.size > maxSize) {
       const sizeMB = Math.round(maxSize / 1024 / 1024);
-      return { 
-        isValid: false, 
-        error: `文件大小超过限制（${sizeMB}MB）` 
+      return {
+        isValid: false,
+        error: `文件大小超过限制（${sizeMB}MB）`,
       };
     }
 
     // 检查文件类型
     if (!this.isSupportedFormat(file)) {
-      return { 
-        isValid: false, 
-        error: '不支持的文件格式' 
+      return {
+        isValid: false,
+        error: "不支持的文件格式",
       };
     }
 
     // 检查文件名
-    if (!file.name || file.name.trim() === '') {
-      return { 
-        isValid: false, 
-        error: '无效的文件名' 
+    if (!file.name || file.name.trim() === "") {
+      return {
+        isValid: false,
+        error: "无效的文件名",
       };
     }
 
@@ -89,17 +90,17 @@ export class FileUtils {
    */
   static getMediaType(file: File): MediaType {
     const mimeType = file.type.toLowerCase();
-    
+
     if (this.SUPPORTED_VIDEO_FORMATS.includes(mimeType)) {
-      return 'video';
+      return "video";
     }
     if (this.SUPPORTED_AUDIO_FORMATS.includes(mimeType)) {
-      return 'audio';
+      return "audio";
     }
     if (this.SUPPORTED_IMAGE_FORMATS.includes(mimeType)) {
-      return 'image';
+      return "image";
     }
-    
+
     throw new Error(`Unsupported file type: ${mimeType}`);
   }
 
@@ -107,8 +108,8 @@ export class FileUtils {
    * 获取文件扩展名
    */
   static getFileExtension(filename: string): string {
-    const lastDotIndex = filename.lastIndexOf('.');
-    if (lastDotIndex === -1) return '';
+    const lastDotIndex = filename.lastIndexOf(".");
+    if (lastDotIndex === -1) return "";
     return filename.slice(lastDotIndex + 1).toLowerCase();
   }
 
@@ -118,10 +119,10 @@ export class FileUtils {
   static sanitizeFileName(filename: string): string {
     // 移除或替换不安全的字符
     return filename
-      .replace(/[<>:\"/\\\\|?*]/g, '_') // 替换不安全字符为下划线
-      .replace(/\\s+/g, '_') // 替换空格为下划线
-      .replace(/_{2,}/g, '_') // 合并多个下划线
-      .replace(/^_+|_+$/g, '') // 移除开头和结尾的下划线
+      .replace(/[<>:\"/\\\\|?*]/g, "_") // 替换不安全字符为下划线
+      .replace(/\\s+/g, "_") // 替换空格为下划线
+      .replace(/_{2,}/g, "_") // 合并多个下划线
+      .replace(/^_+|_+$/g, "") // 移除开头和结尾的下划线
       .slice(0, 255); // 限制长度
   }
 
@@ -166,19 +167,19 @@ export class FileUtils {
   static readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = () => {
         if (reader.result instanceof ArrayBuffer) {
           resolve(reader.result);
         } else {
-          reject(new Error('Failed to read file as ArrayBuffer'));
+          reject(new Error("Failed to read file as ArrayBuffer"));
         }
       };
-      
+
       reader.onerror = () => {
-        reject(new Error('File reading failed'));
+        reject(new Error("File reading failed"));
       };
-      
+
       reader.readAsArrayBuffer(file);
     });
   }
@@ -189,19 +190,19 @@ export class FileUtils {
   static readFileAsDataURL(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = () => {
-        if (typeof reader.result === 'string') {
+        if (typeof reader.result === "string") {
           resolve(reader.result);
         } else {
-          reject(new Error('Failed to read file as Data URL'));
+          reject(new Error("Failed to read file as Data URL"));
         }
       };
-      
+
       reader.onerror = () => {
-        reject(new Error('File reading failed'));
+        reject(new Error("File reading failed"));
       };
-      
+
       reader.readAsDataURL(file);
     });
   }
@@ -210,20 +211,20 @@ export class FileUtils {
    * 获取文件的MIME类型
    */
   static getMimeType(file: File): string {
-    return file.type || 'application/octet-stream';
+    return file.type || "application/octet-stream";
   }
 
   /**
    * 格式化文件大小
    */
   static formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    
+    if (bytes === 0) return "0 B";
+
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   }
 
   /**

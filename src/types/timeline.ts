@@ -59,7 +59,7 @@ export interface TimeRulerConfig {
 /**
  * 时间格式
  */
-export type TimeFormat = 'hms' | 'frames' | 'seconds' | 'milliseconds';
+export type TimeFormat = "hms" | "frames" | "seconds" | "milliseconds";
 
 /**
  * 片段视觉状态
@@ -79,13 +79,13 @@ export interface ClipVisualState {
 /**
  * 拖拽操作类型
  */
-export type DragOperation = 
-  | 'move' // 移动片段
-  | 'trim-start' // 修剪开始
-  | 'trim-end' // 修剪结束
-  | 'split' // 分割片段
-  | 'select' // 选择片段
-  | 'multi-select'; // 多选片段
+export type DragOperation =
+  | "move" // 移动片段
+  | "trim-start" // 修剪开始
+  | "trim-end" // 修剪结束
+  | "split" // 分割片段
+  | "select" // 选择片段
+  | "multi-select"; // 多选片段
 
 /**
  * 拖拽状态
@@ -112,8 +112,8 @@ export interface Point {
  */
 export interface SnapGuide {
   position: number; // 位置，单位：像素
-  type: 'start' | 'end' | 'center' | 'playhead';
-  orientation: 'vertical' | 'horizontal';
+  type: "start" | "end" | "center" | "playhead";
+  orientation: "vertical" | "horizontal";
 }
 
 /**
@@ -142,18 +142,18 @@ export interface TimelineEvent {
  * 时间轴事件类型
  */
 export type TimelineEventType =
-  | 'clip-select'
-  | 'clip-deselect'
-  | 'clip-move'
-  | 'clip-trim'
-  | 'clip-split'
-  | 'clip-delete'
-  | 'track-add'
-  | 'track-remove'
-  | 'track-reorder'
-  | 'playhead-move'
-  | 'zoom-change'
-  | 'scroll-change';
+  | "clip-select"
+  | "clip-deselect"
+  | "clip-move"
+  | "clip-trim"
+  | "clip-split"
+  | "clip-delete"
+  | "track-add"
+  | "track-remove"
+  | "track-reorder"
+  | "playhead-move"
+  | "zoom-change"
+  | "scroll-change";
 
 /**
  * 时间轴键盘快捷键
@@ -168,36 +168,36 @@ export interface TimelineShortcut {
 /**
  * 键盘修饰键
  */
-export type KeyModifier = 'ctrl' | 'alt' | 'shift' | 'cmd';
+export type KeyModifier = "ctrl" | "alt" | "shift" | "cmd";
 
 /**
  * 时间轴操作
  */
 export type TimelineAction =
-  | 'play-pause'
-  | 'stop'
-  | 'seek-forward'
-  | 'seek-backward'
-  | 'zoom-in'
-  | 'zoom-out'
-  | 'zoom-fit'
-  | 'select-all'
-  | 'deselect-all'
-  | 'delete-selected'
-  | 'copy-selected'
-  | 'paste'
-  | 'undo'
-  | 'redo'
-  | 'split-at-playhead';
+  | "play-pause"
+  | "stop"
+  | "seek-forward"
+  | "seek-backward"
+  | "zoom-in"
+  | "zoom-out"
+  | "zoom-fit"
+  | "select-all"
+  | "deselect-all"
+  | "delete-selected"
+  | "copy-selected"
+  | "paste"
+  | "undo"
+  | "redo"
+  | "split-at-playhead";
 
 /**
  * 时间轴工具
  */
-export type TimelineTool = 
-  | 'select' // 选择工具
-  | 'razor' // 剃刀工具（分割）
-  | 'hand' // 手形工具（平移）
-  | 'zoom'; // 缩放工具
+export type TimelineTool =
+  | "select" // 选择工具
+  | "razor" // 剃刀工具（分割）
+  | "hand" // 手形工具（平移）
+  | "zoom"; // 缩放工具
 
 /**
  * 时间轴工具状态

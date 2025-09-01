@@ -109,8 +109,8 @@ export class TimelineDataAdapter {
     return {
       ...originalClip,
       id: action.id,
-      startTime: action.start * 1000, // 转换为毫秒
-      duration: (action.end - action.start) * 1000, // 转换为毫秒
+      startTime: action.start, // 转换为毫秒
+      duration: action.end - action.start, // 转换为毫秒
       selected: action.selected || false,
     };
   }

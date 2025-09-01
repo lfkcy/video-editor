@@ -66,9 +66,6 @@ export class TimelineStateAdapter {
     const currentProject = useProjectStore.getState().currentProject;
     const timelineState = useTimelineStore.getState();
 
-    console.log("syncFromStores - 当前项目:", currentProject);
-    console.log("syncFromStores - 时间轴状态:", timelineState);
-
     if (!currentProject) {
       console.log("syncFromStores - 没有当前项目，返回空数据");
       return {
@@ -79,17 +76,17 @@ export class TimelineStateAdapter {
       };
     }
 
+    // 轨道数据
     const tracks = currentProject.tracks;
-    console.log("syncFromStores - 轨道数据:", tracks);
 
+    // 所有片段
     const allClips = timelineDataAdapter.getAllClips(tracks);
-    console.log("syncFromStores - 所有片段:", allClips);
 
+    // 转换后的编辑器数据:
     const editorData = timelineDataAdapter.convertTracksToRows(tracks);
-    console.log("syncFromStores - 转换后的编辑器数据:", editorData);
 
+    // Effects 映射:
     const effects = timelineDataAdapter.createEffectsMap(allClips);
-    console.log("syncFromStores - Effects 映射:", effects);
 
     const result = {
       editorData,
@@ -100,7 +97,7 @@ export class TimelineStateAdapter {
       scale: this.calculateTimelineScale(timelineState.scale),
     };
 
-    console.log("syncFromStores - 最终返回结果:", result);
+    // console.log("syncFromStores - 最终返回结果:", result);
     return result;
   }
 
@@ -116,6 +113,7 @@ export class TimelineStateAdapter {
       data,
       originalTracks
     );
+    console.log(updatedTracks, "updatedTracks");
 
     // 更新项目数据
     useProjectStore.getState().updateProject({ tracks: updatedTracks });
@@ -126,7 +124,7 @@ export class TimelineStateAdapter {
    */
   handleTimeChange(time: number): void {
     const timeInMs = TimelineDataAdapter.timeUtils.secondsToMs(time);
-    useTimelineStore.getState().seekTo(timeInMs);
+    useTimelineStore.getState().seekTo(timeInMs / 1000);
 
     if (this.onTimeChangeCallback) {
       this.onTimeChangeCallback(time);

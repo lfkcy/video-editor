@@ -3,7 +3,7 @@
  * 实现虚拟滚动、批量更新、防抖等性能优化策略
  */
 
-import { TimelineRow, TimelineAction } from './timeline-data-adapter';
+import { TimelineRow, TimelineAction } from "./timeline-data-adapter";
 
 export interface PerformanceMetrics {
   renderTime: number;
@@ -31,7 +31,8 @@ class BatchUpdateManager {
   private batchDelay: number;
   private timeoutId: NodeJS.Timeout | null = null;
 
-  constructor(batchDelay = 16) { // 60fps
+  constructor(batchDelay = 16) {
+    // 60fps
     this.batchDelay = batchDelay;
   }
 
@@ -61,18 +62,18 @@ class BatchUpdateManager {
    */
   private processBatch(): void {
     if (this.isProcessing) return;
-    
+
     this.isProcessing = true;
     const updates = [...this.updateQueue];
     this.updateQueue = [];
 
     requestAnimationFrame(() => {
       try {
-        updates.forEach(update => update());
+        updates.forEach((update) => update());
       } finally {
         this.isProcessing = false;
         this.timeoutId = null;
-        
+
         // 如果在处理过程中又有新的更新，继续处理
         if (this.updateQueue.length > 0) {
           this.scheduleProcessing();
@@ -104,7 +105,10 @@ class Debouncer {
   /**
    * 防抖执行
    */
-  debounce<T extends (...args: any[]) => void>(fn: T, customDelay?: number): (...args: Parameters<T>) => void {
+  debounce<T extends (...args: any[]) => void>(
+    fn: T,
+    customDelay?: number
+  ): (...args: Parameters<T>) => void {
     return (...args: Parameters<T>) => {
       if (this.timeoutId) {
         clearTimeout(this.timeoutId);
@@ -171,7 +175,10 @@ class VirtualScrollManager {
    */
   getVisibleRange(): { start: number; end: number; offset: number } {
     const visibleCount = Math.ceil(this.containerHeight / this.trackHeight) + 2; // 缓冲2个
-    const start = Math.max(0, Math.floor(this.scrollTop / this.trackHeight) - 1);
+    const start = Math.max(
+      0,
+      Math.floor(this.scrollTop / this.trackHeight) - 1
+    );
     const end = Math.min(this.totalTracks, start + visibleCount);
     const offset = start * this.trackHeight;
 
@@ -194,7 +201,7 @@ class PerformanceMonitor {
     renderTime: 0,
     updateCount: 0,
     visibleItems: 0,
-    totalItems: 0
+    totalItems: 0,
   };
 
   private renderStartTime = 0;
@@ -246,7 +253,7 @@ class PerformanceMonitor {
       renderTime: 0,
       updateCount: 0,
       visibleItems: 0,
-      totalItems: 0
+      totalItems: 0,
     };
   }
 }
@@ -260,7 +267,7 @@ export class TimelinePerformanceOptimizer {
   private debouncer: Debouncer;
   private virtualScrollManager: VirtualScrollManager;
   private performanceMonitor: PerformanceMonitor;
-  
+
   // 缓存
   private trackHeightCache = new Map<string, number>();
   private actionRenderCache = new Map<string, any>();
@@ -273,10 +280,12 @@ export class TimelinePerformanceOptimizer {
       trackHeightCaching: true,
       debounceDelay: 300,
       enableMetrics: true,
-      ...options
+      ...options,
     };
 
-    this.batchUpdateManager = new BatchUpdateManager(this.options.batchUpdateDelay);
+    this.batchUpdateManager = new BatchUpdateManager(
+      this.options.batchUpdateDelay
+    );
     this.debouncer = new Debouncer(this.options.debounceDelay);
     this.virtualScrollManager = new VirtualScrollManager();
     this.performanceMonitor = new PerformanceMonitor();
@@ -294,10 +303,16 @@ export class TimelinePerformanceOptimizer {
       this.performanceMonitor.startRender();
     }
 
-    if (!this.options.enableVirtualScrolling || tracks.length <= (this.options.maxVisibleTracks || 50)) {
+    if (
+      !this.options.enableVirtualScrolling ||
+      tracks.length <= (this.options.maxVisibleTracks || 50)
+    ) {
       // 不需要虚拟滚动
       if (this.options.enableMetrics) {
-        this.performanceMonitor.updateVisibleItems(tracks.length, tracks.length);
+        this.performanceMonitor.updateVisibleItems(
+          tracks.length,
+          tracks.length
+        );
         this.performanceMonitor.endRender();
       }
 
@@ -305,8 +320,8 @@ export class TimelinePerformanceOptimizer {
         visibleTracks: tracks,
         virtualScrollProps: {
           totalHeight: tracks.length * 80,
-          offset: 0
-        }
+          offset: 0,
+        },
       };
     }
 
@@ -319,7 +334,10 @@ export class TimelinePerformanceOptimizer {
     const visibleTracks = tracks.slice(start, end);
 
     if (this.options.enableMetrics) {
-      this.performanceMonitor.updateVisibleItems(visibleTracks.length, tracks.length);
+      this.performanceMonitor.updateVisibleItems(
+        visibleTracks.length,
+        tracks.length
+      );
       this.performanceMonitor.endRender();
     }
 
@@ -327,8 +345,8 @@ export class TimelinePerformanceOptimizer {
       visibleTracks,
       virtualScrollProps: {
         totalHeight: this.virtualScrollManager.getTotalHeight(),
-        offset
-      }
+        offset,
+      },
     };
   }
 
@@ -337,7 +355,7 @@ export class TimelinePerformanceOptimizer {
    */
   batchUpdate(updateFn: () => void): void {
     this.batchUpdateManager.addUpdate(updateFn);
-    
+
     if (this.options.enableMetrics) {
       this.performanceMonitor.recordUpdate();
     }
@@ -346,7 +364,10 @@ export class TimelinePerformanceOptimizer {
   /**
    * 防抖操作
    */
-  debounce<T extends (...args: any[]) => void>(fn: T, customDelay?: number): (...args: Parameters<T>) => void {
+  debounce<T extends (...args: any[]) => void>(
+    fn: T,
+    customDelay?: number
+  ): (...args: Parameters<T>) => void {
     return this.debouncer.debounce(fn, customDelay);
   }
 
@@ -404,10 +425,10 @@ export class TimelinePerformanceOptimizer {
     scale: number
   ): TimelineAction[] {
     // 只渲染可见区域内的 actions
-    return actions.filter(action => {
+    return actions.filter((action) => {
       const actionStart = action.start * scale;
       const actionEnd = action.end * scale;
-      
+
       // 检查 action 是否在可视区域内
       return actionEnd >= viewportStart && actionStart <= viewportEnd;
     });
@@ -419,7 +440,7 @@ export class TimelinePerformanceOptimizer {
   optimizeMemory(): void {
     // 清理过期的缓存
     const maxCacheSize = 100;
-    
+
     if (this.trackHeightCache.size > maxCacheSize) {
       const entries = Array.from(this.trackHeightCache.entries());
       const toDelete = entries.slice(0, entries.length - maxCacheSize);
@@ -449,7 +470,7 @@ export class TimelinePerformanceOptimizer {
       renderTime: 0,
       updateCount: 0,
       visibleItems: 0,
-      totalItems: 0
+      totalItems: 0,
     };
   }
 
@@ -487,6 +508,8 @@ export class TimelinePerformanceOptimizer {
 /**
  * 创建性能优化器实例
  */
-export function createTimelinePerformanceOptimizer(options?: OptimizationOptions): TimelinePerformanceOptimizer {
+export function createTimelinePerformanceOptimizer(
+  options?: OptimizationOptions
+): TimelinePerformanceOptimizer {
   return new TimelinePerformanceOptimizer(options);
 }

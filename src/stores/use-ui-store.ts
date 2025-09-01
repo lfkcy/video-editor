@@ -1,15 +1,15 @@
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { 
-  EditorMode, 
-  EditorPanel, 
-  EditorTheme, 
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import {
+  EditorMode,
+  EditorPanel,
+  EditorTheme,
   ZoomFitMode,
   ThumbnailSize,
   PreviewQuality,
   LayoutConfig,
-  UIConfig 
-} from '@/types';
+  UIConfig,
+} from "@/types";
 
 /**
  * UI操作接口
@@ -21,12 +21,12 @@ interface UIActions {
   togglePanel: (panel: EditorPanel) => void;
   showPanel: (panel: EditorPanel) => void;
   hidePanel: (panel: EditorPanel) => void;
-  
+
   // 主题和外观
   setTheme: (theme: EditorTheme) => void;
   toggleTheme: () => void;
   setThumbnailSize: (size: ThumbnailSize) => void;
-  
+
   // 布局控制
   setLayout: (layout: Partial<LayoutConfig>) => void;
   setPanelSize: (panel: string, size: number) => void;
@@ -40,46 +40,46 @@ interface UIActions {
   setRightPanelWidth: (width: number) => void;
   setBottomPanelHeight: (height: number) => void;
   resetLayout: () => void;
-  
+
   // 全屏和缩放
   setFullscreen: (fullscreen: boolean) => void;
   toggleFullscreen: () => void;
   setZoomFitMode: (mode: ZoomFitMode) => void;
-  
+
   // 预览设置
   setPreviewQuality: (quality: PreviewQuality) => void;
   togglePreviewAudio: () => void;
   togglePreviewOverlays: () => void;
   toggleSafeArea: () => void;
-  
+
   // 工作区设置
   setShowTimecode: (show: boolean) => void;
   setShowWaveforms: (show: boolean) => void;
   setShowThumbnails: (show: boolean) => void;
   setTrackHeight: (height: number) => void;
   setTimelineHeight: (height: number) => void;
-  
+
   // 加载状态
   setLoading: (component: string, loading: boolean) => void;
   clearAllLoading: () => void;
-  
+
   // 错误处理
   setError: (component: string, error: string | null) => void;
   clearAllErrors: () => void;
-  
+
   // 通知系统
   addNotification: (notification: Notification) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
-  
+
   // 对话框管理
   openDialog: (dialog: DialogConfig) => void;
   closeDialog: (dialogId?: string) => void;
   closeAllDialogs: () => void;
-  
+
   // 工具提示
   setTooltip: (tooltip: TooltipConfig | null) => void;
-  
+
   // 键盘快捷键
   setShortcutsEnabled: (enabled: boolean) => void;
   toggleShortcuts: () => void;
@@ -90,7 +90,7 @@ interface UIActions {
  */
 interface Notification {
   id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   title: string;
   message?: string;
   duration?: number; // 自动关闭时间，毫秒
@@ -110,7 +110,7 @@ interface NotificationAction {
  */
 interface DialogConfig {
   id: string;
-  type: 'confirm' | 'alert' | 'prompt' | 'custom';
+  type: "confirm" | "alert" | "prompt" | "custom";
   title: string;
   message?: string;
   component?: React.ComponentType<any>;
@@ -129,7 +129,7 @@ interface DialogConfig {
 interface TooltipConfig {
   content: string;
   position: { x: number; y: number };
-  placement?: 'top' | 'bottom' | 'left' | 'right';
+  placement?: "top" | "bottom" | "left" | "right";
   delay?: number;
 }
 
@@ -141,47 +141,47 @@ interface UIState {
   mode: EditorMode;
   activePanel: EditorPanel;
   visiblePanels: Set<EditorPanel>;
-  
+
   // 主题和外观
   theme: EditorTheme;
   thumbnailSize: ThumbnailSize;
-  
+
   // 布局
   layout: LayoutConfig;
   panelSizes: Record<string, number>;
-  
+
   // 全屏和缩放
   isFullscreen: boolean;
   zoomFitMode: ZoomFitMode;
-  
+
   // 预览设置
   previewQuality: PreviewQuality;
   previewAudio: boolean;
   previewOverlays: boolean;
   showSafeArea: boolean;
-  
+
   // 工作区设置
   showTimecode: boolean;
   showWaveforms: boolean;
   showThumbnails: boolean;
   trackHeight: number;
   timelineHeight: number;
-  
+
   // 加载状态
   loadingStates: Record<string, boolean>;
-  
+
   // 错误状态
   errors: Record<string, string>;
-  
+
   // 通知
   notifications: Notification[];
-  
+
   // 对话框
   dialogs: DialogConfig[];
-  
+
   // 工具提示
   tooltip: TooltipConfig | null;
-  
+
   // 键盘快捷键
   shortcutsEnabled: boolean;
 }
@@ -222,30 +222,34 @@ export const useUIStore = create<UIStore>()(
     persist(
       (set, get) => ({
         // 初始状态
-        mode: 'edit',
-        activePanel: 'timeline',
-        visiblePanels: new Set(['timeline', 'media', 'properties'] as EditorPanel[]),
-        
-        theme: 'light',
-        thumbnailSize: 'medium',
-        
+        mode: "edit",
+        activePanel: "timeline",
+        visiblePanels: new Set([
+          "timeline",
+          "media",
+          "properties",
+        ] as EditorPanel[]),
+
+        theme: "light",
+        thumbnailSize: "medium",
+
         layout: defaultLayout,
         panelSizes: defaultPanelSizes,
-        
+
         isFullscreen: false,
-        zoomFitMode: 'none',
-        
-        previewQuality: 'high',
+        zoomFitMode: "none",
+
+        previewQuality: "high",
         previewAudio: true,
         previewOverlays: true,
         showSafeArea: false,
-        
+
         showTimecode: true,
         showWaveforms: true,
         showThumbnails: true,
         trackHeight: 80,
         timelineHeight: 300,
-        
+
         loadingStates: {},
         errors: {},
         notifications: [],
@@ -265,13 +269,13 @@ export const useUIStore = create<UIStore>()(
         togglePanel: (panel) => {
           const { visiblePanels } = get();
           const newVisiblePanels = new Set(visiblePanels);
-          
+
           if (newVisiblePanels.has(panel)) {
             newVisiblePanels.delete(panel);
           } else {
             newVisiblePanels.add(panel);
           }
-          
+
           set({ visiblePanels: newVisiblePanels });
         },
 
@@ -293,12 +297,12 @@ export const useUIStore = create<UIStore>()(
         setTheme: (theme) => {
           set({ theme });
           // 应用主题到document
-          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.setAttribute("data-theme", theme);
         },
 
         toggleTheme: () => {
           const { theme } = get();
-          const newTheme = theme === 'light' ? 'dark' : 'light';
+          const newTheme = theme === "light" ? "dark" : "light";
           get().setTheme(newTheme);
         },
 
@@ -314,8 +318,8 @@ export const useUIStore = create<UIStore>()(
 
         setPanelSize: (panel, size) => {
           const { panelSizes } = get();
-          set({ 
-            panelSizes: { ...panelSizes, [panel]: size } 
+          set({
+            panelSizes: { ...panelSizes, [panel]: size },
           });
         },
 
@@ -359,7 +363,7 @@ export const useUIStore = create<UIStore>()(
         },
 
         resetLayout: () => {
-          set({ 
+          set({
             layout: defaultLayout,
             panelSizes: defaultPanelSizes,
           });
@@ -423,8 +427,8 @@ export const useUIStore = create<UIStore>()(
         // 加载状态
         setLoading: (component, loading) => {
           const { loadingStates } = get();
-          set({ 
-            loadingStates: { ...loadingStates, [component]: loading } 
+          set({
+            loadingStates: { ...loadingStates, [component]: loading },
           });
         },
 
@@ -464,8 +468,8 @@ export const useUIStore = create<UIStore>()(
 
         removeNotification: (id) => {
           const { notifications } = get();
-          set({ 
-            notifications: notifications.filter(n => n.id !== id) 
+          set({
+            notifications: notifications.filter((n) => n.id !== id),
           });
         },
 
@@ -482,8 +486,8 @@ export const useUIStore = create<UIStore>()(
         closeDialog: (dialogId) => {
           const { dialogs } = get();
           if (dialogId) {
-            set({ 
-              dialogs: dialogs.filter(d => d.id !== dialogId) 
+            set({
+              dialogs: dialogs.filter((d) => d.id !== dialogId),
             });
           } else {
             // 关闭最后一个对话框
@@ -511,7 +515,7 @@ export const useUIStore = create<UIStore>()(
         },
       }),
       {
-        name: 'video-editor-ui',
+        name: "video-editor-ui",
         partialize: (state) => ({
           theme: state.theme,
           layout: state.layout,
@@ -530,7 +534,7 @@ export const useUIStore = create<UIStore>()(
         }),
       }
     ),
-    { name: 'UIStore' }
+    { name: "UIStore" }
   )
 );
 
@@ -540,23 +544,31 @@ export const useUIStore = create<UIStore>()(
 export const createNotification = {
   info: (title: string, message?: string, duration = 3000): Notification => ({
     id: Math.random().toString(36).substr(2, 9),
-    type: 'info',
+    type: "info",
     title,
     message,
     duration,
   }),
 
-  success: (title: string, message?: string, duration = 3000): Notification => ({
+  success: (
+    title: string,
+    message?: string,
+    duration = 3000
+  ): Notification => ({
     id: Math.random().toString(36).substr(2, 9),
-    type: 'success',
+    type: "success",
     title,
     message,
     duration,
   }),
 
-  warning: (title: string, message?: string, duration = 5000): Notification => ({
+  warning: (
+    title: string,
+    message?: string,
+    duration = 5000
+  ): Notification => ({
     id: Math.random().toString(36).substr(2, 9),
-    type: 'warning',
+    type: "warning",
     title,
     message,
     duration,
@@ -564,7 +576,7 @@ export const createNotification = {
 
   error: (title: string, message?: string, duration = 0): Notification => ({
     id: Math.random().toString(36).substr(2, 9),
-    type: 'error',
+    type: "error",
     title,
     message,
     duration, // 错误通知不自动消失

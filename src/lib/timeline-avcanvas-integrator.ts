@@ -1,8 +1,8 @@
-import { TimelineAction, TimelineRow } from '@xzdarcy/react-timeline-editor';
-import { VisibleSprite } from '@webav/av-cliper';
-import { VideoClipService } from '@/services/video-clip-service';
-import { useProjectStore, useTimelineStore } from '@/stores';
-import { Clip, ClipType } from '@/types/project';
+import { TimelineAction, TimelineRow } from "@xzdarcy/react-timeline-editor";
+import { VisibleSprite } from "@webav/av-cliper";
+import { VideoClipService } from "@/services/video-clip-service";
+import { useProjectStore, useTimelineStore } from "@/stores";
+import { Clip, ClipType } from "@/types/project";
 
 /**
  * 时间轴与 AVCanvas 集成器
@@ -13,7 +13,7 @@ export class TimelineAVCanvasIntegrator {
   private videoClipService: VideoClipService;
   private isInitialized = false;
   private timelineRef: React.MutableRefObject<any> | null = null;
-  
+
   // 事件监听器
   private timeUpdateListeners: ((time: number) => void)[] = [];
   private dataChangeListeners: ((data: TimelineRow[]) => void)[] = [];
@@ -30,8 +30,8 @@ export class TimelineAVCanvasIntegrator {
   initialize(timelineRef: React.MutableRefObject<any>): void {
     this.timelineRef = timelineRef;
     this.isInitialized = true;
-    
-    console.log('时间轴 AVCanvas 集成器初始化完成');
+
+    console.log("时间轴 AVCanvas 集成器初始化完成");
   }
 
   /**
@@ -68,19 +68,19 @@ export class TimelineAVCanvasIntegrator {
     try {
       // 更新时间轴播放头位置
       this.timelineRef.current.setTime(time);
-      
+
       // 更新 store 中的播放头位置
       useTimelineStore.getState().setPlayhead(time);
 
       // 更新 store 中实时时间
-      useTimelineStore.getState().setCurrentTime(time)
+      useTimelineStore.getState().setCurrentTime(time);
 
       // 通知监听器
-      this.timeUpdateListeners.forEach(listener => listener(time));
+      this.timeUpdateListeners.forEach((listener) => listener(time));
 
-      console.log('同步时间到时间轴:', time);
+      // console.log('同步时间到时间轴:', time);
     } catch (error) {
-      console.error('同步时间失败:', error);
+      console.error("同步时间失败:", error);
     }
   }
 
@@ -97,26 +97,29 @@ export class TimelineAVCanvasIntegrator {
       }
 
       // 通知监听器
-      this.playStateListeners.forEach(listener => listener(isPlaying));
+      this.playStateListeners.forEach((listener) => listener(isPlaying));
 
-      console.log('播放状态变化:', isPlaying);
+      console.log("播放状态变化:", isPlaying);
     } catch (error) {
-      console.error('处理播放状态变化失败:', error);
+      console.error("处理播放状态变化失败:", error);
     }
   }
 
   /**
    * 处理精灵添加 - 添加到时间轴
    */
-  private handleSpriteAdded(action: TimelineAction, sprite: VisibleSprite): void {
+  private handleSpriteAdded(
+    action: TimelineAction,
+    sprite: VisibleSprite
+  ): void {
     try {
       const { addClip } = useProjectStore.getState();
-      
+
       // 确定目标轨道
       const trackId = (action as any).trackId || this.determineTrackId(sprite);
-      
+
       // 创建 Clip 对象
-      const clip: Omit<Clip, 'id' | 'trackId'> = {
+      const clip: Omit<Clip, "id" | "trackId"> = {
         type: this.determineClipType(sprite),
         startTime: action.start,
         duration: action.end - action.start,
@@ -124,15 +127,15 @@ export class TimelineAVCanvasIntegrator {
         trimEnd: action.end - action.start,
         source: {
           id: `sprite-${action.id}`,
-          type: 'file',
-          url: '',
+          type: "file",
+          url: "",
           name: `Media Clip ${action.id}`,
           size: 0,
           metadata: {
             duration: sprite.time.duration / 1e6,
             format: this.getMediaFormat(sprite),
-            ...this.getMediaSize(sprite)
-          }
+            ...this.getMediaSize(sprite),
+          },
         },
         effects: [],
         transform: {
@@ -144,17 +147,17 @@ export class TimelineAVCanvasIntegrator {
           scaleX: 1,
           scaleY: 1,
           anchorX: 0.5,
-          anchorY: 0.5
+          anchorY: 0.5,
         },
-        selected: false
+        selected: false,
       };
 
       // 添加到项目中
       addClip(trackId, clip);
 
-      console.log('精灵添加到时间轴:', { actionId: action.id, trackId, clip });
+      console.log("精灵添加到时间轴:", { actionId: action.id, trackId, clip });
     } catch (error) {
-      console.error('处理精灵添加失败:', error);
+      console.error("处理精灵添加失败:", error);
     }
   }
 
@@ -166,16 +169,16 @@ export class TimelineAVCanvasIntegrator {
       const { removeClip } = useProjectStore.getState();
       removeClip(actionId);
 
-      console.log('精灵从时间轴移除:', actionId);
+      console.log("精灵从时间轴移除:", actionId);
     } catch (error) {
-      console.error('处理精灵移除失败:', error);
+      console.error("处理精灵移除失败:", error);
     }
   }
 
   /**
    * 时间轴操作处理器
    */
-  
+
   /**
    * 处理时间轴时间变化
    */
@@ -183,10 +186,10 @@ export class TimelineAVCanvasIntegrator {
     try {
       // 同步到 AVCanvas
       this.videoClipService.seekTo(time);
-      
-      console.log('时间轴时间变化:', time);
+
+      console.log("时间轴时间变化:", time);
     } catch (error) {
-      console.error('处理时间轴时间变化失败:', error);
+      console.error("处理时间轴时间变化失败:", error);
     }
   }
 
@@ -197,50 +200,58 @@ export class TimelineAVCanvasIntegrator {
     try {
       // 更新精灵时间属性
       const success = this.videoClipService.updateSpriteTime(action);
-      
+
       if (success) {
-        console.log('Action 移动同步成功:', action.id);
+        console.log("Action 移动同步成功:", action.id);
       }
     } catch (error) {
-      console.error('处理 Action 移动失败:', error);
+      console.error("处理 Action 移动失败:", error);
     }
   }
 
   /**
    * 处理 Action 调整大小
    */
-  handleActionResize(action: TimelineAction, start: number, end: number): boolean {
+  handleActionResize(
+    action: TimelineAction,
+    start: number,
+    end: number
+  ): boolean {
     try {
       // 获取对应的精灵
       const sprite = this.videoClipService.getSprite(action);
       if (!sprite) {
-        console.warn('未找到对应的精灵:', action.id);
+        console.warn("未找到对应的精灵:", action.id);
         return false;
       }
 
       // 检查是否超出原始时长
       const requestedDuration = (end - start) * 1e6;
       const originalDuration = sprite.getClip().meta.duration;
-      
+
       if (requestedDuration > originalDuration) {
-        console.warn('调整的时长超出原始时长');
+        console.warn("调整的时长超出原始时长");
         return false;
       }
 
       // 更新 action 时间
       action.start = start;
       action.end = end;
-      
+
       // 同步到精灵
       const success = this.videoClipService.updateSpriteTime(action);
-      
+
       if (success) {
-        console.log('Action 调整大小同步成功:', { actionId: action.id, start, end });
+        console.log("Action 调整大小同步成功:", {
+          actionId: action.id,
+          start,
+          end,
+        });
       }
-      
+
       return success;
     } catch (error) {
-      console.error('处理 Action 调整大小失败:', error);
+      console.error("处理 Action 调整大小失败:", error);
       return false;
     }
   }
@@ -252,10 +263,10 @@ export class TimelineAVCanvasIntegrator {
     try {
       // 从 AVCanvas 移除精灵
       await this.videoClipService.removeSprite(action);
-      
-      console.log('Action 删除成功:', action.id);
+
+      console.log("Action 删除成功:", action.id);
     } catch (error) {
-      console.error('处理 Action 删除失败:', error);
+      console.error("处理 Action 删除失败:", error);
       throw error;
     }
   }
@@ -263,19 +274,25 @@ export class TimelineAVCanvasIntegrator {
   /**
    * 处理 Action 分割
    */
-  async handleActionSplit(action: TimelineAction, splitTime: number): Promise<TimelineAction[]> {
+  async handleActionSplit(
+    action: TimelineAction,
+    splitTime: number
+  ): Promise<TimelineAction[]> {
     try {
       // 使用视频服务分割精灵
-      const newActions = await this.videoClipService.splitSprite(action, splitTime);
-      
-      console.log('Action 分割成功:', { 
-        originalId: action.id, 
-        newActionsCount: newActions.length 
+      const newActions = await this.videoClipService.splitSprite(
+        action,
+        splitTime
+      );
+
+      console.log("Action 分割成功:", {
+        originalId: action.id,
+        newActionsCount: newActions.length,
       });
-      
+
       return newActions;
     } catch (error) {
-      console.error('处理 Action 分割失败:', error);
+      console.error("处理 Action 分割失败:", error);
       throw error;
     }
   }
@@ -283,14 +300,14 @@ export class TimelineAVCanvasIntegrator {
   /**
    * 播放控制方法
    */
-  
+
   /**
    * 播放/暂停切换
    */
   togglePlayPause(): void {
     try {
       const { isPlaying } = useTimelineStore.getState();
-      
+
       if (isPlaying) {
         this.videoClipService.pause();
       } else {
@@ -298,7 +315,7 @@ export class TimelineAVCanvasIntegrator {
         this.videoClipService.play(currentTime);
       }
     } catch (error) {
-      console.error('切换播放状态失败:', error);
+      console.error("切换播放状态失败:", error);
     }
   }
 
@@ -308,39 +325,39 @@ export class TimelineAVCanvasIntegrator {
   seekTo(time: number): void {
     try {
       this.videoClipService.seekTo(time);
-      
+
       // 同时更新时间轴
       if (this.timelineRef?.current) {
         this.timelineRef.current.setTime(time);
       }
     } catch (error) {
-      console.error('跳转时间失败:', error);
+      console.error("跳转时间失败:", error);
     }
   }
 
   /**
    * 工具方法
    */
-  
+
   /**
    * 确定片段类型
    */
   private determineClipType(sprite: VisibleSprite): ClipType {
     const clip = sprite.getClip();
     const clipName = clip.constructor.name.toLowerCase();
-    
-    if (clipName.includes('mp4') || clipName.includes('video')) {
-      return 'video';
-    } else if (clipName.includes('audio')) {
-      return 'audio';
-    } else if (clipName.includes('img') || clipName.includes('image')) {
-      return 'image';
-    } else if (clipName.includes('text')) {
-      return 'text';
+
+    if (clipName.includes("mp4") || clipName.includes("video")) {
+      return "video";
+    } else if (clipName.includes("audio")) {
+      return "audio";
+    } else if (clipName.includes("img") || clipName.includes("image")) {
+      return "image";
+    } else if (clipName.includes("text")) {
+      return "text";
     }
-    
+
     // 默认返回 video 类型
-    return 'video';
+    return "video";
   }
 
   /**
@@ -348,17 +365,17 @@ export class TimelineAVCanvasIntegrator {
    */
   private determineTrackId(sprite: VisibleSprite): string {
     const clip = sprite.getClip();
-    
+
     // 根据 clip 类型确定轨道
-    if (clip.constructor.name.includes('MP4')) {
-      return 'video-track-1';
-    } else if (clip.constructor.name.includes('Audio')) {
-      return 'audio-track-1';
-    } else if (clip.constructor.name.includes('Img')) {
-      return 'image-track-1';
+    if (clip.constructor.name.includes("MP4")) {
+      return "video-track-1";
+    } else if (clip.constructor.name.includes("Audio")) {
+      return "audio-track-1";
+    } else if (clip.constructor.name.includes("Img")) {
+      return "image-track-1";
     }
-    
-    return 'default-track';
+
+    return "default-track";
   }
 
   /**
@@ -372,12 +389,15 @@ export class TimelineAVCanvasIntegrator {
   /**
    * 获取媒体大小
    */
-  private getMediaSize(sprite: VisibleSprite): { width: number; height: number } {
+  private getMediaSize(sprite: VisibleSprite): {
+    width: number;
+    height: number;
+  } {
     try {
       const clip = sprite.getClip();
       return {
         width: (clip as any).meta?.videoWidth || 0,
-        height: (clip as any).meta?.videoHeight || 0
+        height: (clip as any).meta?.videoHeight || 0,
       };
     } catch {
       return { width: 0, height: 0 };
@@ -387,7 +407,7 @@ export class TimelineAVCanvasIntegrator {
   /**
    * 事件监听器管理
    */
-  
+
   onTimeUpdate(callback: (time: number) => void): () => void {
     this.timeUpdateListeners.push(callback);
     return () => {
@@ -427,8 +447,8 @@ export class TimelineAVCanvasIntegrator {
     this.playStateListeners = [];
     this.timelineRef = null;
     this.isInitialized = false;
-    
-    console.log('时间轴 AVCanvas 集成器已销毁');
+
+    console.log("时间轴 AVCanvas 集成器已销毁");
   }
 
   /**

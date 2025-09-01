@@ -22,7 +22,7 @@ export interface ProjectSettings {
   fps: number;
   sampleRate: number;
   channels: number;
-  quality: 'low' | 'medium' | 'high' | 'ultra';
+  quality: "low" | "medium" | "high" | "ultra";
 }
 
 /**
@@ -43,7 +43,7 @@ export interface Track {
 /**
  * 轨道类型枚举
  */
-export type TrackType = 'video' | 'audio' | 'text' | 'image';
+export type TrackType = "video" | "audio" | "text" | "image";
 
 /**
  * 片段基础接口
@@ -65,7 +65,7 @@ export interface Clip {
 /**
  * 片段类型枚举
  */
-export type ClipType = 'video' | 'audio' | 'image' | 'text';
+export type ClipType = "video" | "audio" | "image" | "text";
 
 /**
  * 媒体源
@@ -82,7 +82,7 @@ export interface MediaSource {
 /**
  * 媒体源类型
  */
-export type MediaSourceType = 'file' | 'camera' | 'screen' | 'url';
+export type MediaSourceType = "file" | "camera" | "screen" | "url";
 
 /**
  * 媒体元数据
@@ -103,7 +103,7 @@ export interface MediaMetadata {
  * 视频片段
  */
 export interface VideoClip extends Clip {
-  type: 'video';
+  type: "video";
   volume: number; // 音量 0-1
   speed: number; // 播放速度
   opacity: number; // 透明度 0-1
@@ -113,7 +113,7 @@ export interface VideoClip extends Clip {
  * 音频片段
  */
 export interface AudioClip extends Clip {
-  type: 'audio';
+  type: "audio";
   volume: number; // 音量 0-1
   speed: number; // 播放速度
 }
@@ -122,7 +122,7 @@ export interface AudioClip extends Clip {
  * 图片片段
  */
 export interface ImageClip extends Clip {
-  type: 'image';
+  type: "image";
   opacity: number; // 透明度 0-1
 }
 
@@ -130,7 +130,7 @@ export interface ImageClip extends Clip {
  * 文字片段
  */
 export interface TextClip extends Clip {
-  type: 'text';
+  type: "text";
   text: string;
   style: TextStyle;
 }
@@ -141,12 +141,12 @@ export interface TextClip extends Clip {
 export interface TextStyle {
   fontFamily: string;
   fontSize: number;
-  fontWeight: 'normal' | 'bold' | number;
+  fontWeight: "normal" | "bold" | number;
   color: string;
   backgroundColor: string;
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: "left" | "center" | "right";
   lineHeight: number;
-  letterSpacing:  string;
+  letterSpacing: string;
   shadow: TextShadow;
 }
 
@@ -189,34 +189,34 @@ export interface Effect {
 /**
  * 效果类型
  */
-export type EffectType = 
-  | 'blur'
-  | 'brightness'
-  | 'contrast'
-  | 'saturation'
-  | 'hue'
-  | 'grayscale'
-  | 'sepia'
-  | 'invert'
-  | 'fade-in'
-  | 'fade-out'
-  | 'slide-in'
-  | 'slide-out'
-  | 'zoom-in'
-  | 'zoom-out';
+export type EffectType =
+  | "blur"
+  | "brightness"
+  | "contrast"
+  | "saturation"
+  | "hue"
+  | "grayscale"
+  | "sepia"
+  | "invert"
+  | "fade-in"
+  | "fade-out"
+  | "slide-in"
+  | "slide-out"
+  | "zoom-in"
+  | "zoom-out";
 
 /**
  * 导出设置
  */
 export interface ExportSettings {
-  format: 'mp4' | 'webm' | 'avi' | 'mov';
-  quality: 'low' | 'medium' | 'high' | 'ultra';
+  format: "mp4" | "webm" | "avi" | "mov";
+  quality: "low" | "medium" | "high" | "ultra";
   width: number;
   height: number;
   fps: number;
   bitrate: number;
-  audioCodec: 'aac' | 'mp3' | 'opus';
-  videoCodec: 'h264' | 'h265' | 'vp8' | 'vp9';
+  audioCodec: "aac" | "mp3" | "opus";
+  videoCodec: "h264" | "h265" | "vp8" | "vp9";
 }
 
 /**
@@ -241,11 +241,11 @@ export interface TextOverlay {
   };
   fontSize: number;
   fontFamily: string;
-  fontWeight: 'normal' | 'bold';
-  fontStyle: 'normal' | 'italic';
+  fontWeight: "normal" | "bold";
+  fontStyle: "normal" | "italic";
   color: string;
   background: string | null;
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: "left" | "center" | "right";
   opacity: number; // 0-100
   rotation: number; // 旋转角度 -180 到 180
   shadow: boolean;

@@ -59,14 +59,14 @@ export class PerformanceOptimizationManager {
     spriteCount: 0,
     actionCount: 0,
     fps: 0,
-    lastUpdateTime: 0
+    lastUpdateTime: 0,
   };
 
   private memoryConfig: MemoryMonitorConfig = {
     maxMemoryUsage: 512, // 512MB
     checkInterval: 5000, // 5秒
     warningThreshold: 256, // 256MB
-    cleanupThreshold: 384 // 384MB
+    cleanupThreshold: 384, // 384MB
   };
 
   private renderConfig: RenderOptimizationConfig = {
@@ -74,7 +74,7 @@ export class PerformanceOptimizationManager {
     maxVisibleItems: 100,
     debounceDelay: 16,
     enableLazyLoading: true,
-    cacheSize: 50
+    cacheSize: 50,
   };
 
   private errorConfig: ErrorHandlingConfig = {
@@ -82,17 +82,22 @@ export class PerformanceOptimizationManager {
     enableRetry: true,
     maxRetryAttempts: 3,
     retryDelay: 1000,
-    enableLogging: true
+    enableLogging: true,
   };
 
   private isMonitoring = false;
   private monitoringInterval: number | null = null;
   private renderCache = new Map<string, any>();
-  private errorLog: Array<{ timestamp: number; error: Error; context?: string }> = [];
-  
+  private errorLog: Array<{
+    timestamp: number;
+    error: Error;
+    context?: string;
+  }> = [];
+
   // 事件监听器
   private memoryWarningListeners: ((usage: number) => void)[] = [];
-  private performanceIssueListeners: ((metrics: PerformanceMetrics) => void)[] = [];
+  private performanceIssueListeners: ((metrics: PerformanceMetrics) => void)[] =
+    [];
   private errorListeners: ((error: Error, context?: string) => void)[] = [];
 
   /**
@@ -102,8 +107,8 @@ export class PerformanceOptimizationManager {
     this.startMonitoring();
     this.setupErrorHandlers();
     this.initializeRenderOptimizations();
-    
-    console.log('性能优化管理器初始化完成');
+
+    console.log("性能优化管理器初始化完成");
   }
 
   /**
@@ -119,7 +124,7 @@ export class PerformanceOptimizationManager {
       this.checkPerformanceIssues();
     }, this.memoryConfig.checkInterval);
 
-    console.log('性能监控已启动');
+    console.log("性能监控已启动");
   }
 
   /**
@@ -134,7 +139,7 @@ export class PerformanceOptimizationManager {
       this.monitoringInterval = null;
     }
 
-    console.log('性能监控已停止');
+    console.log("性能监控已停止");
   }
 
   /**
@@ -143,7 +148,7 @@ export class PerformanceOptimizationManager {
   private updateMetrics(): void {
     try {
       // 内存使用情况
-      if ('memory' in performance) {
+      if ("memory" in performance) {
         const memory = (performance as any).memory;
         this.metrics.memoryUsage = memory.usedJSHeapSize / 1024 / 1024; // MB
       }
@@ -157,10 +162,10 @@ export class PerformanceOptimizationManager {
       this.metrics.lastUpdateTime = now;
 
       // 组件计数
-      this.metrics.componentCount = document.querySelectorAll('[data-component]').length;
-
+      this.metrics.componentCount =
+        document.querySelectorAll("[data-component]").length;
     } catch (error) {
-      this.handleError(error as Error, 'updateMetrics');
+      this.handleError(error as Error, "updateMetrics");
     }
   }
 
@@ -186,12 +191,13 @@ export class PerformanceOptimizationManager {
 
     // FPS 过低
     if (fps < 30 && fps > 0) {
-      this.notifyPerformanceIssue('FPS过低');
+      this.notifyPerformanceIssue("FPS过低");
     }
 
     // 渲染时间过长
-    if (renderTime > 16) { // 超过一帧的时间
-      this.notifyPerformanceIssue('渲染时间过长');
+    if (renderTime > 16) {
+      // 超过一帧的时间
+      this.notifyPerformanceIssue("渲染时间过长");
     }
   }
 
@@ -211,9 +217,9 @@ export class PerformanceOptimizationManager {
         (window as any).gc();
       }
 
-      console.log('内存清理完成');
+      console.log("内存清理完成");
     } catch (error) {
-      this.handleError(error as Error, 'performMemoryCleanup');
+      this.handleError(error as Error, "performMemoryCleanup");
     }
   }
 
@@ -224,9 +230,12 @@ export class PerformanceOptimizationManager {
     const cacheSize = this.renderCache.size;
     if (cacheSize > this.renderConfig.cacheSize) {
       const deleteCount = cacheSize - this.renderConfig.cacheSize;
-      const keysToDelete = Array.from(this.renderCache.keys()).slice(0, deleteCount);
-      
-      keysToDelete.forEach(key => {
+      const keysToDelete = Array.from(this.renderCache.keys()).slice(
+        0,
+        deleteCount
+      );
+
+      keysToDelete.forEach((key) => {
         this.renderCache.delete(key);
       });
 
@@ -240,8 +249,8 @@ export class PerformanceOptimizationManager {
   private clearOldErrorLogs(): void {
     const now = Date.now();
     const oneHourAgo = now - 60 * 60 * 1000; // 1小时前
-    
-    this.errorLog = this.errorLog.filter(log => log.timestamp > oneHourAgo);
+
+    this.errorLog = this.errorLog.filter((log) => log.timestamp > oneHourAgo);
   }
 
   /**
@@ -251,13 +260,13 @@ export class PerformanceOptimizationManager {
     if (!this.errorConfig.enableErrorBoundary) return;
 
     // 全局错误处理
-    window.addEventListener('error', (event) => {
-      this.handleError(event.error, 'globalError');
+    window.addEventListener("error", (event) => {
+      this.handleError(event.error, "globalError");
     });
 
     // Promise 拒绝处理
-    window.addEventListener('unhandledrejection', (event) => {
-      this.handleError(new Error(event.reason), 'unhandledPromise');
+    window.addEventListener("unhandledrejection", (event) => {
+      this.handleError(new Error(event.reason), "unhandledPromise");
     });
   }
 
@@ -267,11 +276,11 @@ export class PerformanceOptimizationManager {
   private initializeRenderOptimizations(): void {
     // 防抖函数创建
     this.createDebouncedFunctions();
-    
+
     // 虚拟滚动设置
     this.setupVirtualScrolling();
-    
-    console.log('渲染优化设置完成');
+
+    console.log("渲染优化设置完成");
   }
 
   /**
@@ -286,9 +295,9 @@ export class PerformanceOptimizationManager {
    */
   private setupVirtualScrolling(): void {
     if (!this.renderConfig.enableVirtualScrolling) return;
-    
+
     // 虚拟滚动逻辑
-    console.log('虚拟滚动已启用');
+    console.log("虚拟滚动已启用");
   }
 
   /**
@@ -299,21 +308,21 @@ export class PerformanceOptimizationManager {
     this.errorLog.push({
       timestamp: Date.now(),
       error,
-      context
+      context,
     });
 
     // 通知监听器
-    this.errorListeners.forEach(listener => {
+    this.errorListeners.forEach((listener) => {
       try {
         listener(error, context);
       } catch (listenerError) {
-        console.error('错误监听器执行失败:', listenerError);
+        console.error("错误监听器执行失败:", listenerError);
       }
     });
 
     // 日志记录
     if (this.errorConfig.enableLogging) {
-      console.error(`[${context || 'unknown'}]`, error);
+      console.error(`[${context || "unknown"}]`, error);
     }
   }
 
@@ -321,11 +330,11 @@ export class PerformanceOptimizationManager {
    * 通知内存警告
    */
   private notifyMemoryWarning(usage: number): void {
-    this.memoryWarningListeners.forEach(listener => {
+    this.memoryWarningListeners.forEach((listener) => {
       try {
         listener(usage);
       } catch (error) {
-        console.error('内存警告监听器执行失败:', error);
+        console.error("内存警告监听器执行失败:", error);
       }
     });
   }
@@ -334,15 +343,15 @@ export class PerformanceOptimizationManager {
    * 通知性能问题
    */
   private notifyPerformanceIssue(issue: string): void {
-    this.performanceIssueListeners.forEach(listener => {
+    this.performanceIssueListeners.forEach((listener) => {
       try {
         listener({ ...this.metrics });
       } catch (error) {
-        console.error('性能问题监听器执行失败:', error);
+        console.error("性能问题监听器执行失败:", error);
       }
     });
 
-    console.warn('性能问题:', issue, this.metrics);
+    console.warn("性能问题:", issue, this.metrics);
   }
 
   /**
@@ -354,24 +363,26 @@ export class PerformanceOptimizationManager {
     maxAttempts?: number
   ): Promise<T> {
     const attempts = maxAttempts || this.errorConfig.maxRetryAttempts;
-    
+
     for (let i = 0; i < attempts; i++) {
       try {
         return await operation();
       } catch (error) {
         console.warn(`重试 ${i + 1}/${attempts} 失败:`, error);
-        
+
         if (i === attempts - 1) {
           this.handleError(error as Error, context);
           throw error;
         }
-        
+
         // 等待后重试
-        await new Promise(resolve => setTimeout(resolve, this.errorConfig.retryDelay));
+        await new Promise((resolve) =>
+          setTimeout(resolve, this.errorConfig.retryDelay)
+        );
       }
     }
-    
-    throw new Error('重试失败');
+
+    throw new Error("重试失败");
   }
 
   /**
@@ -383,7 +394,7 @@ export class PerformanceOptimizationManager {
   ): (...args: Parameters<T>) => void {
     const wait = delay || this.renderConfig.debounceDelay;
     let timeoutId: number;
-    
+
     return (...args: Parameters<T>) => {
       clearTimeout(timeoutId);
       timeoutId = window.setTimeout(() => func(...args), wait);
@@ -399,7 +410,7 @@ export class PerformanceOptimizationManager {
   ): (...args: Parameters<T>) => void {
     const wait = delay || this.renderConfig.debounceDelay;
     let lastCallTime = 0;
-    
+
     return (...args: Parameters<T>) => {
       const now = Date.now();
       if (now - lastCallTime >= wait) {
@@ -416,10 +427,10 @@ export class PerformanceOptimizationManager {
     if (this.renderCache.has(key)) {
       return this.renderCache.get(key);
     }
-    
+
     const result = generator();
     this.renderCache.set(key, result);
-    
+
     return result;
   }
 
@@ -436,7 +447,9 @@ export class PerformanceOptimizationManager {
     };
   }
 
-  onPerformanceIssue(callback: (metrics: PerformanceMetrics) => void): () => void {
+  onPerformanceIssue(
+    callback: (metrics: PerformanceMetrics) => void
+  ): () => void {
     this.performanceIssueListeners.push(callback);
     return () => {
       const index = this.performanceIssueListeners.indexOf(callback);
@@ -499,24 +512,24 @@ export class PerformanceOptimizationManager {
     const recommendations: string[] = [];
 
     // 内存状态
-    let memoryStatus = '正常';
+    let memoryStatus = "正常";
     if (memoryUsage > this.memoryConfig.cleanupThreshold) {
-      memoryStatus = '严重';
-      recommendations.push('建议清理内存或减少组件数量');
+      memoryStatus = "严重";
+      recommendations.push("建议清理内存或减少组件数量");
     } else if (memoryUsage > this.memoryConfig.warningThreshold) {
-      memoryStatus = '警告';
-      recommendations.push('监控内存使用情况');
+      memoryStatus = "警告";
+      recommendations.push("监控内存使用情况");
     }
 
     // 渲染状态
-    let renderStatus = '正常';
+    let renderStatus = "正常";
     if (fps < 30 && fps > 0) {
-      renderStatus = '较差';
-      recommendations.push('优化渲染性能，减少复杂操作');
+      renderStatus = "较差";
+      recommendations.push("优化渲染性能，减少复杂操作");
     }
     if (renderTime > 16) {
-      renderStatus = '缓慢';
-      recommendations.push('优化组件渲染逻辑');
+      renderStatus = "缓慢";
+      recommendations.push("优化组件渲染逻辑");
     }
 
     return {
@@ -524,7 +537,7 @@ export class PerformanceOptimizationManager {
       memoryStatus,
       renderStatus,
       errorCount: this.errorLog.length,
-      recommendations
+      recommendations,
     };
   }
 
@@ -538,8 +551,8 @@ export class PerformanceOptimizationManager {
     this.memoryWarningListeners = [];
     this.performanceIssueListeners = [];
     this.errorListeners = [];
-    
-    console.log('性能优化管理器已销毁');
+
+    console.log("性能优化管理器已销毁");
   }
 }
 
@@ -553,7 +566,8 @@ export function createPerformanceOptimizationManager(): PerformanceOptimizationM
 /**
  * 全局性能优化管理器实例
  */
-export const performanceOptimizationManager = new PerformanceOptimizationManager();
+export const performanceOptimizationManager =
+  new PerformanceOptimizationManager();
 
 /**
  * 导出类型
@@ -562,5 +576,5 @@ export type {
   PerformanceMetrics,
   MemoryMonitorConfig,
   RenderOptimizationConfig,
-  ErrorHandlingConfig
+  ErrorHandlingConfig,
 };

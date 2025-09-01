@@ -3,18 +3,31 @@
  * 负责处理 react-timeline-editor 的各种交互事件
  */
 
-import { TimelineAction, TimelineRow } from './timeline-data-adapter';
-import { timelineStateAdapter } from './timeline-state-adapter';
-import { useProjectStore, useTimelineStore } from '@/stores';
-import { Track, Clip } from '@/types/project';
+import { TimelineAction, TimelineRow } from "./timeline-data-adapter";
+import { timelineStateAdapter } from "./timeline-state-adapter";
+import { useProjectStore, useTimelineStore } from "@/stores";
+import { Track, Clip } from "@/types/project";
 
 export interface TimelineEventCallbacks {
   onActionSelect?: (action: TimelineAction, row: TimelineRow) => void;
   onActionDeselect?: (action: TimelineAction, row: TimelineRow) => void;
-  onActionMove?: (action: TimelineAction, row: TimelineRow, newStart: number) => void;
-  onActionResize?: (action: TimelineAction, row: TimelineRow, newStart: number, newEnd: number) => void;
+  onActionMove?: (
+    action: TimelineAction,
+    row: TimelineRow,
+    newStart: number
+  ) => void;
+  onActionResize?: (
+    action: TimelineAction,
+    row: TimelineRow,
+    newStart: number,
+    newEnd: number
+  ) => void;
   onActionDelete?: (actionIds: string[]) => void;
-  onActionSplit?: (action: TimelineAction, row: TimelineRow, splitTime: number) => void;
+  onActionSplit?: (
+    action: TimelineAction,
+    row: TimelineRow,
+    splitTime: number
+  ) => void;
   onRowAdd?: () => void;
   onRowRemove?: (rowId: string) => void;
   onRowReorder?: (fromIndex: number, toIndex: number) => void;
@@ -27,7 +40,7 @@ export interface TimelineEventCallbacks {
  */
 export class TimelineEventHandler {
   private callbacks: TimelineEventCallbacks = {};
-  
+
   constructor(callbacks?: TimelineEventCallbacks) {
     if (callbacks) {
       this.callbacks = callbacks;
@@ -48,7 +61,7 @@ export class TimelineEventHandler {
     // 更新选择状态
     const currentState = useTimelineStore.getState();
     const isMultiSelect = false; // 这里可以根据键盘状态判断
-    
+
     if (isMultiSelect) {
       const newSelection = [...currentState.selectedClips, action.id];
       useTimelineStore.getState().selectClips(newSelection);
@@ -67,7 +80,9 @@ export class TimelineEventHandler {
    */
   handleActionDeselect = (action: TimelineAction, row: TimelineRow): void => {
     const currentState = useTimelineStore.getState();
-    const newSelection = currentState.selectedClips.filter(id => id !== action.id);
+    const newSelection = currentState.selectedClips.filter(
+      (id) => id !== action.id
+    );
     useTimelineStore.getState().selectClips(newSelection);
 
     if (this.callbacks.onActionDeselect) {
@@ -78,7 +93,11 @@ export class TimelineEventHandler {
   /**
    * 处理 Action 移动
    */
-  handleActionMove = (action: TimelineAction, row: TimelineRow, newStart: number): void => {
+  handleActionMove = (
+    action: TimelineAction,
+    row: TimelineRow,
+    newStart: number
+  ): void => {
     // 验证移动的有效性
     if (!this.validateActionMove(action, newStart)) {
       return;
@@ -86,12 +105,12 @@ export class TimelineEventHandler {
 
     // 处理对齐
     const snappedStart = this.snapToGrid(newStart);
-    
+
     // 更新 action
     const updatedAction = {
       ...action,
       start: snappedStart,
-      end: snappedStart + (action.end - action.start)
+      end: snappedStart + (action.end - action.start),
     };
 
     // 通过状态适配器更新
@@ -106,9 +125,9 @@ export class TimelineEventHandler {
    * 处理 Action 大小调整
    */
   handleActionResize = (
-    action: TimelineAction, 
-    row: TimelineRow, 
-    newStart: number, 
+    action: TimelineAction,
+    row: TimelineRow,
+    newStart: number,
     newEnd: number
   ): void => {
     // 验证调整的有效性
@@ -127,7 +146,7 @@ export class TimelineEventHandler {
     const updatedAction = {
       ...action,
       start: snappedStart,
-      end: finalEnd
+      end: finalEnd,
     };
 
     // 通过状态适配器更新
@@ -144,8 +163,8 @@ export class TimelineEventHandler {
   handleActionDelete = (actionIds: string[]): void => {
     // 从 store 中删除对应的 clips
     const projectStore = useProjectStore.getState();
-    
-    actionIds.forEach(actionId => {
+
+    actionIds.forEach((actionId) => {
       projectStore.removeClip(actionId);
     });
 
@@ -160,15 +179,18 @@ export class TimelineEventHandler {
   /**
    * 处理 Action 分割
    */
-  handleActionSplit = (action: TimelineAction, row: TimelineRow, splitTime: number): void => {
+  handleActionSplit = (
+    action: TimelineAction,
+    row: TimelineRow,
+    splitTime: number
+  ): void => {
     // 验证分割时间
     if (splitTime <= action.start || splitTime >= action.end) {
-      console.warn('Invalid split time');
+      console.warn("Invalid split time");
       return;
     }
 
     const projectStore = useProjectStore.getState();
-    const newClipIds = projectStore.splitClip(action.id, splitTime * 1000); // 转换为毫秒
 
     if (this.callbacks.onActionSplit) {
       this.callbacks.onActionSplit(action, row, splitTime);
@@ -181,16 +203,16 @@ export class TimelineEventHandler {
   handleRowAdd = (): void => {
     const projectStore = useProjectStore.getState();
     const trackCount = projectStore.currentProject?.tracks.length || 0;
-    
+
     projectStore.addTrack({
-      type: 'video',
+      type: "video",
       name: `轨道 ${trackCount + 1}`,
       clips: [],
       isVisible: true,
       isMuted: false,
       isLocked: false,
       height: 80,
-      order: trackCount
+      order: trackCount,
     });
 
     if (this.callbacks.onRowAdd) {
@@ -226,6 +248,8 @@ export class TimelineEventHandler {
    * 处理时间变更
    */
   handleTimeChange = (time: number): void => {
+    console.log(time, "time+++");
+
     useTimelineStore.getState().seekTo(time * 1000); // 转换为毫秒
 
     if (this.callbacks.onTimeChange) {
@@ -250,13 +274,13 @@ export class TimelineEventHandler {
    * 处理键盘快捷键
    */
   handleKeyboardShortcut = (key: string, modifiers: string[]): boolean => {
-    const hasCtrl = modifiers.includes('ctrl') || modifiers.includes('cmd');
-    const hasShift = modifiers.includes('shift');
-    const hasAlt = modifiers.includes('alt');
+    const hasCtrl = modifiers.includes("ctrl") || modifiers.includes("cmd");
+    const hasShift = modifiers.includes("shift");
+    const hasAlt = modifiers.includes("alt");
 
     switch (key.toLowerCase()) {
-      case 'delete':
-      case 'backspace':
+      case "delete":
+      case "backspace":
         // 删除选中的 actions
         const selectedClips = useTimelineStore.getState().selectedClips;
         if (selectedClips.length > 0) {
@@ -265,7 +289,7 @@ export class TimelineEventHandler {
         }
         break;
 
-      case 's':
+      case "s":
         if (!hasCtrl) {
           // 分割操作
           const currentTime = useTimelineStore.getState().playhead / 1000;
@@ -274,7 +298,7 @@ export class TimelineEventHandler {
         }
         break;
 
-      case 'a':
+      case "a":
         if (hasCtrl) {
           // 全选
           this.handleSelectAll();
@@ -282,7 +306,7 @@ export class TimelineEventHandler {
         }
         break;
 
-      case 'd':
+      case "d":
         if (hasCtrl) {
           // 复制选中的片段
           this.handleDuplicateSelected();
@@ -290,13 +314,13 @@ export class TimelineEventHandler {
         }
         break;
 
-      case 'space':
+      case "space":
         // 播放/暂停
         useTimelineStore.getState().togglePlayPause();
         return true;
 
-      case 'equal':
-      case '+':
+      case "equal":
+      case "+":
         if (hasCtrl) {
           // 放大
           useTimelineStore.getState().zoomIn();
@@ -304,8 +328,8 @@ export class TimelineEventHandler {
         }
         break;
 
-      case 'minus':
-      case '-':
+      case "minus":
+      case "-":
         if (hasCtrl) {
           // 缩小
           useTimelineStore.getState().zoomOut();
@@ -313,7 +337,7 @@ export class TimelineEventHandler {
         }
         break;
 
-      case '0':
+      case "0":
         if (hasCtrl) {
           // 适合窗口
           useTimelineStore.getState().zoomToFit();
@@ -338,7 +362,7 @@ export class TimelineEventHandler {
       for (const clip of track.clips) {
         const clipStart = clip.startTime / 1000;
         const clipEnd = (clip.startTime + clip.duration) / 1000;
-        
+
         if (currentTime > clipStart && currentTime < clipEnd) {
           projectStore.splitClip(clip.id, currentTime * 1000);
         }
@@ -352,7 +376,7 @@ export class TimelineEventHandler {
   private handleSelectAll = (): void => {
     const projectStore = useProjectStore.getState();
     const allClips = projectStore.getAllClips();
-    const allClipIds = allClips.map(clip => clip.id);
+    const allClipIds = allClips.map((clip) => clip.id);
     useTimelineStore.getState().selectClips(allClipIds);
   };
 
@@ -362,8 +386,8 @@ export class TimelineEventHandler {
   handleDuplicateSelected = (): void => {
     const selectedClips = useTimelineStore.getState().selectedClips;
     const projectStore = useProjectStore.getState();
-    
-    selectedClips.forEach(clipId => {
+
+    selectedClips.forEach((clipId) => {
       projectStore.duplicateClip(clipId);
     });
   };
@@ -371,7 +395,10 @@ export class TimelineEventHandler {
   /**
    * 验证 Action 移动的有效性
    */
-  private validateActionMove = (action: TimelineAction, newStart: number): boolean => {
+  private validateActionMove = (
+    action: TimelineAction,
+    newStart: number
+  ): boolean => {
     if (newStart < 0) {
       return false;
     }
@@ -384,7 +411,11 @@ export class TimelineEventHandler {
   /**
    * 验证 Action 大小调整的有效性
    */
-  private validateActionResize = (action: TimelineAction, newStart: number, newEnd: number): boolean => {
+  private validateActionResize = (
+    action: TimelineAction,
+    newStart: number,
+    newEnd: number
+  ): boolean => {
     if (newStart < 0 || newEnd <= newStart) {
       return false;
     }

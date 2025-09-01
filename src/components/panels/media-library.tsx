@@ -293,8 +293,6 @@ export function MediaLibrary() {
               );
             }
 
-            console.log("test");
-
             // 只添加支持的文件类型到时间轴
             if (fileType !== "unknown") {
               await timelineContext.addMediaFile(
