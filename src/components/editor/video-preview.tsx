@@ -56,7 +56,6 @@ export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
     const initialize = async () => {
       try {
         // 在这里执行 VideoPreview 自己的初始化逻辑
-        // 例如，如果 AVCanvas 的初始化只需要容器，就放在这里
         await videoClipService.initialize(containerRef.current!);
 
         setIsInitialized(true);
@@ -70,12 +69,13 @@ export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
     };
 
     initialize();
+  }, []);
 
+  useEffect(() => {
     return () => {
-      // 可以在这里做一些清理工作
       videoClipService.destroy();
     };
-  }, []); // 依赖 onInitialized
+  }, []);
 
   return (
     <div
@@ -86,10 +86,7 @@ export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
       )}
     >
       {/* 画布容器 */}
-      <div
-        ref={containerRef}
-        className="absolute inset-0 flex items-center justify-center"
-      >
+      <div className="absolute inset-0 flex items-center justify-center">
         {!isInitialized && (
           <div className="text-white text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>

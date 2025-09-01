@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useProjectStore, useTimelineStore, useUIStore } from "@/stores";
 import { VideoPreview } from "./video-preview";
 import { TimelineEditor } from "./timeline-editor";
-import { PlayerControls } from "./player-controls";
 import {
   MediaLibrary,
   TimelineEditorProvider,
@@ -46,7 +45,6 @@ import {
  * 集成所有新的管理器和服务，实现完整的视频编辑功能
  */
 export function VideoEditor() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const timelineEditorRef = useRef<any>(null);
   // 定义本地引用来存储从子组件传回的 DOM 节点
   const videoPreviewContainerRef = useRef<HTMLDivElement | null>(null);
@@ -58,11 +56,14 @@ export function VideoEditor() {
     useTimelineStore();
 
   // 本地状态
-  const [isInitialized, setIsInitialized] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+
+  const [isInitVideoPreviewContainer, setIsInitVideoPreviewContainer] =
+    useState(false);
 
   // 服务和管理器引用
   const videoClipServiceRef = useRef<VideoClipService>();
@@ -73,10 +74,12 @@ export function VideoEditor() {
 
   useEffect(() => {
     if (!currentProject) {
+      setIsInitialized(true);
       createNewProject();
     }
+
     // 只有在收到 VideoPreview 的容器引用并且编辑器未初始化时，才启动初始化流程
-    if (videoPreviewContainerRef.current && !isInitialized && currentProject) {
+    if (videoPreviewContainerRef.current && currentProject) {
       const initializeEditor = async () => {
         try {
           // --- 修改点 2: 在这里设置 isLoading 为 true ---
@@ -99,6 +102,8 @@ export function VideoEditor() {
               }
             );
           }
+
+          console.log("videoClipServiceRef", videoClipServiceRef.current);
 
           // 2. 创建时间轴集成器
           if (!timelineIntegratorRef.current && videoClipServiceRef.current) {
@@ -155,7 +160,6 @@ export function VideoEditor() {
             "editorInitialization"
           );
 
-          setIsInitialized(true);
           // --- 修改点 3: 在这里设置 isLoading 为 false ---
           setIsLoading(false);
           console.log("视频编辑器初始化完成");
@@ -173,13 +177,8 @@ export function VideoEditor() {
 
       initializeEditor();
     }
-  }, [
-    videoPreviewContainerRef.current,
-    isInitialized,
-    currentProject,
-    selectedClips,
-    playhead,
-  ]);
+    // 单独添加 videoPreviewContainerRef 依赖无法触发更新，必须使用useState才能正确更新
+  }, [isInitVideoPreviewContainer, currentProject]);
 
   // 更新时间轴总时长
   useEffect(() => {
@@ -221,13 +220,10 @@ export function VideoEditor() {
   /**
    * 核心初始化逻辑。这个函数现在由 VideoPreview 准备就绪时调用。
    */
-  const handleVideoPreviewInitialized = useCallback(
-    (container: HTMLDivElement) => {
-      console.log("接收到 VideoPreview 的容器引用");
-      videoPreviewContainerRef.current = container;
-    },
-    []
-  );
+  const handleVideoPreviewInitialized = (container: HTMLDivElement) => {
+    videoPreviewContainerRef.current = container;
+    setIsInitVideoPreviewContainer(true);
+  };
 
   // 播放控制回调函数
   const handlePlayPause = useCallback(() => {
@@ -257,19 +253,19 @@ export function VideoEditor() {
   };
 
   // 加载状态渲染
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-lg font-medium mb-2">初始化视频编辑器...</p>
-          <p className="text-sm text-muted-foreground">
-            请稍候，正在加载核心组件
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex h-screen items-center justify-center bg-background">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+  //         <p className="text-lg font-medium mb-2">初始化视频编辑器...</p>
+  //         <p className="text-sm text-muted-foreground">
+  //           请稍候，正在加载核心组件
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   // 错误状态渲染
   if (initializationError) {
@@ -314,7 +310,6 @@ export function VideoEditor() {
       }}
     >
       <div
-        ref={containerRef}
         className={cn(
           "video-editor flex flex-col h-screen overflow-hidden",
           theme === "dark" ? "dark" : ""
@@ -353,7 +348,13 @@ export function VideoEditor() {
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* 视频预览区 */}
             <div className="flex-1 p-4 bg-muted/20 overflow-scroll">
-              <VideoPreview onInitialized={handleVideoPreviewInitialized} />
+              {isLoading ? (
+                <div className="text-center flex flex-col justify-center items-center w-full h-full bg-black text-muted-foreground">
+                  Loading...
+                </div>
+              ) : (
+                <VideoPreview onInitialized={handleVideoPreviewInitialized} />
+              )}
             </div>
 
             {/* 时间轴区域 */}
@@ -375,9 +376,15 @@ export function VideoEditor() {
                     height={320}
                     showToolbar={true}
                     onTimelineChange={(data) => {
+                      console.log(
+                        clipOperationManagerRef.current,
+                        "clipOperationManagerRef"
+                      );
+
                       console.log("时间轴数据变化:", data);
                     }}
                     onTimeChange={(time) => {
+                      videoClipService.seekTo(time);
                       console.log("时间变化:", time);
                     }}
                     onSelectionChange={(actionIds) => {

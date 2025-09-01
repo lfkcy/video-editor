@@ -319,6 +319,8 @@ export class VideoClipService {
   updateSpriteTime(action: TimelineAction): boolean {
     this.ensureInitialized();
 
+    console.log("更新精灵时间属性:", action.id);
+
     try {
       // 同步 Action 到 Sprite
       const success = this.actionSpriteManager.syncActionToSprite(action);
