@@ -8,6 +8,7 @@ import {
 } from "@webav/av-cliper";
 import { TimelineAction } from "@xzdarcy/react-timeline-editor";
 import { TextStyle } from "@/types";
+import { generateId } from "./utils";
 
 /**
  * AVCanvas 管理器
@@ -262,7 +263,7 @@ export class AVCanvasManager {
     const end = (sprite.time.offset + sprite.time.duration) / 1e6;
 
     return {
-      id: Math.random().toString(36).substr(2, 9),
+      id: generateId(),
       start,
       end,
       effectId: "",

@@ -27,6 +27,12 @@ import {
   KeyboardShortcutManager,
   keyboardShortcutManager,
 } from "@/lib/keyboard-shortcut-manager";
+import {
+  ActionSpriteManager,
+  actionSpriteManager,
+} from "@/lib/action-sprite-manager";
+import { TimelineAction } from "@xzdarcy/react-timeline-editor";
+import { avCanvasManager } from "@/lib/av-canvas-manager";
 
 /**
  * 主视频编辑器组件（重构版）
@@ -40,7 +46,7 @@ export function VideoEditor() {
   // 状态管理
   const { currentProject, createNewProject } = useProjectStore();
   const { layout, theme } = useUIStore();
-  const { setDuration, selectedClips, playhead, isPlaying } =
+  const { setDuration, selectedClips, playhead, isPlaying, setCurrentTime } =
     useTimelineStore();
 
   // 本地状态
@@ -56,6 +62,7 @@ export function VideoEditor() {
   // 服务和管理器引用
   const videoClipServiceRef = useRef<VideoClipService>();
   const keyboardShortcutManagerRef = useRef<KeyboardShortcutManager>();
+  const actionSpriteManagerRef = useRef<ActionSpriteManager>();
 
   useEffect(() => {
     if (!currentProject) {
@@ -85,6 +92,11 @@ export function VideoEditor() {
                 bgColor: "#000000",
               }
             );
+          }
+
+          // 初始化 ActionSpriteManager
+          if (!actionSpriteManagerRef.current) {
+            actionSpriteManagerRef.current = actionSpriteManager;
           }
 
           // 初始化性能监控
@@ -266,6 +278,17 @@ export function VideoEditor() {
                     }}
                     onSelectionChange={(actionIds) => {
                       console.log("选择变化:", actionIds);
+                    }}
+                    onDurationChange={({ action, start, end }) => {
+                      videoClipService.updateSpriteTime(action);
+                      console.log("时长变化:", action, start, end);
+                    }}
+                    onOffsetChange={(action) => {
+                      videoClipService.updateSpriteTime(action);
+                      console.log("偏移变化:", action);
+                    }}
+                    onSplitAction={(action: TimelineAction) => {
+                      console.log("分割动作:", action);
                     }}
                   />
                 </div>

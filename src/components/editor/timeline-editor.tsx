@@ -13,6 +13,11 @@ import {
   videoClipService,
   VideoClipService,
 } from "@/services/video-clip-service";
+import {
+  ActionSpriteManager,
+  actionSpriteManager,
+} from "@/lib/action-sprite-manager";
+import { generateId } from "@/lib/utils";
 
 /**
  * TimelineEditor 组件属性
@@ -22,6 +27,17 @@ interface TimelineEditorProps {
   showToolbar?: boolean;
   className?: string;
   onTimelineChange?: (data: TimelineRow[]) => void;
+  onOffsetChange?: (action: TimelineAction) => void;
+  onDurationChange?: ({
+    action,
+    start,
+    end,
+  }: {
+    action: TimelineAction;
+    start: number;
+    end: number;
+  }) => void;
+  onSplitAction?: (action: TimelineAction, splitTime: number) => void;
   onTimeChange?: (time: number) => void;
   onSelectionChange?: (actionIds: string[]) => void;
 }
@@ -37,13 +53,23 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
       showToolbar = true,
       className = "",
       onTimelineChange,
+      onOffsetChange,
+      onDurationChange,
+      onSplitAction,
       onTimeChange,
       onSelectionChange,
     },
     ref
   ) => {
     // 状态管理
-    const { currentProject } = useProjectStore();
+    const currentProject = useProjectStore((state) => state.currentProject);
+    const editorData = useProjectStore((state) => state.editorData);
+    const updateEditorData = useProjectStore((state) => state.uodateEditorData);
+    const activeAction = useProjectStore((state) => state.activeAction);
+    const updateActiveAction = useProjectStore(
+      (state) => state.updateActiveAction
+    );
+
     const {
       playhead,
       duration,
@@ -52,28 +78,18 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
       selectedClips,
       snapToGrid,
       gridSize,
+      currentTime,
+      setCurrentTime,
     } = useTimelineStore();
 
     // 本地状态
-    const [editorData, setEditorData] = useState<TimelineRow[]>([]);
     const [effects, setEffects] = useState<Record<string, TimelineEffect>>({});
-    const [currentTime, setCurrentTime] = useState(0);
-    const [editorScale, setEditorScale] = useState(100); // 像素/秒
+    const [editorScale, setEditorScale] = useState(50); // 像素/秒
 
     // refs
     const timelineRef = useRef<any>(null);
     const videoClipServiceRef = useRef<VideoClipService>();
-
-    /**
-     * 处理时间轴数据变更
-     */
-    const handleDataChange = (data: TimelineRow[]) => {
-      setEditorData(data);
-
-      if (onTimelineChange) {
-        onTimelineChange(data);
-      }
-    };
+    const actionSpriteManagerRef = useRef<ActionSpriteManager>();
 
     /**
      * 点击时间轴
@@ -98,16 +114,41 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
     );
 
     /**
+     * 处理时长变更
+     */
+    const handleDurationChange = useCallback(
+      ({
+        action,
+        start,
+        end,
+      }: {
+        action: TimelineAction;
+        start: number;
+        end: number;
+      }) => {
+        if (onDurationChange) {
+          onDurationChange({ action, start, end });
+        }
+        console.log("处理时长变更:", action, start, end);
+      },
+      []
+    );
+
+    /**
+     * 处理偏移变更
+     */
+    const handleOffsetChange = (action: TimelineAction) => {
+      console.log("处理偏移变更:", action);
+    };
+
+    /**
      * 处理选择变更
      */
-    const handleSelectionChange = useCallback(
-      (actionIds: string[]) => {
-        if (onSelectionChange) {
-          onSelectionChange(actionIds);
-        }
-      },
-      [onSelectionChange]
-    );
+    const handleSelectionChange = (actionIds: string[]) => {
+      if (onSelectionChange) {
+        onSelectionChange(actionIds);
+      }
+    };
 
     /**
      * 处理 Action 变更
@@ -225,9 +266,25 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
             let result;
             const targetTrackId = trackId || `${fileType || "default"}-track-1`;
 
+            console.log(editorData, "editorData");
+
             switch (fileType || file.type.split("/")[0]) {
               case "video":
                 let startTime = options?.startTime || 0;
+
+                updateEditorData(
+                  editorData.map((data) => {
+                    if (data.id === targetTrackId) {
+                      data.actions.push({
+                        id: generateId(),
+                        start: startTime,
+                        end: startTime + (options?.duration || 10),
+                        effectId: options?.effectId || "",
+                      });
+                    }
+                    return data;
+                  })
+                );
 
                 result =
                   await videoClipServiceRef.current.addVideoSpriteToTrack(
@@ -348,15 +405,40 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
             effects={effects as any}
             style={{ width: "100%", height: "100%" }}
             {...timelineConfig}
-            onChange={handleDataChange}
+            onChange={(data) => {
+              console.log("时间轴数据变化:", data);
+            }}
             onClickTimeArea={(time) => {
               handleTimeChange(time);
               return true;
             }}
             onCursorDragEnd={(time) => {
               handleTimeChange(time);
-              return true;
             }}
+            onActionResizing={({ dir, action, start, end }) => {
+              if (dir === "left") return false;
+              handleDurationChange({ action, start, end });
+            }}
+            onActionMoveEnd={({ action }) => {
+              handleOffsetChange(action);
+            }}
+            onClickAction={(_, { action }) => {
+              updateActiveAction(action);
+            }}
+            // getActionRender={(action: TimelineAction) => {
+            //   const baseStyle =
+            //     "h-full justify-center items-center flex text-white";
+            //   if (action.id === activeAction?.id) {
+            //     return (
+            //       <div
+            //         className={`${baseStyle} border border-red-300 border-solid box-border`}
+            //       >
+            //         {action.id}
+            //       </div>
+            //     );
+            //   }
+            //   return <div className={baseStyle}>{action.id}</div>;
+            // }}
           />
         </div>
       </div>

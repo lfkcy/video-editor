@@ -7,6 +7,7 @@ import {
 } from "@/types";
 import { FileUtils } from "@/utils/file-utils";
 import { videoClipService } from "./video-clip-service";
+import { generateId } from "@/lib/utils";
 
 /**
  * 媒体处理服务类
@@ -30,10 +31,10 @@ export class MediaProcessingService {
    * 处理媒体文件
    */
   async processMediaFile(file: File): Promise<MediaFile> {
-    const taskId = this.generateId();
+    const taskId = generateId();
     const task: MediaProcessingTask = {
       id: taskId,
-      fileId: this.generateId(),
+      fileId: generateId(),
       status: "processing",
       progress: 0,
       startTime: new Date(),
@@ -386,13 +387,6 @@ export class MediaProcessingService {
    */
   static validateFile(file: File): { isValid: boolean; error?: string } {
     return FileUtils.validateFile(file);
-  }
-
-  /**
-   * 生成唯一ID
-   */
-  private generateId(): string {
-    return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 }
 

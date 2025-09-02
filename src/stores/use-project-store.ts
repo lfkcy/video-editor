@@ -7,6 +7,8 @@ import {
   Clip,
   ProjectState,
 } from "@/types";
+import { generateId } from "@/lib/utils";
+import { TimelineAction, TimelineRow } from "@xzdarcy/react-timeline-editor";
 
 /**
  * 项目操作接口
@@ -28,6 +30,8 @@ interface ProjectActions {
   duplicateTrack: (trackId: string) => string;
 
   // 片段操作
+  uodateEditorData: (data: TimelineRow[]) => void;
+  updateActiveAction: (action: TimelineAction) => void;
   addClip: (trackId: string, clip: Omit<Clip, "trackId">) => string;
   removeClip: (clipId: string) => void;
   updateClip: (clipId: string, updates: Partial<Clip>) => void;
@@ -67,11 +71,6 @@ const defaultProjectSettings: ProjectSettings = {
 };
 
 /**
- * 生成唯一 ID
- */
-const generateId = () => Math.random().toString(36).substr(2, 9);
-
-/**
  * 创建默认项目
  */
 const createDefaultProject = (
@@ -107,6 +106,11 @@ const createDefaultProject = (
   settings: { ...defaultProjectSettings, ...settings },
   createdAt: new Date(),
   updatedAt: new Date(),
+  editorData: [
+    { id: "video-track-1", actions: [] },
+    { id: "audio-track-1", actions: [] },
+  ],
+  activeAction: null,
 });
 
 /**
@@ -121,6 +125,11 @@ export const useProjectStore = create<ProjectStore>()(
         isLoading: false,
         error: null,
         hasUnsavedChanges: false,
+        editorData: [
+          { id: "video-track-1", actions: [] },
+          { id: "audio-track-1", actions: [] },
+        ],
+        activeAction: null,
 
         // 项目操作
         createNewProject: (settings) => {
@@ -279,6 +288,14 @@ export const useProjectStore = create<ProjectStore>()(
           });
 
           return newTrackId;
+        },
+
+        uodateEditorData: (data: TimelineRow[]) => {
+          get().updateProject({ editorData: data });
+        },
+
+        updateActiveAction: (action: TimelineAction | null) => {
+          get().updateProject({ activeAction: action });
         },
 
         // 片段操作

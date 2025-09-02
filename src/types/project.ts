@@ -1,5 +1,7 @@
 // 项目相关类型定义
 
+import { TimelineAction, TimelineRow } from "@xzdarcy/react-timeline-editor";
+
 /**
  * 项目数据结构
  */
@@ -11,6 +13,8 @@ export interface ProjectData {
   settings: ProjectSettings;
   createdAt: Date;
   updatedAt: Date;
+  editorData: TimelineRow[];
+  activeAction: TimelineAction | null;
 }
 
 /**
@@ -176,6 +180,9 @@ export interface ProjectState {
   isLoading: boolean;
   error: string | null;
   hasUnsavedChanges: boolean;
+
+  editorData: TimelineRow[];
+  activeAction: TimelineAction | null;
 }
 
 /**

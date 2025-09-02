@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { EditAction, EditActionType, EditActionData } from "@/types";
+import { generateId } from "@/lib/utils";
 
 /**
  * 历史记录操作接口
@@ -49,11 +50,6 @@ interface HistoryState {
  * 历史记录 Store 接口
  */
 interface HistoryStore extends HistoryState, HistoryActions {}
-
-/**
- * 生成唯一 ID
- */
-const generateId = () => Math.random().toString(36).substr(2, 9);
 
 /**
  * 创建编辑操作

@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/utils";
 import { canvasCompositionService } from "./canvas-composition-service";
 import {
   ProjectData,
@@ -223,7 +224,7 @@ export class VideoExportService {
    * 生成导出ID
    */
   private generateExportId(): string {
-    return `export_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `export_${generateId()}`;
   }
 
   /**

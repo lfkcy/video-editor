@@ -1,5 +1,6 @@
 import { VisibleSprite } from "@webav/av-cliper";
 import { TimelineAction } from "@xzdarcy/react-timeline-editor";
+import { generateId } from "./utils";
 
 /**
  * Action 与 Sprite 映射关系管理器
@@ -142,7 +143,7 @@ export class ActionSpriteManager {
    * 当 Sprite 属性发生变化时，同步更新对应的 Action
    */
   syncSpriteToAction(sprite: VisibleSprite): boolean {
-    const action = this.spriteToAction.get(sprite);
+    const action = this.getActionBySpriteId(this.getSpriteId(sprite));
     if (!action) {
       console.warn("同步失败: 未找到对应的 Action");
       return false;
@@ -239,7 +240,7 @@ export class ActionSpriteManager {
   private getSpriteId(sprite: VisibleSprite): string {
     // 尝试从 Sprite 获取唯一标识，如果没有则创建一个
     if (!(sprite as any)._id) {
-      (sprite as any)._id = Math.random().toString(36).substr(2, 9);
+      (sprite as any)._id = generateId();
     }
     return (sprite as any)._id;
   }

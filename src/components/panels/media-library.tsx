@@ -65,6 +65,7 @@ export function MediaLibrary() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timelineContext = useContext(TimelineEditorContext);
   const currentProject = useProjectStore((state) => state.currentProject);
+  const editorData = useProjectStore((state) => state.editorData);
 
   // 本地状态
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
@@ -276,22 +277,18 @@ export function MediaLibrary() {
 
             // 设置下个片段的开始时间
             let startTime = 0;
-            // const curProject = useProjectStore.getState().currentProject;
-            // const editorData = timelineDataAdapter.convertTracksToRows(
-            //   curProject?.tracks || []
-            // );
-            // const targetTrackId = `${fileType || "default"}-track-1`;
+            const targetTrackId = `${fileType || "default"}-track-1`;
 
-            // const fideTrack = editorData.find(
-            //   (data) => data.id === targetTrackId
-            // );
+            const fideTrack = editorData.find(
+              (data) => data.id === targetTrackId
+            );
 
-            // if (fideTrack) {
-            //   startTime = fideTrack.actions.reduce(
-            //     (acc, pre) => acc + pre.end,
-            //     0
-            //   );
-            // }
+            if (fideTrack) {
+              startTime = fideTrack.actions.reduce(
+                (acc, pre) => acc + pre.end,
+                0
+              );
+            }
 
             // 只添加支持的文件类型到时间轴
             if (fileType !== "unknown") {

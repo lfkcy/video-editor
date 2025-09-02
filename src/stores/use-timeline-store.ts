@@ -139,7 +139,7 @@ export const useTimelineStore = create<TimelineStore>()(
       // 时间轴状态
       playhead: 0,
       duration: 0,
-      scale: 0.05,
+      scale: 0.005,
       scrollPosition: 0,
       isPlaying: false,
       loop: false,

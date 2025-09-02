@@ -15,7 +15,6 @@ export interface TimelineState {
   gridSize: number; // 网格大小，单位：毫秒
   viewRange: TimeRange; // 可视范围
 }
-
 /**
  * 时间范围
  */
@@ -161,7 +160,7 @@ export type TimelineEventType =
 export interface TimelineShortcut {
   key: string;
   modifiers: KeyModifier[];
-  action: TimelineAction;
+  action: TimelineActionType;
   description: string;
 }
 
@@ -173,7 +172,7 @@ export type KeyModifier = "ctrl" | "alt" | "shift" | "cmd";
 /**
  * 时间轴操作
  */
-export type TimelineAction =
+export type TimelineActionType =
   | "play-pause"
   | "stop"
   | "seek-forward"

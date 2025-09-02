@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-
+import { v4 as uuidv4 } from "uuid";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -34,7 +34,7 @@ export function formatFileSize(bytes: number): string {
  * 生成唯一ID
  */
 export function generateId(): string {
-  return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return uuidv4();
 }
 
 /**
