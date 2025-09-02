@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn, generateId } from '@/lib/utils';
 import { videoClipService } from '@/services';
-
+import { toast } from 'sonner';
 interface OverlayManagerProps {
   containerWidth: number;
   containerHeight: number;
@@ -95,7 +95,7 @@ export function OverlayManager({
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      alert('请选择图片文件');
+      toast.warning('请选择图片文件');
       return;
     }
 

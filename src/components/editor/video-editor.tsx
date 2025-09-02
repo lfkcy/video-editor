@@ -67,7 +67,6 @@ export function VideoEditor() {
     if (videoPreviewContainerRef.current && currentProject) {
       const initializeEditor = async () => {
         try {
-          // --- 修改点 2: 在这里设置 isLoading 为 true ---
           setIsLoading(true);
           setInitializationError(null);
 
@@ -93,7 +92,6 @@ export function VideoEditor() {
             "editorInitialization"
           );
 
-          // --- 修改点 3: 在这里设置 isLoading 为 false ---
           setIsLoading(false);
           console.log("视频编辑器初始化完成");
 
@@ -103,7 +101,6 @@ export function VideoEditor() {
           setInitializationError(
             error instanceof Error ? error.message : "初始化失败"
           );
-          // --- 修改点 4: 在错误时也设置 isLoading 为 false ---
           setIsLoading(false);
         }
       };

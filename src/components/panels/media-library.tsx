@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { MediaItem } from "./media-item";
 import { cn, formatFileSize } from "@/lib/utils";
 import { useProjectStore } from "@/stores";
+import { toast } from "sonner";
 
 /**
  * 时间轴编辑器上下文
@@ -99,7 +100,7 @@ export function MediaLibrary() {
         });
 
         if (validFiles.length === 0) {
-          alert("没有有效的文件可以上传");
+          toast.warning("没有有效的文件可以上传");
           return;
         }
 
@@ -157,7 +158,7 @@ export function MediaLibrary() {
         }, 1000);
       } catch (error) {
         console.error("文件上传失败:", error);
-        alert("文件上传失败");
+        toast.warning("文件上传失败");
       } finally {
         setIsUploading(false);
       }
@@ -317,7 +318,7 @@ export function MediaLibrary() {
       console.log("所选文件已添加到时间轴");
     } catch (error) {
       console.error("添加文件到时间轴失败:", error);
-      alert("添加文件到时间轴失败");
+      toast.warning("添加文件到时间轴失败");
     }
   }, [timelineContext, selectedFiles, mediaFiles]);
 

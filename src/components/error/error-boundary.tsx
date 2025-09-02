@@ -4,6 +4,7 @@ import React, { Component, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 interface Props {
   children: ReactNode;
@@ -123,7 +124,7 @@ export class ErrorBoundary extends Component<Props, State> {
     `.trim();
 
     navigator.clipboard.writeText(errorText).then(() => {
-      alert('错误信息已复制到剪贴板');
+      toast.success('错误信息已复制到剪贴板');
     });
   };
 
