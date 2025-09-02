@@ -11,10 +11,4 @@ export {
   mediaProcessingService,
 } from "./media-processing-service";
 
-export {
-  TimeSyncService,
-  timeSyncService,
-  PlaybackCoordinator,
-  playbackCoordinator,
-} from "./time-sync-service";
 export { VideoExportService, videoExportService } from "./video-export-service";

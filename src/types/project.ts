@@ -100,57 +100,6 @@ export interface MediaMetadata {
 }
 
 /**
- * 视频片段
- */
-export interface VideoClip extends Clip {
-  type: "video";
-  volume: number; // 音量 0-1
-  speed: number; // 播放速度
-  opacity: number; // 透明度 0-1
-}
-
-/**
- * 音频片段
- */
-export interface AudioClip extends Clip {
-  type: "audio";
-  volume: number; // 音量 0-1
-  speed: number; // 播放速度
-}
-
-/**
- * 图片片段
- */
-export interface ImageClip extends Clip {
-  type: "image";
-  opacity: number; // 透明度 0-1
-}
-
-/**
- * 文字片段
- */
-export interface TextClip extends Clip {
-  type: "text";
-  text: string;
-  style: TextStyle;
-}
-
-/**
- * 文字样式
- */
-export interface TextStyle {
-  fontFamily: string;
-  fontSize: number;
-  fontWeight: "normal" | "bold" | number;
-  color: string;
-  backgroundColor: string;
-  textAlign: "left" | "center" | "right";
-  lineHeight: number;
-  letterSpacing: string;
-  shadow: TextShadow;
-}
-
-/**
  * 文字阴影
  */
 export interface TextShadow {

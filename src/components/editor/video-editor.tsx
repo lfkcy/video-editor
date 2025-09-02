@@ -24,20 +24,8 @@ import {
   VideoClipService,
 } from "@/services/video-clip-service";
 import {
-  TimelineAVCanvasIntegrator,
-  createTimelineAVCanvasIntegrator,
-} from "@/lib/timeline-avcanvas-integrator";
-import {
-  PlaybackSyncManager,
-  createPlaybackSyncManager,
-} from "@/lib/playback-sync-manager";
-import {
-  ClipOperationManager,
-  createClipOperationManager,
-} from "@/lib/clip-operation-manager";
-import {
   KeyboardShortcutManager,
-  createKeyboardShortcutManager,
+  keyboardShortcutManager,
 } from "@/lib/keyboard-shortcut-manager";
 
 /**
@@ -67,9 +55,6 @@ export function VideoEditor() {
 
   // 服务和管理器引用
   const videoClipServiceRef = useRef<VideoClipService>();
-  const timelineIntegratorRef = useRef<TimelineAVCanvasIntegrator>();
-  const playbackSyncManagerRef = useRef<PlaybackSyncManager>();
-  const clipOperationManagerRef = useRef<ClipOperationManager>();
   const keyboardShortcutManagerRef = useRef<KeyboardShortcutManager>();
 
   useEffect(() => {
@@ -101,58 +86,6 @@ export function VideoEditor() {
                 bgColor: "#000000",
               }
             );
-          }
-
-          console.log("videoClipServiceRef", videoClipServiceRef.current);
-
-          // 2. 创建时间轴集成器
-          if (!timelineIntegratorRef.current && videoClipServiceRef.current) {
-            console.log("初始化 TimelineAVCanvasIntegrator...");
-            timelineIntegratorRef.current = createTimelineAVCanvasIntegrator(
-              videoClipServiceRef.current
-            );
-          }
-
-          // 3. 创建播放同步管理器
-          if (
-            !playbackSyncManagerRef.current &&
-            videoClipServiceRef.current &&
-            timelineIntegratorRef.current
-          ) {
-            console.log("初始化 PlaybackSyncManager...");
-            playbackSyncManagerRef.current = createPlaybackSyncManager(
-              videoClipServiceRef.current,
-              timelineIntegratorRef.current
-            );
-            playbackSyncManagerRef.current.initialize();
-          }
-
-          // 4. 创建片段操作管理器
-          if (
-            !clipOperationManagerRef.current &&
-            videoClipServiceRef.current &&
-            timelineIntegratorRef.current
-          ) {
-            console.log("初始化 ClipOperationManager...");
-            clipOperationManagerRef.current = createClipOperationManager(
-              videoClipServiceRef.current,
-              timelineIntegratorRef.current
-            );
-            clipOperationManagerRef.current.initialize();
-          }
-
-          // 5. 创建键盘快捷键管理器
-          if (!keyboardShortcutManagerRef.current) {
-            console.log("初始化 KeyboardShortcutManager...");
-            keyboardShortcutManagerRef.current =
-              createKeyboardShortcutManager();
-            keyboardShortcutManagerRef.current.updateContext({
-              clipOperationManager: clipOperationManagerRef.current,
-              playbackSyncManager: playbackSyncManagerRef.current,
-              selectedClipIds: selectedClips,
-              currentTime: playhead,
-            });
-            keyboardShortcutManagerRef.current.startListening();
           }
 
           // 初始化性能监控
@@ -208,9 +141,6 @@ export function VideoEditor() {
     return () => {
       // 清理所有管理器和服务
       keyboardShortcutManagerRef.current?.destroy();
-      clipOperationManagerRef.current?.destroy();
-      playbackSyncManagerRef.current?.destroy();
-      timelineIntegratorRef.current?.destroy();
       videoClipServiceRef.current?.destroy();
 
       console.log("视频编辑器组件已清理");
@@ -324,15 +254,6 @@ export function VideoEditor() {
             {/* 时间轴区域 */}
             {layout.showBottomPanel && (
               <div className="border-t bg-background overflow-scroll">
-                {/* 播放器控制 */}
-                {/* <PlayerControls
-                  onPlayPause={handlePlayPause}
-                  onStop={handleStop}
-                  onSeek={handleSeek}
-                  onSkipBack={handleSkipBack}
-                  onSkipForward={handleSkipForward}
-                /> */}
-
                 {/* 时间轴 */}
                 <div className="h-80">
                   <TimelineEditor
@@ -340,11 +261,6 @@ export function VideoEditor() {
                     height={320}
                     showToolbar={true}
                     onTimelineChange={(data) => {
-                      console.log(
-                        clipOperationManagerRef.current,
-                        "clipOperationManagerRef"
-                      );
-
                       console.log("时间轴数据变化:", data);
                     }}
                     onTimeChange={(time) => {

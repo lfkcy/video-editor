@@ -155,13 +155,13 @@ export class VideoExportService {
         textAlign: overlay.textAlign,
         lineHeight: 1.2,
         letterSpacing: "0px",
-        shadow: {
-          enabled: overlay.shadow,
-          offsetX: 2,
-          offsetY: 2,
-          blur: 4,
-          color: "rgba(0,0,0,0.5)",
-        },
+        // shadow: {
+        //   enabled: overlay.shadow,
+        //   offsetX: 2,
+        //   offsetY: 2,
+        //   blur: 4,
+        //   color: "rgba(0,0,0,0.5)",
+        // },
       });
 
       // 设置变换属性

@@ -133,20 +133,6 @@ export interface SnappingState {
 }
 
 /**
- * 编辑器配置
- */
-export interface EditorConfig {
-  theme: EditorTheme;
-  language: string;
-  autoSave: boolean;
-  autoSaveInterval: number; // 自动保存间隔，单位：毫秒
-  maxUndoSteps: number;
-  defaultProject: Partial<ProjectSettings>;
-  shortcuts: EditorShortcut[];
-  ui: UIConfig;
-}
-
-/**
  * 编辑器主题
  */
 export type EditorTheme = "light" | "dark" | "auto";
@@ -233,53 +219,6 @@ export interface SpriteOperationEvent {
 }
 
 /**
- * 时间轴同步状态
- */
-export interface TimelineSyncState {
-  isPlaying: boolean;
-  currentTime: number;
-  duration: number;
-  playbackRate: number;
-  lastSyncTime: number;
-}
-
-/**
- * 编辑器工具
- */
-export interface EditorTool {
-  id: string;
-  name: string;
-  icon: string;
-  shortcut?: string;
-  category: ToolCategory;
-  enabled: boolean;
-  active: boolean;
-}
-
-/**
- * 工具分类
- */
-export type ToolCategory =
-  | "selection" // 选择工具
-  | "editing" // 编辑工具
-  | "effects" // 效果工具
-  | "text" // 文本工具
-  | "drawing" // 绘图工具
-  | "navigation"; // 导航工具
-
-/**
- * 预览配置
- */
-export interface PreviewConfig {
-  quality: PreviewQuality;
-  enableAudio: boolean;
-  showOverlays: boolean;
-  showSafeArea: boolean;
-  aspectRatio: AspectRatio;
-  resolution: Resolution;
-}
-
-/**
  * 预览质量
  */
 export type PreviewQuality = "low" | "medium" | "high" | "full";
@@ -288,15 +227,6 @@ export type PreviewQuality = "low" | "medium" | "high" | "full";
  * 宽高比
  */
 export interface AspectRatio {
-  width: number;
-  height: number;
-  label: string;
-}
-
-/**
- * 分辨率
- */
-export interface Resolution {
   width: number;
   height: number;
   label: string;
@@ -321,29 +251,6 @@ export interface Marker {
 export type MarkerType = "point" | "range" | "chapter" | "cue";
 
 /**
- * 渲染状态
- */
-export interface RenderState {
-  isRendering: boolean;
-  progress: number; // 渲染进度 0-100
-  stage: RenderStage;
-  startTime?: Date;
-  estimatedTime?: number; // 预计剩余时间，单位：毫秒
-  error?: string;
-}
-
-/**
- * 渲染阶段
- */
-export type RenderStage =
-  | "preparing" // 准备阶段
-  | "processing" // 处理阶段
-  | "encoding" // 编码阶段
-  | "finalizing" // 完成阶段
-  | "completed" // 已完成
-  | "failed"; // 失败
-
-/**
  * 性能监控
  */
 export interface PerformanceMetrics {
@@ -352,30 +259,4 @@ export interface PerformanceMetrics {
   cpuUsage: number; // CPU 使用率，单位：百分比
   renderTime: number; // 渲染时间，单位：毫秒
   lastUpdate: Date;
-}
-
-/**
- * 插件接口
- */
-export interface EditorPlugin {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  enabled: boolean;
-  config: Record<string, any>;
-  hooks: PluginHooks;
-}
-
-/**
- * 插件钩子
- */
-export interface PluginHooks {
-  onProjectLoad?: (project: ProjectData) => void;
-  onProjectSave?: (project: ProjectData) => void;
-  onClipAdd?: (clip: Clip) => void;
-  onClipRemove?: (clip: Clip) => void;
-  onRenderStart?: () => void;
-  onRenderComplete?: () => void;
 }

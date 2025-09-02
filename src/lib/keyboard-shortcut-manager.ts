@@ -1,8 +1,3 @@
-import {
-  ClipOperationManager,
-  ClipOperationParams,
-} from "./clip-operation-manager";
-import { PlaybackSyncManager } from "./playback-sync-manager";
 import { useTimelineStore, useUIStore } from "@/stores";
 
 /**
@@ -20,8 +15,8 @@ interface ShortcutDefinition {
  * 快捷键上下文
  */
 interface ShortcutContext {
-  clipOperationManager?: ClipOperationManager;
-  playbackSyncManager?: PlaybackSyncManager;
+  // clipOperationManager?: ClipOperationManager;
+  // playbackSyncManager?: PlaybackSyncManager;
   selectedClipIds: string[];
   currentTime: number;
 }
@@ -331,134 +326,134 @@ export class KeyboardShortcutManager {
     try {
       console.log("执行快捷键动作:", action);
 
-      switch (action) {
-        // 播放控制
-        case "togglePlayPause":
-          await this.context.playbackSyncManager?.togglePlayPause();
-          break;
+      // switch (action) {
+      //   // 播放控制
+      //   case "togglePlayPause":
+      //     await this.context.playbackSyncManager?.togglePlayPause();
+      //     break;
 
-        case "jumpToStart":
-          await this.context.playbackSyncManager?.seekTo(0);
-          break;
+      //   case "jumpToStart":
+      //     await this.context.playbackSyncManager?.seekTo(0);
+      //     break;
 
-        case "jumpToEnd":
-          const timelineStore = useTimelineStore.getState();
-          await this.context.playbackSyncManager?.seekTo(
-            timelineStore.duration / 1000
-          );
-          break;
+      //   case "jumpToEnd":
+      //     const timelineStore = useTimelineStore.getState();
+      //     await this.context.playbackSyncManager?.seekTo(
+      //       timelineStore.duration / 1000
+      //     );
+      //     break;
 
-        case "skipBack":
-          await this.context.playbackSyncManager?.skipBack(5);
-          break;
+      //   case "skipBack":
+      //     await this.context.playbackSyncManager?.skipBack(5);
+      //     break;
 
-        case "skipForward":
-          await this.context.playbackSyncManager?.skipForward(5);
-          break;
+      //   case "skipForward":
+      //     await this.context.playbackSyncManager?.skipForward(5);
+      //     break;
 
-        case "skipBackFrame":
-          await this.context.playbackSyncManager?.skipBack(1 / 30); // 假设30fps
-          break;
+      //   case "skipBackFrame":
+      //     await this.context.playbackSyncManager?.skipBack(1 / 30); // 假设30fps
+      //     break;
 
-        case "skipForwardFrame":
-          await this.context.playbackSyncManager?.skipForward(1 / 30);
-          break;
+      //   case "skipForwardFrame":
+      //     await this.context.playbackSyncManager?.skipForward(1 / 30);
+      //     break;
 
-        // 片段操作
-        case "deleteSelectedClips":
-          if (this.context.selectedClipIds.length > 0) {
-            await this.context.clipOperationManager?.deleteClips({
-              actionIds: this.context.selectedClipIds,
-            });
-          }
-          break;
+      //   // 片段操作
+      //   case "deleteSelectedClips":
+      //     if (this.context.selectedClipIds.length > 0) {
+      //       // await this.context.clipOperationManager?.deleteClips({
+      //       //   actionIds: this.context.selectedClipIds,
+      //       // });
+      //     }
+      //     break;
 
-        case "splitAtPlayhead":
-          if (this.context.selectedClipIds.length > 0) {
-            await this.context.clipOperationManager?.splitClips({
-              actionIds: this.context.selectedClipIds,
-              splitTime: this.context.currentTime / 1000,
-            });
-          }
-          break;
+      //   case "splitAtPlayhead":
+      //     if (this.context.selectedClipIds.length > 0) {
+      //       // await this.context.clipOperationManager?.splitClips({
+      //       //   actionIds: this.context.selectedClipIds,
+      //       //   splitTime: this.context.currentTime / 1000,
+      //       // });
+      //     }
+      //     break;
 
-        case "duplicateSelectedClips":
-          if (this.context.selectedClipIds.length > 0) {
-            await this.context.clipOperationManager?.duplicateClips({
-              actionIds: this.context.selectedClipIds,
-              offset: 1, // 1秒偏移
-            });
-          }
-          break;
+      //   case "duplicateSelectedClips":
+      //     if (this.context.selectedClipIds.length > 0) {
+      //       // await this.context.clipOperationManager?.duplicateClips({
+      //       //   actionIds: this.context.selectedClipIds,
+      //       //   offset: 1, // 1秒偏移
+      //       // });
+      //     }
+      //     break;
 
-        case "copySelectedClips":
-          // TODO: 实现剪贴板功能
-          console.log("复制功能待实现");
-          break;
+      //   case "copySelectedClips":
+      //     // TODO: 实现剪贴板功能
+      //     console.log("复制功能待实现");
+      //     break;
 
-        case "pasteClips":
-          // TODO: 实现剪贴板功能
-          console.log("粘贴功能待实现");
-          break;
+      //   case "pasteClips":
+      //     // TODO: 实现剪贴板功能
+      //     console.log("粘贴功能待实现");
+      //     break;
 
-        case "cutSelectedClips":
-          // TODO: 实现剪贴板功能
-          console.log("剪切功能待实现");
-          break;
+      //   case "cutSelectedClips":
+      //     // TODO: 实现剪贴板功能
+      //     console.log("剪切功能待实现");
+      //     break;
 
-        // 选择操作
-        case "selectAllClips":
-          // TODO: 实现全选功能
-          console.log("全选功能待实现");
-          break;
+      //   // 选择操作
+      //   case "selectAllClips":
+      //     // TODO: 实现全选功能
+      //     console.log("全选功能待实现");
+      //     break;
 
-        case "clearSelection":
-          useTimelineStore.getState().clearSelection();
-          break;
+      //   case "clearSelection":
+      //     useTimelineStore.getState().clearSelection();
+      //     break;
 
-        // 撤销重做
-        case "undo":
-          // TODO: 通过历史记录store实现
-          console.log("撤销功能待实现");
-          break;
+      //   // 撤销重做
+      //   case "undo":
+      //     // TODO: 通过历史记录store实现
+      //     console.log("撤销功能待实现");
+      //     break;
 
-        case "redo":
-          // TODO: 通过历史记录store实现
-          console.log("重做功能待实现");
-          break;
+      //   case "redo":
+      //     // TODO: 通过历史记录store实现
+      //     console.log("重做功能待实现");
+      //     break;
 
-        // 缩放操作
-        case "zoomIn":
-          useTimelineStore.getState().zoomIn();
-          break;
+      //   // 缩放操作
+      //   case "zoomIn":
+      //     useTimelineStore.getState().zoomIn();
+      //     break;
 
-        case "zoomOut":
-          useTimelineStore.getState().zoomOut();
-          break;
+      //   case "zoomOut":
+      //     useTimelineStore.getState().zoomOut();
+      //     break;
 
-        case "zoomToFit":
-          useTimelineStore.getState().zoomToFit();
-          break;
+      //   case "zoomToFit":
+      //     useTimelineStore.getState().zoomToFit();
+      //     break;
 
-        // 文件操作
-        case "saveProject":
-          // TODO: 实现保存功能
-          console.log("保存功能待实现");
-          break;
+      //   // 文件操作
+      //   case "saveProject":
+      //     // TODO: 实现保存功能
+      //     console.log("保存功能待实现");
+      //     break;
 
-        case "exportVideo":
-          // TODO: 触发导出对话框
-          console.log("导出功能待实现");
-          break;
+      //   case "exportVideo":
+      //     // TODO: 触发导出对话框
+      //     console.log("导出功能待实现");
+      //     break;
 
-        // 调试功能
-        case "toggleDevTools":
-          console.log("开发者工具切换");
-          break;
+      //   // 调试功能
+      //   case "toggleDevTools":
+      //     console.log("开发者工具切换");
+      //     break;
 
-        default:
-          console.warn("未知的快捷键动作:", action);
-      }
+      //   default:
+      //     console.warn("未知的快捷键动作:", action);
+      // }
     } catch (error) {
       console.error("执行快捷键动作失败:", action, error);
     }
@@ -582,6 +577,4 @@ export class KeyboardShortcutManager {
 /**
  * 创建键盘快捷键管理器
  */
-export function createKeyboardShortcutManager(): KeyboardShortcutManager {
-  return new KeyboardShortcutManager();
-}
+export const keyboardShortcutManager = new KeyboardShortcutManager();
