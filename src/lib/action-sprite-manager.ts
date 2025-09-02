@@ -324,6 +324,4 @@ export type ActionSpriteManagerListener = (
 /**
  * 创建 ActionSprite 映射管理器实例
  */
-export function createActionSpriteManager(): ActionSpriteManager {
-  return new ActionSpriteManager();
-}
+export const actionSpriteManager = new ActionSpriteManager();

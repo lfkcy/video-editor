@@ -1,18 +1,11 @@
 import { AVCanvas } from "@webav/av-canvas";
 import { TextStyle, AVCanvasOptions } from "@/types/editor";
-import { Clip, ProjectData, ProjectSettings, Track } from "@/types/project";
-import {
-  AudioClip,
-  EmbedSubtitlesClip,
-  ImgClip,
-  MP4Clip,
-  VisibleSprite,
-  renderTxt2ImgBitmap,
-} from "@webav/av-cliper";
+import { ProjectSettings, Track } from "@/types/project";
+import { MP4Clip, VisibleSprite } from "@webav/av-cliper";
 import { AVCanvasManager, avCanvasManager } from "@/lib/av-canvas-manager";
 import {
+  actionSpriteManager,
   ActionSpriteManager,
-  createActionSpriteManager,
 } from "@/lib/action-sprite-manager";
 import { TimelineAction } from "@xzdarcy/react-timeline-editor";
 
@@ -39,7 +32,7 @@ export class VideoClipService {
 
   constructor() {
     this.avCanvasManager = avCanvasManager;
-    this.actionSpriteManager = createActionSpriteManager();
+    this.actionSpriteManager = actionSpriteManager;
     this.setupManagerIntegration();
   }
 
