@@ -58,6 +58,8 @@ export class TimelineDataAdapter {
    * 单个 Track 转换为 TimelineRow
    */
   private trackToRow(track: Track): TimelineRow {
+    console.log(track.clips, "track.clips");
+
     return {
       id: track.id,
       actions: track.clips.map((clip) => this.clipToAction(clip)),
@@ -104,6 +106,8 @@ export class TimelineDataAdapter {
       // 如果找不到原始数据，创建一个基本的 Clip
       return this.createDefaultClip(action);
     }
+
+    console.log(action, "action +++");
 
     // 更新时间信息
     return {

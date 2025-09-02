@@ -118,8 +118,9 @@ export class TimelineAVCanvasIntegrator {
       // 确定目标轨道
       const trackId = (action as any).trackId || this.determineTrackId(sprite);
 
-      // 创建 Clip 对象
-      const clip: Omit<Clip, "id" | "trackId"> = {
+      // 创建 Clip 对象 --- id使用actionId 防止后续找不到对应的sprite
+      const clip: Omit<Clip, "trackId"> = {
+        id: action.id,
         type: this.determineClipType(sprite),
         startTime: action.start,
         duration: action.end - action.start,

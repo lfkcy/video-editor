@@ -107,7 +107,8 @@ export class ActionSpriteManager {
    * 当时间轴上的 Action 发生变化时，同步更新对应的 Sprite
    */
   syncActionToSprite(action: TimelineAction): boolean {
-    const sprite = this.actionToSprite.get(action);
+    // 查找必须从 getSpriteByActionId 获取，直接从 actionToSprite 获取，由于WeakMap和实例重新加载的原因，action对象在内存中的地址会发生更改，与WeakMap中的对象地址不一致，导致无法获取到对应的Sprite对象
+    const sprite = this.getSpriteByActionId(action.id);
     if (!sprite) {
       console.warn("同步失败: 未找到对应的 Sprite:", action.id);
       return false;

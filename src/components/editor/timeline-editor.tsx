@@ -106,17 +106,24 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
     /**
      * 处理时间轴数据变更
      */
-    const handleDataChange = useCallback(
-      (data: TimelineRow[]) => {
-        setEditorData(data);
-        stateAdapterRef.current.syncToStores(data);
+    const handleDataChange = (data: TimelineRow[]) => {
+      setEditorData(data);
+      stateAdapterRef.current.syncToStores(data);
 
-        if (onTimelineChange) {
-          onTimelineChange(data);
-        }
-      },
-      [onTimelineChange]
-    );
+      const row = data.find((row) => row.id === "video-track-1");
+
+      if (row && row.actions && row.actions.length > 0) {
+        eventHandlerRef.current.handleActionMove(
+          row.actions[0],
+          row,
+          row.actions[0].start
+        );
+      }
+
+      if (onTimelineChange) {
+        onTimelineChange(data);
+      }
+    };
 
     /**
      * 点击时间轴
@@ -326,8 +333,8 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
         onActionSelect: (action, row) => {
           console.log("选中片段:", action.id);
         },
-        onActionMove: (action, row, newStart) => {
-          console.log("移动片段:", action.id, "新位置:", newStart);
+        onActionMove: (action) => {
+          console.log("移动片段:", action.id);
           // 使用集成器处理移动
           if (timelineIntegratorRef.current) {
             timelineIntegratorRef.current.handleActionMove(action);

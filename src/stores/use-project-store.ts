@@ -28,7 +28,7 @@ interface ProjectActions {
   duplicateTrack: (trackId: string) => string;
 
   // 片段操作
-  addClip: (trackId: string, clip: Omit<Clip, "id" | "trackId">) => string;
+  addClip: (trackId: string, clip: Omit<Clip, "trackId">) => string;
   removeClip: (clipId: string) => void;
   updateClip: (clipId: string, updates: Partial<Clip>) => void;
   moveClip: (clipId: string, newTrackId: string, newStartTime: number) => void;
@@ -286,10 +286,11 @@ export const useProjectStore = create<ProjectStore>()(
           const { currentProject } = get();
           if (!currentProject) return "";
 
-          const clipId = generateId();
+          // 采用 actionId 创建，防止后续找不到对应的sprite
+          const clipId = clipData.id;
+
           const newClip: Clip = {
             ...clipData,
-            id: clipId,
             trackId,
             selected: false,
           };
@@ -380,7 +381,8 @@ export const useProjectStore = create<ProjectStore>()(
           const { id, trackId, ...clipData } = clip;
           const newClipId = addClip(trackId, {
             ...clipData,
-            startTime: clip.startTime + clip.duration + 100, // 稍微偏移
+            startTime: clip.startTime + clip.duration + 100,
+            id,
           });
 
           return newClipId;

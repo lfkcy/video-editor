@@ -225,47 +225,11 @@ export function VideoEditor() {
     setIsInitVideoPreviewContainer(true);
   };
 
-  // 播放控制回调函数
-  const handlePlayPause = useCallback(() => {
-    playbackSyncManagerRef.current?.togglePlayPause();
-  }, []);
-
-  const handleStop = useCallback(() => {
-    playbackSyncManagerRef.current?.stop();
-  }, []);
-
-  const handleSeek = useCallback((time: number) => {
-    playbackSyncManagerRef.current?.seekTo(time);
-  }, []);
-
-  const handleSkipBack = useCallback((seconds = 5) => {
-    playbackSyncManagerRef.current?.skipBack(seconds);
-  }, []);
-
-  const handleSkipForward = useCallback((seconds = 5) => {
-    playbackSyncManagerRef.current?.skipForward(seconds);
-  }, []);
-
   // 媒体库上下文
   const mediaLibraryContext: TimelineEditorContextType = {
     addMediaFile: timelineEditorRef.current?.addMediaFile,
     addTextSprite: timelineEditorRef.current?.addTextSprite,
   };
-
-  // 加载状态渲染
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex h-screen items-center justify-center bg-background">
-  //       <div className="text-center">
-  //         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-  //         <p className="text-lg font-medium mb-2">初始化视频编辑器...</p>
-  //         <p className="text-sm text-muted-foreground">
-  //           请稍候，正在加载核心组件
-  //         </p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   // 错误状态渲染
   if (initializationError) {
