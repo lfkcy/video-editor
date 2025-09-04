@@ -18,27 +18,28 @@ import { ErrorBoundary } from "../error/error-boundary";
 import { performanceMonitor } from "@/utils/performance-monitor";
 import { cn } from "@/lib/utils";
 
-// 新的服务和管理器
-import {
-  videoClipService,
-  VideoClipService,
-} from "@/services/video-clip-service";
 import {
   KeyboardShortcutManager,
   keyboardShortcutManager,
 } from "@/lib/keyboard-shortcut-manager";
-import {
-  ActionSpriteManager,
-  actionSpriteManager,
-} from "@/lib/action-sprite-manager";
 import { TimelineAction } from "@xzdarcy/react-timeline-editor";
-import { avCanvasManager } from "@/lib/av-canvas-manager";
+import { useVideoEditor } from "@/hooks/useVideoEditor";
+import { useActionSpriteManager } from "@/hooks/useActionSpriteManager";
 
 /**
  * 主视频编辑器组件（重构版）
  * 集成所有新的管理器和服务，实现完整的视频编辑功能
  */
 export function VideoEditor() {
+  const {
+    initialize: initializeVideoEditor,
+    ...videoEditorApi
+  } = useVideoEditor();
+
+  const {
+    ...actionSpriteManagerApi
+  } = useActionSpriteManager();
+
   const timelineEditorRef = useRef<any>(null);
   // 定义本地引用来存储从子组件传回的 DOM 节点
   const videoPreviewContainerRef = useRef<HTMLDivElement | null>(null);
@@ -60,9 +61,7 @@ export function VideoEditor() {
     useState(false);
 
   // 服务和管理器引用
-  const videoClipServiceRef = useRef<VideoClipService>();
   const keyboardShortcutManagerRef = useRef<KeyboardShortcutManager>();
-  const actionSpriteManagerRef = useRef<ActionSpriteManager>();
 
   useEffect(() => {
     if (!currentProject) {
@@ -79,25 +78,8 @@ export function VideoEditor() {
 
           console.log("准备初始化视频编辑器...");
 
-          // 1. 创建 VideoClipService，使用传递进来的容器
-          if (!videoClipServiceRef.current) {
-            console.log("初始化 VideoClipService...");
-            videoClipServiceRef.current = videoClipService;
-            await videoClipServiceRef.current.initialize(
-              videoPreviewContainerRef.current as HTMLElement,
-              currentProject.settings,
-              {
-                width: currentProject.settings.width,
-                height: currentProject.settings.height,
-                bgColor: "#000000",
-              }
-            );
-          }
-
-          // 初始化 ActionSpriteManager
-          if (!actionSpriteManagerRef.current) {
-            actionSpriteManagerRef.current = actionSpriteManager;
-          }
+          // 1. 初始化视频编辑器
+          await initializeVideoEditor(videoPreviewContainerRef.current as HTMLElement);
 
           // 初始化性能监控
           const endTiming = performanceMonitor.startTiming(
@@ -150,7 +132,6 @@ export function VideoEditor() {
     return () => {
       // 清理所有管理器和服务
       keyboardShortcutManagerRef.current?.destroy();
-      videoClipServiceRef.current?.destroy();
 
       console.log("视频编辑器组件已清理");
     };
@@ -273,18 +254,18 @@ export function VideoEditor() {
                       console.log("时间轴数据变化:", data);
                     }}
                     onTimeChange={(time) => {
-                      videoClipService.seekTo(time);
+                      videoEditorApi.seekTo(time);
                       console.log("时间变化:", time);
                     }}
                     onSelectionChange={(actionIds) => {
                       console.log("选择变化:", actionIds);
                     }}
                     onDurationChange={({ action, start, end }) => {
-                      videoClipService.updateSpriteTime(action);
+                      videoEditorApi.updateSpriteTime(action);
                       console.log("时长变化:", action, start, end);
                     }}
                     onOffsetChange={(action) => {
-                      videoClipService.updateSpriteTime(action);
+                      videoEditorApi.updateSpriteTime(action);
                       console.log("偏移变化:", action);
                     }}
                     onSplitAction={(action: TimelineAction) => {

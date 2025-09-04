@@ -1,7 +1,9 @@
 // 编辑器相关类型定义
 
+import { TimelineAction } from "@xzdarcy/react-timeline-editor";
 import { Clip, ProjectData, ProjectSettings, Track } from "./project";
 import { Point } from "./timeline";
+import { VisibleSprite } from "@webav/av-cliper";
 
 /**
  * 编辑器状态
@@ -260,3 +262,21 @@ export interface PerformanceMetrics {
   renderTime: number; // 渲染时间，单位：毫秒
   lastUpdate: Date;
 }
+
+/**
+ * 事件类型
+ */
+export type ActionSpriteManagerEvent =
+  | "register"
+  | "unregister"
+  | "syncActionToSprite"
+  | "syncSpriteToAction";
+
+/**
+ * 事件监听器类型
+ */
+export type ActionSpriteManagerListener = (
+  event: ActionSpriteManagerEvent,
+  action: TimelineAction,
+  sprite: VisibleSprite
+) => void;

@@ -18,17 +18,12 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { MediaFile } from "@/types";
-import { mediaProcessingService, MediaProcessingService } from "@/services";
-import {
-  isSupportedFormat,
-  getFileType,
-  videoClipService,
-} from "@/services/video-clip-service";
 import { Button } from "@/components/ui/button";
 import { MediaItem } from "./media-item";
-import { cn, formatFileSize } from "@/lib/utils";
+import { cn, getFileType, isSupportedFormat } from "@/lib/utils";
 import { useProjectStore } from "@/stores";
 import { toast } from "sonner";
+import { useMediaProcessor } from "@/hooks/useMediaProcessor";
 
 /**
  * 时间轴编辑器上下文
@@ -62,6 +57,8 @@ const TimelineEditorContext = createContext<TimelineEditorContextType>({});
  * 集成 VideoClipService，支持直接添加到时间轴
  */
 export function MediaLibrary() {
+  const { processMediaFile, processMediaFiles } = useMediaProcessor();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const timelineContext = useContext(TimelineEditorContext);
   const currentProject = useProjectStore((state) => state.currentProject);
@@ -127,16 +124,12 @@ export function MediaLibrary() {
               }
 
               // 同时添加到媒体库
-              const mediaFile = await mediaProcessingService.processMediaFile(
-                file
-              );
+              const mediaFile = await processMediaFile(file);
               processedFiles.push(mediaFile);
             } catch (error) {
               console.error(`添加文件 ${file.name} 到时间轴失败:`, error);
               // 即使添加到时间轴失败，也要添加到媒体库
-              const mediaFile = await mediaProcessingService.processMediaFile(
-                file
-              );
+              const mediaFile = await processMediaFile(file);
               processedFiles.push(mediaFile);
             }
 
@@ -145,9 +138,7 @@ export function MediaLibrary() {
           }
         } else {
           // 仅添加到媒体库
-          processedFiles = await mediaProcessingService.processMediaFiles(
-            validFiles
-          );
+          processedFiles = await processMediaFiles(validFiles);
           setUploadProgress(100);
         }
 

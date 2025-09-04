@@ -2,8 +2,8 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { useTimelineStore, useUIStore } from "@/stores";
-import { videoClipService } from "@/services";
 import { cn } from "@/lib/utils";
+import { useVideoEditor } from "@/hooks/useVideoEditor";
 
 interface VideoPreviewProps {
   onInitialized: (container: HTMLDivElement) => void;
@@ -13,6 +13,8 @@ interface VideoPreviewProps {
  * 视频预览器组件
  */
 export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
+  const { ...videoEditorApi } = useVideoEditor();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -55,9 +57,6 @@ export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
     // 确保只执行一次初始化逻辑
     const initialize = async () => {
       try {
-        // 在这里执行 VideoPreview 自己的初始化逻辑
-        await videoClipService.initialize(containerRef.current!);
-
         setIsInitialized(true);
         console.log("VideoPreview 内部初始化成功，通知父组件");
 
@@ -69,12 +68,6 @@ export const VideoPreview = ({ onInitialized }: VideoPreviewProps) => {
     };
 
     initialize();
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      videoClipService.destroy();
-    };
   }, []);
 
   return (

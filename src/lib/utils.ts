@@ -236,3 +236,42 @@ export function isMobile(): boolean {
 export function isTouchDevice(): boolean {
   return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
+
+/**
+ * 检查是否支持指定的文件格式
+ */
+export function isSupportedFormat(file: File): boolean {
+  const supportedVideoFormats = ["video/mp4", "video/webm", "video/mov"];
+  const supportedAudioFormats = [
+    "audio/mp3",
+    "audio/wav",
+    "audio/ogg",
+    "audio/m4a",
+  ];
+  const supportedImageFormats = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+  ];
+
+  const allSupportedFormats = [
+    ...supportedVideoFormats,
+    ...supportedAudioFormats,
+    ...supportedImageFormats,
+  ];
+
+  return allSupportedFormats.includes(file.type);
+}
+
+/**
+ * 获取文件类型
+ */
+export function getFileType(
+  file: File
+): "video" | "audio" | "image" | "unknown" {
+  if (file.type.startsWith("video/")) return "video";
+  if (file.type.startsWith("audio/")) return "audio";
+  if (file.type.startsWith("image/")) return "image";
+  return "unknown";
+}

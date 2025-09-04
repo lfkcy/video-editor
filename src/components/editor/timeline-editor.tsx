@@ -9,16 +9,9 @@ import {
 } from "@xzdarcy/react-timeline-editor";
 import { useProjectStore, useTimelineStore } from "@/stores";
 import { EnhancedTimelineToolbar } from "./enhanced-timeline-toolbar";
-import {
-  videoClipService,
-  VideoClipService,
-} from "@/services/video-clip-service";
-import {
-  ActionSpriteManager,
-  actionSpriteManager,
-} from "@/lib/action-sprite-manager";
 import { generateId } from "@/lib/utils";
-
+import { useVideoEditor } from "@/hooks/useVideoEditor";
+import { useActionSpriteManager } from "@/hooks/useActionSpriteManager";
 /**
  * TimelineEditor 组件属性
  */
@@ -61,6 +54,9 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
     },
     ref
   ) => {
+    const { ...videoEditorApi } = useVideoEditor();
+    const { ...actionSpriteManagerApi } = useActionSpriteManager();
+
     // 状态管理
     const currentProject = useProjectStore((state) => state.currentProject);
     const editorData = useProjectStore((state) => state.editorData);
@@ -88,8 +84,6 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
 
     // refs
     const timelineRef = useRef<any>(null);
-    const videoClipServiceRef = useRef<VideoClipService>();
-    const actionSpriteManagerRef = useRef<ActionSpriteManager>();
 
     /**
      * 点击时间轴
@@ -183,22 +177,6 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
     }, [isPlaying]);
 
     /**
-     * 初始化组件
-     */
-    useEffect(() => {
-      // 创建 VideoClipService
-      if (!videoClipServiceRef.current) {
-        videoClipServiceRef.current = videoClipService;
-      }
-
-      return () => {
-        if (videoClipServiceRef.current) {
-          videoClipServiceRef.current.destroy();
-        }
-      };
-    }, []);
-
-    /**
      * 监听 stores 变化
      */
     useEffect(() => {
@@ -242,9 +220,6 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
     React.useImperativeHandle(
       ref,
       () => ({
-        // 获取 VideoClipService 实例
-        getVideoClipService: () => videoClipServiceRef.current,
-
         // 手动添加媒体文件
         addMediaFile: async (
           file: File,
@@ -258,8 +233,8 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
             effectOptions?: Record<string, any>;
           }
         ) => {
-          if (!videoClipServiceRef.current) {
-            throw new Error("VideoClipService 未初始化");
+          if (!videoEditorApi.isInitialized) {
+            throw new Error("VideoEditor 未初始化");
           }
 
           try {
@@ -286,27 +261,17 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
                   })
                 );
 
-                result =
-                  await videoClipServiceRef.current.addVideoSpriteToTrack(
-                    file,
-                    targetTrackId,
-                    true,
-                    startTime
-                  );
+                result = await videoEditorApi.addVideoSprite(
+                  file,
+                  startTime,
+                  options?.duration || 10
+                );
                 break;
               case "audio":
-                result =
-                  await videoClipServiceRef.current.addAudioSpriteToTrack(
-                    file,
-                    targetTrackId
-                  );
+                result = await videoEditorApi.addAudioSprite(file);
                 break;
               case "image":
-                result =
-                  await videoClipServiceRef.current.addImageSpriteToTrack(
-                    file,
-                    targetTrackId
-                  );
+                result = await videoEditorApi.addImageSprite(file);
                 break;
               default:
                 throw new Error("不支持的文件类型");
@@ -327,18 +292,12 @@ export const TimelineEditor = React.forwardRef<any, TimelineEditorProps>(
           trackId: string = "text-track-1",
           duration: number = 5
         ) => {
-          if (!videoClipServiceRef.current) {
-            throw new Error("VideoClipService 未初始化");
+          if (!videoEditorApi.isInitialized) {
+            throw new Error("VideoEditor 未初始化");
           }
 
           try {
-            const result =
-              await videoClipServiceRef.current.addTextSpriteToTrack(
-                text,
-                trackId,
-                style,
-                duration
-              );
+            const result = await videoEditorApi.addTextSprite(text, style);
 
             console.log("文字精灵添加成功:", result);
             return result;

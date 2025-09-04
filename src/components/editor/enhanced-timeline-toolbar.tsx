@@ -22,7 +22,7 @@ import {
   Settings,
 } from "lucide-react";
 import { formatTime } from "@/lib/utils";
-import { videoClipService } from "@/services";
+import { useVideoEditor } from "@/hooks/useVideoEditor";
 
 interface EnhancedTimelineToolbarProps {
   onAddTrack?: () => void;
@@ -45,6 +45,8 @@ export function EnhancedTimelineToolbar({
   onRedo,
   onShowSettings,
 }: EnhancedTimelineToolbarProps) {
+  const { ...videoEditorApi } = useVideoEditor();
+
   const { currentProject } = useProjectStore();
   const {
     isPlaying,
@@ -77,10 +79,10 @@ export function EnhancedTimelineToolbar({
       if (currentTime === 0 && !currentProject?.tracks.length) return;
 
       if (isPlaying) {
-        videoClipService.pause();
+        videoEditorApi.pause();
         pause();
       } else {
-        videoClipService.play(currentTime);
+        videoEditorApi.play(currentTime);
         play();
       }
     } catch (err) {
